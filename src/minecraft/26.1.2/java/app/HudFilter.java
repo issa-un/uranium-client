@@ -59,6 +59,9 @@ public final class HudFilter implements ClassFileTransformer {
             "app."};
     // Where installed mods and the game's libraries live.
     private static final String[] GAME_PLACES = {"/mods/", "/.fabric/", "/libraries/", "/versions/"};
+    // Renderers some clients bring to draw their HUD themselves instead of through the game.
+    private static final String[] OWN_RENDERERS = {"org.lwjgl.nanovg.", "imgui.", "io.github.humbleui.skija.",
+            "org.lwjgl.nuklear.", "org.jetbrains.skija."};
     private static final StackWalker WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 
     /** Where a drawing class comes from: a jar name, or injected code; injected starts hidden. */
@@ -73,6 +76,8 @@ public final class HudFilter implements ClassFileTransformer {
     private static final Map<String, Boolean> HIDDEN = new ConcurrentHashMap<>();
     private static final HudFilter INSTANCE = new HudFilter();
     private static volatile boolean enabled;
+    // Hide UI: every source but the game itself is hidden, whatever its switch says.
+    private static volatile boolean hideAll;
     private static volatile Instrumentation instrumentation;
     private static volatile boolean installed;
     // Turned on from saved settings before the agent handed Instrumentation over.
@@ -98,7 +103,7 @@ public final class HudFilter implements ClassFileTransformer {
 
     /** Called from the rewritten drawing methods: true to skip this draw. */
     public static boolean skip() {
-        if (!enabled) {
+        if (!enabled && !hideAll) {
             return false;
         }
         try {
@@ -138,6 +143,19 @@ public final class HudFilter implements ClassFileTransformer {
         if (source == GAME) {
             source = mixinSource(caller.getMethodName());
         }
+        if (source == GAME) {
+            for (StackWalker.StackFrame frame : list) {
+                if (isHudRoot(frame.getDeclaringClass())) {
+                    break;
+                }
+                Source deeper = sourceOf(frame.getDeclaringClass());
+                if (deeper != GAME && deeper.injected()) {
+                    source = deeper;
+                    caller = frame;
+                    break;
+                }
+            }
+        }
         String key = caller.getClassName() + "#" + caller.getMethodName();
         if (source == GAME || !TRACED.add(key)) {
             return null;
@@ -171,6 +189,25 @@ public final class HudFilter implements ClassFileTransformer {
         if (source == GAME) {
             source = mixinSource(method); // a mod's code spliced into a Minecraft class
         }
+        while (source == GAME && it.hasNext()) {
+            // Injected clients without mixins (Doomsday and the like) splice a call to their
+            // own code into Minecraft's HUD methods, so the frame right above the draw is the
+            // game's. Look further up for their code, but only up to the HUD's own entry
+            // points: code wrapped around the whole HUD from above must not hide the hotbar.
+            StackWalker.StackFrame frame = it.next();
+            Class<?> type = frame.getDeclaringClass();
+            if (isHudRoot(type)) {
+                return false;
+            }
+            if (Screen.class.isAssignableFrom(type)) {
+                return false;
+            }
+            Source deeper = sourceOf(type);
+            if (deeper != GAME && deeper.injected()) {
+                source = deeper;
+                caller = type;
+            }
+        }
         if (source == GAME) {
             return false;
         }
@@ -187,7 +224,14 @@ public final class HudFilter implements ClassFileTransformer {
             SpearLog.log("hide other clients: " + source.name() + " draws on the HUD (" + caller.getName() + "), "
                     + (HIDDEN.get(source.name()) ? "hidden" : "shown"));
         }
-        return HIDDEN.get(source.name());
+        return hideAll || HIDDEN.get(source.name());
+    }
+
+    /** Where Minecraft starts drawing the HUD: anything found above these wraps all of it. */
+    private static boolean isHudRoot(Class<?> type) {
+        String name = type.getName();
+        return name.equals("net.minecraft.client.gui.Gui") || name.equals("net.minecraft.client.renderer.GameRenderer")
+                || name.equals("net.minecraft.client.gui.render.GuiRenderer") || name.equals("net.minecraft.client.Minecraft");
     }
 
     /** The game, the JDK and Uranium (GAME), an installed mod or library jar, or code injected from outside. */
@@ -272,6 +316,17 @@ public final class HudFilter implements ClassFileTransformer {
         if (counts.isEmpty()) {
             SpearLog.log("hide other clients: no injected classes found besides Uranium");
         }
+        Map<String, Integer> renderers = new TreeMap<>();
+        for (Class<?> type : inst.getAllLoadedClasses()) {
+            String name = type.getName();
+            for (String lib : OWN_RENDERERS) {
+                if (name.startsWith(lib)) {
+                    renderers.merge(lib, 1, Integer::sum);
+                }
+            }
+        }
+        renderers.forEach((lib, count) -> SpearLog.log("hide other clients: " + count + " classes of " + lib
+                + " loaded: a client drawing with its own renderer, past Minecraft's HUD"));
         counts.forEach((name, count) -> SpearLog.log("hide other clients: " + count + " classes from "
                 + printable(name) + " (" + printable(samples.get(name)) + ")"));
         // No render-thread sampling here: snapshotting the render thread every few ms for
@@ -286,7 +341,7 @@ public final class HudFilter implements ClassFileTransformer {
         StringBuilder out = new StringBuilder();
         for (char c : text.toCharArray()) {
             if (c < 0x20 || c == 0x7f) {
-                out.append('<').append(String.format("%02x", (int) c)).append('>');
+                out.append('<').append(String.format(Locale.ROOT, "%02x", (int) c)).append('>');
             } else {
                 out.append(c);
             }
@@ -350,6 +405,25 @@ public final class HudFilter implements ClassFileTransformer {
         enabled = on;
     }
 
+    static boolean isHideAll() {
+        return hideAll;
+    }
+
+    /**
+     * Hide UI: only Minecraft's own HUD stays on screen. Uranium's HUD and wheels are left out
+     * where they draw; every other mod or client is hidden through the same drawing check
+     * as Hide other clients. Menus still open and show as normal.
+     */
+    static void toggleHideAll() {
+        boolean on = !hideAll;
+        if (on && instrumentation != null && !install()) {
+            MinecraftSpearDash.setStatus(status);
+        }
+        hideAll = on;
+        SpearLog.log("hide ui: " + (on ? "on" : "off"));
+        MinecraftSpearDash.setStatus(on ? "UI hidden" : "UI shown");
+    }
+
     static void toggleEnabled() {
         setEnabled(!enabled);
         MinecraftSpearDash.setStatus(enabled ? "Other clients' HUD hidden" : status.isEmpty() ? "Other clients' HUD shown" : status);
@@ -382,6 +456,7 @@ public final class HudFilter implements ClassFileTransformer {
     /** Takes the check out again (Unload or Update), leaving the drawing methods as they were. */
     static synchronized void uninstall() {
         enabled = false;
+        hideAll = false;
         pending = false;
         Instrumentation inst = instrumentation;
         if (!installed || inst == null) {

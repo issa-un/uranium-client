@@ -28,7 +28,9 @@ import net.minecraft.world.phys.HitResult;
  * sword or mace), at the spear's reach. Everything else about the hit comes from the spear:
  * its enchantments, and no mace smash, Density or Breach.
  *
- * Mode: Jab switches straight back to your weapon. Switch only keeps the spear in your hand
+ * Mode: Jab switches back to your weapon after SHOW_MS (or Switch back, if longer), so you
+ * see the hotbar go to the spear and back; the jab itself has already gone out with your
+ * weapon's charge. Switch only keeps the spear in your hand
  * while your crosshair stays on someone out of your weapon's reach but in the spear's, and
  * switches back (after Switch back) once you look away or they come into your weapon's
  * reach. Nothing is ever hit without your click. Each jab is logged with the health the
@@ -39,6 +41,8 @@ final class ReachSwap {
     private static final long DAMAGE_WAIT_MS = 400;
     private static final String[] MODES = {"Jab", "Switch only"};
     private static final int SWITCH_ONLY = 1;
+    // Jab: how long the spear stays in your hand after the jab, so the swap shows.
+    private static final long SHOW_MS = 120;
     private static volatile boolean enabled;
     private static volatile int mode;
     // Switch only: target gone or in your weapon's reach -> your weapon back.
@@ -87,7 +91,7 @@ final class ReachSwap {
                 jabbed = true;
             }
         } finally {
-            if (!jabbed || mode != SWITCH_ONLY) {
+            if (!jabbed) {
                 player.getInventory().setSelectedSlot(previousSlot);
                 MinecraftSpearDash.sendSelectedSlot(minecraft, false);
             }
@@ -95,14 +99,14 @@ final class ReachSwap {
         if (!jabbed) {
             return false;
         }
-        if (mode == SWITCH_ONLY) {
-            MinecraftInputController.stopGuard(); // the spear stays on purpose
-            switchedTo = spearSlot;
-            fromSlot = previousSlot;
-            backAtMs = -1;
-        } else {
-            MinecraftInputController.guardSwitchBack(previousSlot, spearSlot);
-        }
+        // The spear stays in your hand on purpose: for good (Switch only), or for a moment
+        // you can see (Jab), and the switch back comes from update.
+        MinecraftInputController.stopGuard();
+        MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+        switchedTo = spearSlot;
+        fromSlot = previousSlot;
+        backAtMs = mode == SWITCH_ONLY ? -1
+                : System.nanoTime() / 1_000_000 + Math.max(SHOW_MS, SWITCH_BACK.pick());
         MinecraftSpearDash.setStatus("Reach jab");
         SpearLog.log("reach swap: hotbar " + (previousSlot + 1) + " -> spear " + (spearSlot + 1)
                 + (mode == SWITCH_ONLY ? ", spear kept, " : " -> back, ")
@@ -118,7 +122,8 @@ final class ReachSwap {
 
     /**
      * Switch only: keeps the spear while your crosshair is on someone out of your weapon's
-     * reach but in the spear's, and puts your weapon back otherwise.
+     * reach but in the spear's, and puts your weapon back otherwise. Jab: puts your weapon
+     * back once the moment the spear is shown has passed.
      */
     private static void followTarget(Minecraft minecraft) {
         LocalPlayer player = minecraft.player;
@@ -147,8 +152,8 @@ final class ReachSwap {
         }
         if (now >= backAtMs) {
             select(minecraft, fromSlot);
-            SpearLog.log("reach swap: " + (target == null ? "looked away" : "in weapon reach")
-                    + ", back to hotbar " + (fromSlot + 1));
+            SpearLog.log("reach swap: " + (mode != SWITCH_ONLY ? "jab shown" : target == null ? "looked away"
+                    : "in weapon reach") + ", back to hotbar " + (fromSlot + 1));
             switchedTo = -1;
             backAtMs = -1;
         }

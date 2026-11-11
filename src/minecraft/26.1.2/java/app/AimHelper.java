@@ -2,51 +2,59 @@ package app;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
-import org.lwjgl.glfw.GLFW;
-import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.lwjgl.glfw.GLFW;
 
 /**
- * Aim Helper: while its key works (hold Left Alt by default), moves your view onto one player
- * you have locked onto, with any item in your hand. It moves like your own aim does in
- * recordings of it, only firmer:
- * - it aims where they will be when your hit arrives (their speed times one tick plus your
- *   ping), and keeps up with them sliding across your view (FOLLOW_AIR of their speed in
- *   the air, FOLLOW_GROUND on the ground, at Strength 50%);
- * - only players within RANGE blocks of you (straight-line) are locked, and the lock drops
- *   the moment they get further;
- * - it leaves the last couple of degrees alone (DEAD_YAW / DEAD_PITCH): that bit is yours;
- * - bigger gaps ease in, CLOSE_NEAR of the gap per tenth of a second at NEAR degrees off,
- *   rising to CLOSE_FAR past FAR, never a snap.
- * It runs every frame, scaled by the time since the last one, so it glides instead of
- * stepping. Strength 50% is the default; 100% follows fully and closes twice as fast.
- * - Air only: nothing happens while you stand on the ground, unless Ground too is on.
+ * Aim Helper: while its key works (hold Left Alt by default), turns your view toward the
+ * player nearest your crosshair, with any item in your hand. Your own mouse always still
+ * works on top of it.
+ * Settings follow Wurst's Aim Assist:
+ * - Range: every moment it picks the player closest to your crosshair within this many
+ *   blocks of your eyes (measured to their hitbox, so reach).
+ * - FOV: only players inside this cone around your crosshair (360 = all around you).
+ * - Aim at: Auto aims at the spot on their hitbox nearest your crosshair, so once you are on
+ *   them it stops moving and never fights you; or Head, Center, Feet.
+ * - Speed: how fast it turns, in degrees per second, at a steady rate.
+ * - Ignore mouse: holds back that share of your own mouse while it aims.
+ * - Line of sight: no aiming through walls. Ignore invisible / Ignore creative players.
+ * - Their hitbox is moved ahead by their speed for one tick plus your ping, so it aims where
+ *   they will be when your hit arrives.
+ * - Runs every frame, so it glides.
+ * - It holds off while you eat, drink or block with a shield, unless Aim while blocking.
+ * - Air only unless Ground too is on.
  * - Key: Hold (only while held), Toggle (press on, press off) or Always (no key needed).
- * - One target, and no flick back: outside PULL_ANGLE it simply stops.
- * Friends are never locked.
+ * Friends are never aimed at.
  */
 final class AimHelper {
-    private static final double RANGE = 6;
+    private static final double MIN_RANGE = 1;
+    private static final int MIN_FOV = 30;
     private static final double MAX_LEAD_TICKS = 6;
-    private static final double LOCK_ANGLE = 25;
-    private static final double PULL_ANGLE = 45;
-    private static final long FORGET_MS = 2000;
-    private static final double FOLLOW_AIR = 1;
-    private static final double FOLLOW_GROUND = 0.8;
-    private static final double DEAD_YAW = 1;
-    private static final double DEAD_PITCH = 2;
-    private static final double CLOSE_NEAR = 0.5;
-    private static final double CLOSE_FAR = 0.85;
-    private static final double NEAR = 3;
-    private static final double FAR = 30;
-    private static final double TURN_PER_SECOND = 720;
-    private static final double FLICK_PER_SECOND = 1800;
+    /** How far into their hitbox the aim spot sits, so you end up on it, not on its edge. */
+    private static final double INSET = 0.1;
     private static final long LOG_GAP_MS = 1000;
     private static final String[] KEY_MODES = {"Hold", "Toggle", "Always"};
-    static final Num STRENGTH = Num.percent(50);
+    private static final String[] AIM_AT = {"Auto", "Head", "Center", "Feet"};
+    /** How far away a player may be, to their hitbox (your reach). */
+    static final Num RANGE = Num.tenths(4.5, 6, " blocks");
+    /** How fast it turns your view. */
+    static final Num SPEED = Num.value(600, 3600, 10, "\u00B0/s");
+    /** How wide around your crosshair it looks for players. */
+    static final Num FOV = Num.value(120, 360, 10, "\u00B0");
+    /** How much of your own mouse movement it holds back while aiming. */
+    static final Num IGNORE_MOUSE = Num.percent(0);
+    private static volatile int aimAt;
+    private static volatile boolean lineOfSight = true;
+    private static volatile boolean whileBlocking;
+    private static volatile boolean ignoreInvisible = true;
+    private static volatile boolean ignoreCreative;
     private static volatile boolean enabled;
     private static volatile boolean ground;
     private static volatile int keyCode = GLFW.GLFW_KEY_LEFT_ALT;
@@ -55,12 +63,11 @@ final class AimHelper {
     private static volatile int keyMode;
     private static volatile boolean toggledOn;
     // Render thread only.
-    private static Player locked;
-    private static long lastNearMs;
     private static long lastStepMs;
-    private static float lastWantYaw;
-    private static float lastWantPitch;
+    private static String lastTarget = "";
     private static boolean haveLast;
+    private static float lastYaw;
+    private static float lastPitch;
     private static String lastNoteKind = "";
     private static long lastNoteMs;
 
@@ -75,57 +82,75 @@ final class AimHelper {
         long elapsed = lastStepMs == 0 ? 0 : now - lastStepMs;
         lastStepMs = now;
         LocalPlayer player = minecraft.player;
-        if (!enabled || player == null || Mc.screen(minecraft) != null || !SpearSettings.combatAllowed(minecraft)
-                || !keyActive(minecraft)) {
-            unlock();
+        if (!enabled || player == null || minecraft.level == null || Mc.screen(minecraft) != null
+                || !SpearSettings.combatAllowed(minecraft) || !keyActive(minecraft)) {
+            lastTarget = "";
+            haveLast = false;
             return;
-        }
-        if (locked != null && (!locked.isAlive() || locked.isRemoved() || !inRange(player, locked)
-                || now - lastNearMs > FORGET_MS)) {
-            unlock();
         }
         if (player.onGround() && !ground) {
             haveLast = false;
             note("waiting: on the ground (turn on Ground too to help here)", now);
             return;
         }
-        if (locked == null) {
-            locked = pick(minecraft, player);
-            if (locked == null) {
-                note("waiting: no player within " + (int) LOCK_ANGLE + " degrees of your crosshair and "
-                        + (int) RANGE + " blocks", now);
-                return;
-            }
-            lastNearMs = now;
-            note("locked on " + locked.getName().getString(), now);
+        if (!whileBlocking && busyHands(player)) {
+            haveLast = false;
+            note("waiting: you are eating, drinking or blocking", now);
+            return;
         }
         float partial = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(true);
         Vec3 eye = player.getEyePosition(partial);
-        float[] want = angles(eye, predicted(minecraft, locked, partial));
-        // How far they slid across your view since the last step.
-        double slideYaw = haveLast ? Mth.wrapDegrees(want[0] - lastWantYaw) : 0;
-        double slidePitch = haveLast ? want[1] - lastWantPitch : 0;
-        lastWantYaw = want[0];
-        lastWantPitch = want[1];
-        haveLast = true;
+        Vec3 look = player.getViewVector(partial);
+        double lead = Math.min(MAX_LEAD_TICKS, 1 + ShieldBreak.pingMs(minecraft) / 50.0);
+        double range = Math.max(MIN_RANGE, RANGE.tenths());
+        double fovHalf = Math.max(MIN_FOV, FOV.low()) / 2.0;
+        Player best = null;
+        Vec3 bestSpot = null;
+        double bestOff = fovHalf >= 180 ? Double.MAX_VALUE : fovHalf;
+        for (Player other : minecraft.level.players()) {
+            if (other == player || !other.isAlive() || other.isSpectator() || VelocityHud.isFriend(other)
+                    || ignoreInvisible && other.isInvisible() || ignoreCreative && other.isCreative()) {
+                continue;
+            }
+            AABB box = ahead(other, partial, lead);
+            if (reach(eye, box) > range) {
+                continue;
+            }
+            Vec3 spot = spot(eye, look, box, other);
+            double off = angleOff(player, eye, spot);
+            if (off < bestOff && (!lineOfSight || canSee(minecraft, player, eye, spot))) {
+                bestOff = off;
+                best = other;
+                bestSpot = spot;
+            }
+        }
+        if (best == null) {
+            lastTarget = "";
+            haveLast = false;
+            note("waiting: no player you can see within " + range + " blocks and " + (int) fovHalf
+                    + " degrees of your crosshair", now);
+            return;
+        }
+        holdBackMouse(player);
+        String name = best.getName().getString();
+        if (!name.equals(lastTarget)) {
+            lastTarget = name;
+            note("aiming at " + name, now);
+        }
+        float[] want = angles(eye, bestSpot);
         double yawOff = Mth.wrapDegrees(want[0] - player.getYRot());
         double pitchOff = want[1] - player.getXRot();
         double off = Math.hypot(yawOff, pitchOff);
-        if (off > PULL_ANGLE) {
-            note("not helping: " + locked.getName().getString() + " is " + (int) off + " degrees away (helps within "
-                    + (int) PULL_ANGLE + ")", now);
-            return; // out of the zone: no pull, and never a flick back
+        if (off < 0.05) {
+            remember(player);
+            return; // already on them
         }
-        lastNearMs = now;
         double seconds = Math.min(0.1, elapsed / 1000.0);
-        double strength = STRENGTH.low() / 50.0;
-        double follow = Math.min(1.2, (player.onGround() ? FOLLOW_GROUND : FOLLOW_AIR) * strength);
-        double stepYaw = slideYaw * follow + correct(yawOff, DEAD_YAW, strength, seconds);
-        double stepPitch = slidePitch * follow + correct(pitchOff, DEAD_PITCH, strength, seconds);
-        double limit = (off > FAR ? FLICK_PER_SECOND : TURN_PER_SECOND) * strength * seconds;
-        stepYaw = Mth.clamp(stepYaw, -limit, limit);
-        stepPitch = Mth.clamp(stepPitch, -limit, limit);
-        float pitch = Mth.clamp(player.getXRot() + (float) stepPitch, -90F, 90F);
+        double step = SPEED.low() * seconds;
+        // One straight turn: yaw and pitch arrive together, never past the spot.
+        double share = Math.min(1, step / off);
+        double stepYaw = yawOff * share;
+        float pitch = Mth.clamp(player.getXRot() + (float) (pitchOff * share), -90F, 90F);
         float turnedPitch = pitch - player.getXRot();
         // Moved like a mouse turn (Entity.turn): the previous rotation goes along, so the
         // step shows at once instead of being blended in over the next frames.
@@ -133,25 +158,93 @@ final class AimHelper {
         player.setXRot(pitch);
         player.yRotO += (float) stepYaw;
         player.xRotO += turnedPitch;
+        remember(player);
         note(String.format(java.util.Locale.ROOT, "helping onto %s: %.0f degrees off, turned %.1f",
-                locked.getName().getString(), off, Math.hypot(stepYaw, turnedPitch)), now);
+                name, off, Math.hypot(stepYaw, turnedPitch)), now);
     }
 
     /**
-     * The part of a gap you would close this step: nothing inside the dead zone, then a share
-     * of what is beyond it that grows from CLOSE_NEAR at NEAR degrees to CLOSE_FAR at FAR.
+     * Ignore mouse: undoes that share of how far your mouse turned you since the last step,
+     * so the aim is harder to pull off the target.
      */
-    private static double correct(double gap, double dead, double strength, double seconds) {
-        double beyond = Math.abs(gap) - dead;
-        if (beyond <= 0) {
-            return 0;
+    private static void holdBackMouse(LocalPlayer player) {
+        double share = IGNORE_MOUSE.low() / 100.0;
+        if (!haveLast || share <= 0) {
+            return;
         }
-        double share = Mth.lerp(Mth.clamp((Math.abs(gap) - NEAR) / (FAR - NEAR), 0, 1), CLOSE_NEAR, CLOSE_FAR);
-        // The shares are per tenth of a second; compounded over this step's time, so many
-        // short frames close the same amount as a few long ones.
-        double perTenth = Math.min(0.95, share * strength);
-        double part = 1 - Math.pow(1 - perTenth, seconds * 10);
-        return Math.signum(gap) * beyond * part;
+        float undoYaw = (float) (Mth.wrapDegrees(player.getYRot() - lastYaw) * share);
+        float pitch = Mth.clamp(player.getXRot() - (float) ((player.getXRot() - lastPitch) * share), -90F, 90F);
+        float undoPitch = player.getXRot() - pitch;
+        player.setYRot(player.getYRot() - undoYaw);
+        player.setXRot(pitch);
+        player.yRotO -= undoYaw;
+        player.xRotO -= undoPitch;
+    }
+
+    private static void remember(LocalPlayer player) {
+        lastYaw = player.getYRot();
+        lastPitch = player.getXRot();
+        haveLast = true;
+    }
+
+    /** Eating, drinking or holding a shield up: aiming then would only get in the way. */
+    private static boolean busyHands(LocalPlayer player) {
+        if (player.isBlocking()) {
+            return true;
+        }
+        if (!player.isUsingItem()) {
+            return false;
+        }
+        ItemStack using = player.getUseItem();
+        return using.has(DataComponents.FOOD) || using.has(DataComponents.CONSUMABLE);
+    }
+
+    /** Their hitbox, drawn smoothly between ticks and moved ahead by their speed for the lead. */
+    private static AABB ahead(Player target, float partial, double lead) {
+        Vec3 drawn = target.getPosition(partial).subtract(target.position());
+        Vec3 speed = new Vec3(target.getX() - target.xo, target.getY() - target.yo, target.getZ() - target.zo);
+        return target.getBoundingBox().move(drawn.add(speed.scale(lead)));
+    }
+
+    /** Distance from your eyes to the nearest point of the box: your reach to it. */
+    private static double reach(Vec3 eye, AABB box) {
+        return eye.distanceTo(clampInto(eye, box, 0));
+    }
+
+    /**
+     * Where on them to aim, by Aim at. Auto: the spot on the box nearest your crosshair (the
+     * point along your view as far away as the box's middle, pulled inside the box, a little
+     * in from its edges). Head: their eyes. Center: their middle. Feet: just above the bottom.
+     */
+    private static Vec3 spot(Vec3 eye, Vec3 look, AABB box, Player target) {
+        Vec3 middle = box.getCenter();
+        return switch (aimAt) {
+            case 1 -> new Vec3(middle.x, Math.min(box.maxY - INSET, box.minY + target.getEyeHeight()), middle.z);
+            case 2 -> middle;
+            case 3 -> new Vec3(middle.x, box.minY + INSET, middle.z);
+            default -> clampInto(eye.add(look.scale(eye.distanceTo(middle))), box, INSET);
+        };
+    }
+
+    private static Vec3 clampInto(Vec3 point, AABB box, double inset) {
+        double ix = Math.min(inset, box.getXsize() / 2);
+        double iy = Math.min(inset, box.getYsize() / 2);
+        double iz = Math.min(inset, box.getZsize() / 2);
+        return new Vec3(
+                Mth.clamp(point.x, box.minX + ix, box.maxX - ix),
+                Mth.clamp(point.y, box.minY + iy, box.maxY - iy),
+                Mth.clamp(point.z, box.minZ + iz, box.maxZ - iz));
+    }
+
+    private static double angleOff(LocalPlayer player, Vec3 eye, Vec3 point) {
+        float[] want = angles(eye, point);
+        return Math.hypot(Mth.wrapDegrees(want[0] - player.getYRot()), want[1] - player.getXRot());
+    }
+
+    /** No block between your eyes and the spot. */
+    private static boolean canSee(Minecraft minecraft, LocalPlayer player, Vec3 eye, Vec3 point) {
+        return minecraft.level.clip(new ClipContext(eye, point, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE,
+                player)).getType() == HitResult.Type.MISS;
     }
 
     /** Whether the key lets the helper work right now. */
@@ -174,11 +267,6 @@ final class AimHelper {
         MinecraftSpearDash.setStatus(toggledOn ? "Aim Helper on" : "Aim Helper off");
     }
 
-    private static void unlock() {
-        locked = null;
-        haveLast = false;
-    }
-
     /** Logs what the helper is doing, when that changes or once a second while it keeps on. */
     private static void note(String what, long now) {
         String kind = what.contains(":") ? what.substring(0, what.indexOf(':')) : what;
@@ -187,53 +275,6 @@ final class AimHelper {
             lastNoteKind = kind;
             lastNoteMs = now;
         }
-    }
-
-    /** The player to lock: the one under your crosshair, else the closest to it within LOCK_ANGLE. */
-    private static Player pick(Minecraft minecraft, LocalPlayer player) {
-        if (minecraft.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof Player under
-                && lockable(player, under)) {
-            return under;
-        }
-        Vec3 eye = player.getEyePosition();
-        Player best = null;
-        double bestOff = LOCK_ANGLE;
-        for (Player other : minecraft.level.players()) {
-            if (!lockable(player, other)) {
-                continue;
-            }
-            float[] want = angles(eye, aimPoint(eye, other.getBoundingBox()));
-            double off = Math.hypot(Mth.wrapDegrees(want[0] - player.getYRot()), want[1] - player.getXRot());
-            if (off < bestOff) {
-                bestOff = off;
-                best = other;
-            }
-        }
-        return best;
-    }
-
-    private static boolean lockable(LocalPlayer player, Player other) {
-        return other != player && other.isAlive() && !other.isSpectator() && inRange(player, other)
-                && !VelocityHud.isFriend(other);
-    }
-
-    private static boolean inRange(LocalPlayer player, Player other) {
-        return player.distanceTo(other) <= RANGE;
-    }
-
-    /**
-     * The middle of their hitbox where it will be when your hit lands: drawn smoothly between
-     * ticks, then moved ahead by their speed for one tick plus your ping.
-     */
-    private static Vec3 predicted(Minecraft minecraft, Player target, float partial) {
-        Vec3 speed = new Vec3(target.getX() - target.xo, target.getY() - target.yo, target.getZ() - target.zo);
-        double lead = Math.min(MAX_LEAD_TICKS, 1 + ShieldBreak.pingMs(minecraft) / 50.0);
-        return target.getPosition(partial).add(0, target.getBbHeight() / 2, 0).add(speed.scale(lead));
-    }
-
-    /** Their middle (where your recordings were measured to): the center of their hitbox. */
-    private static Vec3 aimPoint(Vec3 eye, AABB box) {
-        return box.getCenter();
     }
 
     /** The view {yaw, pitch} from the eye to the point. */
@@ -326,6 +367,71 @@ final class AimHelper {
         enabled = false;
         toggledOn = false;
         awaitingBinding = false;
-        unlock();
+        lastTarget = "";
+        haveLast = false;
+    }
+
+    static String aimAtLabel() {
+        return AIM_AT[aimAt];
+    }
+
+    static int aimAt() {
+        return aimAt;
+    }
+
+    static void setAimAt(int value) {
+        aimAt = Math.floorMod(value, AIM_AT.length);
+    }
+
+    static void cycleAimAt() {
+        setAimAt(aimAt + 1);
+    }
+
+    static boolean isLineOfSight() {
+        return lineOfSight;
+    }
+
+    static void setLineOfSight(boolean on) {
+        lineOfSight = on;
+    }
+
+    static void toggleLineOfSight() {
+        lineOfSight = !lineOfSight;
+    }
+
+    static boolean isWhileBlocking() {
+        return whileBlocking;
+    }
+
+    static void setWhileBlocking(boolean on) {
+        whileBlocking = on;
+    }
+
+    static void toggleWhileBlocking() {
+        whileBlocking = !whileBlocking;
+    }
+
+    static boolean isIgnoreInvisible() {
+        return ignoreInvisible;
+    }
+
+    static void setIgnoreInvisible(boolean on) {
+        ignoreInvisible = on;
+    }
+
+    static void toggleIgnoreInvisible() {
+        ignoreInvisible = !ignoreInvisible;
+    }
+
+    static boolean isIgnoreCreative() {
+        return ignoreCreative;
+    }
+
+    static void setIgnoreCreative(boolean on) {
+        ignoreCreative = on;
+    }
+
+    static void toggleIgnoreCreative() {
+        ignoreCreative = !ignoreCreative;
     }
 }

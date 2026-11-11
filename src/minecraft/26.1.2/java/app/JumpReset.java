@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 
 /**
- * Jump Reset: when you get hit while on the ground, jumps on that game tick. Jumping as the
+ * Jump Reset: when something hits you while you are on the ground, jumps on that game tick. Jumping as the
  * knockback arrives, while sprinting toward the attacker, adds the sprint-jump push toward
  * them and cuts part of the knockback. A hit shows as your hurt timer jumping back up; jump
  * is held for one game tick, then put back to how you are holding it.
@@ -34,7 +34,9 @@ final class JumpReset {
             }
             return;
         }
-        boolean newHit = player.hurtTime > lastHurtTime;
+        // A hit from something (a player or mob, or their arrow), not a fall or fire.
+        boolean newHit = player.hurtTime > lastHurtTime && player.getLastDamageSource() != null
+                && player.getLastDamageSource().getEntity() != null;
         lastHurtTime = player.hurtTime;
         if (!enabled || !newHit || !player.onGround() || player.isInWater() || Mc.screen(minecraft) != null
                 || (onlyWhileSprinting && !player.isSprinting()) || !SpearSettings.combatAllowed(minecraft)) {

@@ -38,7 +38,8 @@ final class WindClutch {
             thrown = false;
             return;
         }
-        if (!enabled || thrown || Mc.screen(minecraft) != null || !SpearSettings.combatAllowed(minecraft)) {
+        if (!enabled || thrown || Mc.screen(minecraft) != null || !SpearSettings.combatAllowed(minecraft)
+                || MlgWater.isActive()) { // MLG Water already has this landing
             return;
         }
         VelocityHud.Landing landing = VelocityHud.predictLanding(minecraft, player);

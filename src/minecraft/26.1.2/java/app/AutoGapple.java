@@ -39,6 +39,10 @@ final class AutoGapple {
             continueEating(minecraft, player, now);
             return;
         }
+        // Never in the middle of another module's swap: it would cancel it.
+        if (ShieldBreak.isRunning() || PearlCatch.isRunning() || MinecraftSpearDash.isDashing()) {
+            return;
+        }
         if (!enabled || Mc.screen(minecraft) != null || now < readyAtMs || player.isUsingItem()
                 || player.getHealth() > HEALTH[healthIndex] || player.hasEffect(MobEffects.REGENERATION)
                 || !SpearSettings.combatAllowed(minecraft)) {

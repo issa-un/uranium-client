@@ -50,6 +50,11 @@ final class WTap {
         }
     }
 
+    /** True while a tap holds forward up (Auto Walk waits). */
+    static boolean isTapping() {
+        return tapUntilMs >= 0;
+    }
+
     static boolean watchesAnyAttack() {
         return enabled && anyAttack;
     }

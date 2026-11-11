@@ -2,6 +2,7 @@ package app;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
@@ -150,7 +151,7 @@ final class PearlCatch {
         throwEyeY = eye.y;
         running = true;
         MinecraftSpearDash.setStatus("Catch in " + bestWait + " ticks, "
-                + String.format("%.1f", best.point().y - eye.y) + " up");
+                + String.format(Locale.ROOT, "%.1f", best.point().y - eye.y) + " up");
         return true;
     }
 
@@ -216,7 +217,7 @@ final class PearlCatch {
         watchUntilTick = player.tickCount + plan.meetAge() - age + ShieldBreak.pingMs(minecraft) / 50 + RESULT_TICKS;
         SpearLog.log("pearl catch: charge at pearl age " + age + " (planned " + fireAge + "), meets in "
                 + plan.flightTicks() + " ticks at age " + plan.meetAge() + ", "
-                + String.format("%.1f", plan.point().y - throwEyeY) + " blocks up");
+                + String.format(Locale.ROOT, "%.1f", plan.point().y - throwEyeY) + " blocks up");
     }
 
     /** Whether you arrived at the meet point (the pearl hit the charge) before time ran out. */
@@ -233,7 +234,7 @@ final class PearlCatch {
         } else if (player.tickCount > watchUntilTick) {
             MinecraftSpearDash.setStatus("Missed the catch (" + caught + "/" + tries + ")");
             SpearLog.log("pearl catch result: no teleport, ended "
-                    + String.format("%.1f", player.position().distanceTo(watchPoint)) + " blocks from the meet point");
+                    + String.format(Locale.ROOT, "%.1f", player.position().distanceTo(watchPoint)) + " blocks from the meet point");
             watchPoint = null;
         }
     }

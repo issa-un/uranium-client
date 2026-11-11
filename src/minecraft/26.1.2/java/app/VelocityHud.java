@@ -106,16 +106,18 @@ final class VelocityHud {
     private static final int[] OFFSET_Y = new int[ELEMENTS];
 
     // Keys that switch a HUD module on or off without the menu; -1 means none.
-    static final int TOGGLES = 3;
+    static final int TOGGLES = 4;
     static final int TOGGLE_SPEED = 0;
     static final int TOGGLE_RADAR = 1;
     static final int TOGGLE_LANDING = 2;
-    private static final String[] TOGGLE_NAMES = {"speed", "radar", "landing"};
-    private static final int[] TOGGLE_KEY = {-1, -1, -1};
-    private static final int[] TOGGLE_MOUSE = {-1, -1, -1};
+    static final int TOGGLE_HIDE = 3;
+    private static final String[] TOGGLE_NAMES = {"speed", "radar", "landing", "hide"};
+    private static final int[] TOGGLE_KEY = {-1, -1, -1, -1};
+    private static final int[] TOGGLE_MOUSE = {-1, -1, -1, -1};
     private static volatile int awaitingToggle = -1;
     private static volatile boolean available = true;
     private static volatile boolean active;
+    private static boolean drawFailed;
     // Lower-case names; read on the render thread, changed from the menu on the same thread.
     private static final Set<String> FRIENDS = new TreeSet<>();
 
@@ -147,11 +149,27 @@ final class VelocityHud {
         if (!active) {
             return;
         }
+        try {
+            draw(graphics, deltaTracker);
+        } catch (RuntimeException error) {
+            // A HUD bug must never take the frame, or the game, down; logged once.
+            if (!drawFailed) {
+                drawFailed = true;
+                SpearLog.log("hud: drawing failed, skipped this frame: " + error);
+            }
+        }
+    }
+
+    private static void draw(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
         Minecraft minecraft = Minecraft.getInstance();
         // Every frame, so a Flat lunge glide is smooth; the input loop covers it when the
         // HUD is not drawn (F1).
         MinecraftSpearDash.updateDash(minecraft, false);
         AimHelper.update(minecraft);
+        WorldSlash.update(minecraft);
+        if (HudFilter.isHideAll()) {
+            return; // Hide UI: nothing of Uranium's on screen, only the game's own HUD
+        }
         LocalPlayer player = minecraft.player;
         if (player == null || Mc.hudHidden(minecraft)) {
             return;
@@ -167,7 +185,8 @@ final class VelocityHud {
         if (landingOn) {
             drawLanding(graphics, minecraft, player);
         }
-        Adapt.draw(graphics, minecraft);
+        SlamMeter.draw(graphics, minecraft);
+        PunishAlerts.draw(graphics, minecraft);
         if (CombatStats.isOn()) {
             int[] panel = position(COMBAT_STATS, graphics.guiWidth(), graphics.guiHeight());
             CombatStats.draw(graphics, minecraft, player, panel[0], panel[1]);
@@ -621,6 +640,7 @@ final class VelocityHud {
         switch (module) {
             case TOGGLE_SPEED -> toggleSpeedHud();
             case TOGGLE_RADAR -> toggleRadar();
+            case TOGGLE_HIDE -> HudFilter.toggleHideAll();
             default -> toggleLanding();
         }
     }

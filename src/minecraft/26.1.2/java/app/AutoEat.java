@@ -45,6 +45,10 @@ final class AutoEat {
             continueEating(minecraft, player, now);
             return;
         }
+        // Never in the middle of another module's swap: it would cancel it.
+        if (ShieldBreak.isRunning() || PearlCatch.isRunning() || MinecraftSpearDash.isDashing()) {
+            return;
+        }
         if (!enabled || Mc.screen(minecraft) != null || now < readyAtMs || player.isUsingItem() || AutoGapple.isEating()
                 || player.getFoodData().getFoodLevel() > HUNGER[hungerIndex] || player.getAbilities().instabuild) {
             return;

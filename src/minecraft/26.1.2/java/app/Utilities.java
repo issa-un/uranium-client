@@ -74,7 +74,9 @@ final class Utilities {
 
     private static void updateWalk(Minecraft minecraft) {
         boolean want = autoWalk && minecraft.player != null && Mc.screen(minecraft) == null;
-        if (want) {
+        if (want && WTap.isTapping()) {
+            walking = true; // W-Tap has forward up for its tap; it puts it back after
+        } else if (want) {
             minecraft.options.keyUp.setDown(true);
             walking = true;
         } else if (walking) {

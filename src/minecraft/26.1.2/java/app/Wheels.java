@@ -50,6 +50,7 @@ final class Wheels {
     private static volatile boolean active;
     // The drawing failed to link on this game version; set once, for the session.
     private static volatile boolean broken;
+    private static boolean drawFailed;
 
     /** One player's wheel: how many hits it has turned for, and when the last one came. */
     private static final class Wheel {
@@ -83,7 +84,7 @@ final class Wheels {
             HIDDEN_HELMETS.clear();
             return;
         }
-        if (!enabled || broken) {
+        if (!enabled || broken || HudFilter.isHideAll()) {
             restoreHelmets(minecraft); // no hidden helmets without wheels to replace them
             return;
         }
@@ -112,7 +113,8 @@ final class Wheels {
 
     private static void trackFight(LocalPlayer player, long now) {
         Player attacker = player.getLastHurtByMob() instanceof Player p ? p : null;
-        Player hit = player.getLastHurtMob() instanceof Player p ? p : null;
+        Player hit = player.getLastHurtMob() instanceof Player p
+                && player.tickCount - player.getLastHurtMobTimestamp() < FIGHT_MS / 50 ? p : null;
         Player latest = attacker != null ? attacker : hit;
         if (latest != null && latest != player && latest.isAlive()) {
             fighting = latest;
@@ -137,11 +139,20 @@ final class Wheels {
      * switch off for the session instead of taking the frame, or the game, down with them.
      */
     private static void render(LevelRenderContext context) {
+        if (HudFilter.isHideAll()) {
+            return;
+        }
         if (!active || !enabled || broken) {
             return;
         }
         try {
             draw(context);
+        } catch (RuntimeException error) {
+            // Skips this frame instead of crashing the game; logged once.
+            if (!drawFailed) {
+                drawFailed = true;
+                SpearLog.log("wheels: drawing failed, skipped this frame: " + error);
+            }
         } catch (LinkageError error) {
             broken = true;
             MinecraftSpearDash.setStatus("Wheels don't work on this version");

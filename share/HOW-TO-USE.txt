@@ -1,10 +1,10 @@
-LUMEN — how to use it
+URANIUM — how to use it
 =====================
 
 WHAT YOU NEED
 - Minecraft 26.1.2, 26.2 or 26.3, running with Fabric Loader and Fabric API.
   (One file works on all three. Older versions won't work.)
-- The official Minecraft Launcher. Lumen borrows its Java, so you don't
+- The official Minecraft Launcher. Uranium borrows its Java, so you don't
   need to install anything else.
 
 GETTING STARTED
@@ -19,7 +19,7 @@ IMPORTANT: inject only ONCE each time you start Minecraft. Injecting again
 without restarting the game loads a second copy, and the two will fight
 each other (double hits, lag). Restart Minecraft first, then inject.
 
-To turn everything off, click Unload in the menu or in the Lumen window.
+To turn everything off, click Unload in the menu or in the Uranium window.
 Your settings are saved automatically.
 
 
@@ -32,13 +32,34 @@ COMBAT
                   Reaches as far as the weapon in your hand (4.5 with a spear).
   Hit             Hits whatever you're looking at, but only when the hit will
                   actually count. One setting: Chance.
+  Slam Saver      A slam you click while they're still immune from the last
+                  hit would mostly be wasted. Slam Saver holds that click and
+                  sends it the moment their immunity ends.
+  Slam Follow-up  Slam, then sword: the moment their immunity from your slam
+                  ends, it pulls out your sword, hits, and goes back.
+  Slam Steer      While you fall into a slam, holds W A S D toward the player
+                  below you so you land on them, not past them. Your own keys
+                  always win.
+  World Slash     A quiet kill aura. Turns your view onto the player in
+                  front of you and hits when the hit counts, only once your
+                  crosshair is really on them, after a human reaction delay.
+                  Settings: Range, Rotation speed, FOV, Reaction, Chance,
+                  Mobs too.
   Aim Helper      Hold Left Alt (change it, or pick Toggle / Always, in the
-                  menu) and your aim glides onto one player, with any item in
-                  your hand. Built from recordings of your own aim: it trails
-                  them, leaves the last few degrees to you and never snaps.
+                  menu) and your aim turns onto the player nearest your
+                  crosshair, with any item in your hand. Settings: Range,
+                  Rotation speed, FOV, Aim at (Auto / Head / Center / Feet),
+                  Ignore mouse input, Check line of sight, Aim while
+                  blocking, Ignore invisible, Ignore creative.
                   Off on the ground unless Ground too is on.
   Mace Swap       Pulls out your mace for slams from 4.5+ blocks. Smaller
                   drops and normal hits keep your weapon, which hits harder.
+  Elytra Mace     Dive at a player with an elytra on and look at them: your
+                  elytra comes off by itself as you close in (a chestplate
+                  from your hotbar goes on), so your mace hit counts as a
+                  slam. Only when you're above them and diving. Glide again
+                  puts the elytra back on after the hit if you're still in
+                  the air.
   Auto Totem      Keeps a totem in your offhand.
   Auto Weapon     Switches to your best weapon when you hit holding a tool.
   Reach Swap      Uses your spear's longer reach to hit players further away.
@@ -77,10 +98,13 @@ HUD
   Radar           Shows nearby players around your crosshair.
   Landing         Shows the fall damage you'll take before you land.
   Combat stats    Your ping, fall, shield timing and shield break results.
-  Adapt           Learns how the player you're fighting plays and shows tips
-                  in the middle of your screen ("They always slam. Shield
-                  every drop." / "RUN. Book it."). Optional wheel that turns
-                  every time a player hits you.
+  Slam Meter      While you fall with a mace, shows under your crosshair how
+                  hard the slam will hit them after their armor, and KILL or
+                  POP when it's enough.
+  Punish Alerts   Shows when a nearby player is open: EATING (with the time
+                  left), POPPED a totem, or SHIELD DOWN after your Shield
+                  Break (with the seconds until they can block). Optional
+                  ping sound.
   Wheels          A wheel floating above players' heads that turns one notch
                   every time they get hit. Choose who gets one and whether it
                   replaces their helmet. Only you can see it.

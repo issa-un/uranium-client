@@ -39,7 +39,7 @@ final class Modules {
     static List<Category> categories(Minecraft minecraft) {
         boolean hud = VelocityHud.isAvailable();
         return List.of(
-                new Category("Combat", "C", 0xFFFF453A, List.of(
+                new Category("Combat", "C", 0xFF39FF14, List.of(
                         new Module("Spear Dash", "Swap, lunge and swap back on a key",
                                 MinecraftSpearDash::isEnabled, MinecraftSpearDash::toggleEnabled, List.of(
                                 new Bind("Key", () -> bindLabel(MinecraftSpearDash.keyCode(), MinecraftSpearDash.mouseButton()),
@@ -70,15 +70,44 @@ final class Modules {
                         new Module("Hit", "Hits what you look at whenever the hit will count",
                                 Hit::isEnabled, Hit::toggleEnabled, List.of(
                                 new Slider("Chance", Hit.CHANCE))),
+                        new Module("Slam Saver", "Holds a slam clicked into their hit immunity and sends it the tick it counts",
+                                SlamSaver::isEnabled, SlamSaver::toggleEnabled, List.of()),
+                        new Module("Slam Follow-up", "After your slam, a sword hit the moment their immunity ends",
+                                SlamFollowUp::isEnabled, SlamFollowUp::toggleEnabled, List.of()),
+                        new Module("Slam Steer", "Air-strafes you onto the player below while you fall into a slam",
+                                SlamSteer::isEnabled, SlamSteer::toggleEnabled, List.of()),
+                        new Module("World Slash", "Quiet kill aura: turns onto who's in front of you and hits when it counts",
+                                WorldSlash::isEnabled, WorldSlash::toggleEnabled, List.of(
+                                new Slider("Range", WorldSlash.RANGE),
+                                new Slider("Rotation speed", WorldSlash.SPEED),
+                                new Slider("FOV", WorldSlash.FOV),
+                                new Slider("Reaction", WorldSlash.REACTION),
+                                new Slider("Chance", WorldSlash.CHANCE),
+                                new Toggle("Mobs too", WorldSlash::isMobs, WorldSlash::toggleMobs))),
                         new Module("Aim Helper", "Hold Alt in the air to glide your aim onto one player",
                                 AimHelper::isEnabled, AimHelper::toggleEnabled, List.of(
                                 new Bind("Key", () -> bindLabel(AimHelper.keyCode(), AimHelper.mouseButton()),
                                         AimHelper::isAwaitingBinding, AimHelper::awaitBinding),
                                 new Choice("Key mode", AimHelper::keyModeLabel, AimHelper::cycleKeyMode),
-                                new Slider("Strength", AimHelper.STRENGTH),
+                                new Slider("Range", AimHelper.RANGE),
+                                new Slider("Rotation speed", AimHelper.SPEED),
+                                new Slider("FOV", AimHelper.FOV),
+                                new Choice("Aim at", AimHelper::aimAtLabel, AimHelper::cycleAimAt),
+                                new Slider("Ignore mouse input", AimHelper.IGNORE_MOUSE),
+                                new Toggle("Check line of sight", AimHelper::isLineOfSight,
+                                        AimHelper::toggleLineOfSight),
+                                new Toggle("Aim while blocking", AimHelper::isWhileBlocking,
+                                        AimHelper::toggleWhileBlocking),
+                                new Toggle("Ignore invisible", AimHelper::isIgnoreInvisible,
+                                        AimHelper::toggleIgnoreInvisible),
+                                new Toggle("Ignore creative", AimHelper::isIgnoreCreative,
+                                        AimHelper::toggleIgnoreCreative),
                                 new Toggle("Ground too", AimHelper::isGround, AimHelper::toggleGround))),
                         new Module("Mace Swap", "Slams worth 3+ hearts go out with a mace",
                                 MaceSwap::isEnabled, MaceSwap::toggleEnabled, List.of()),
+                        new Module("Elytra Mace", "Diving at who you look at, your elytra comes off so the hit slams",
+                                ElytraMace::isEnabled, ElytraMace::toggleEnabled, List.of(
+                                new Toggle("Glide again", ElytraMace::isGlideAgain, ElytraMace::toggleGlideAgain))),
                         new Module("Auto Totem", "Keeps a totem in your offhand",
                                 AutoTotem::isEnabled, AutoTotem::toggleEnabled, List.of(
                                 new Choice("Mode", AutoTotem::modeLabel, AutoTotem::cycleMode),
@@ -116,7 +145,7 @@ final class Modules {
                                 new Slider("Swap delay", ChestSwap.SWAP_DELAY),
                                 new Slider("Use delay", ChestSwap.USE_DELAY),
                                 new Slider("Swap back", ChestSwap.SWAP_BACK))))),
-                new Category("UHC", "U", 0xFFFF9F0A, List.of(
+                new Category("UHC", "U", 0xFFC6FF00, List.of(
                         new Module("Web Escape", "Water out of cobwebs and fire",
                                 WebEscape::isEnabled, WebEscape::toggleEnabled, List.of(
                                 new Toggle("On fire too", WebEscape::isOnFire, WebEscape::toggleOnFire),
@@ -147,7 +176,7 @@ final class Modules {
                         new Module("Auto Gapple", "A golden apple when health is low",
                                 AutoGapple::isEnabled, AutoGapple::toggleEnabled, List.of(
                                 new Choice("Health", AutoGapple::healthLabel, AutoGapple::cycleHealth))))),
-                new Category("Utility", "T", 0xFF30B0C7, List.of(
+                new Category("Utility", "T", 0xFF00E676, List.of(
                         new Module("Auto Tool", "The fastest tool while you mine",
                                 AutoTool::isEnabled, AutoTool::toggleEnabled, List.of(
                                 new Toggle("Swap back", AutoTool::isSwapBack, AutoTool::toggleSwapBack))),
@@ -176,7 +205,7 @@ final class Modules {
                                 Utilities::isHitSound, Utilities::toggleHitSound, List.of()),
                         new Module("Middle Click Friend", "Middle-click a player to friend them",
                                 Utilities::isMiddleClickFriend, Utilities::toggleMiddleClickFriend, List.of()))),
-                new Category("HUD", "H", 0xFF0A84FF, List.of(
+                new Category("HUD", "H", 0xFF64DD17, List.of(
                         new Module("Speed HUD", hud ? "Speed ring above the hotbar" : "Needs Fabric API's HUD module",
                                 VelocityHud::isSpeedHudOn, VelocityHud::toggleSpeedHud, List.of(
                                 new Choice("Position", VelocityHud::positionLabel, VelocityHud::togglePosition),
@@ -189,16 +218,20 @@ final class Modules {
                                         VelocityHud::toggleIgnoreTeam),
                                 new Action(() -> friendLabel(minecraft), () -> toggleFriend(minecraft)),
                                 toggleKey(VelocityHud.TOGGLE_RADAR))),
-                        new Module("Adapt", hud ? "Learns how your opponent fights and coaches you live"
-                                : "Needs Fabric API's HUD module",
-                                Adapt::isEnabled, Adapt::toggleEnabled, List.of(
-                                new Toggle("Wheel", Adapt::isWheel, Adapt::toggleWheel))),
+                        new Module("Slam Meter", "While you fall with a mace: how hard the slam hits them, KILL or POP",
+                                SlamMeter::isEnabled, SlamMeter::toggleEnabled, List.of()),
+                        new Module("Punish Alerts", "Shows when they eat, pop a totem or lose their shield",
+                                PunishAlerts::isEnabled, PunishAlerts::toggleEnabled, List.of(
+                                new Toggle("Sound", PunishAlerts::isSound, PunishAlerts::toggleSound))),
                         new Module("Wheels", hud ? "A wheel above players' heads that turns when they get hit"
                                 : "Needs Fabric API's rendering module",
                                 Wheels::isEnabled, Wheels::toggleEnabled, List.of(
                                 new Choice("Spin", Wheels::spinLabel, Wheels::cycleSpin),
                                 new Choice("Who", Wheels::whoLabel, Wheels::cycleWho),
                                 new Choice("Helmet", Wheels::helmetLabel, Wheels::cycleHelmet))),
+                        new Module("Hide UI", "Only the game's own HUD on screen: hides Uranium and every other mod",
+                                HudFilter::isHideAll, HudFilter::toggleHideAll, List.of(
+                                toggleKey(VelocityHud.TOGGLE_HIDE))),
                         new Module("Hide other clients", "Hides other clients' HUD lists",
                                 HudFilter::isEnabled, HudFilter::toggleEnabled, hideRows()),
                         new Module("Landing", hud ? "Fall damage before you land" : "Needs Fabric API's HUD module",

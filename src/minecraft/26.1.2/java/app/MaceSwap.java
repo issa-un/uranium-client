@@ -27,7 +27,7 @@ final class MaceSwap {
     private static final long REPEAT_MS = 50;
     // The fall a slam needs before the mace beats your weapon: through full netherite, a
     // 3.8-block slam did 3.4 health and a 5.4-block one 9.6 (logged in fights).
-    private static final double WORTH_FALL = 4.5;
+    static final double WORTH_FALL = 4.5;
     private static volatile boolean enabled;
     // The last swap, on the network thread only.
     private static int lastTargetId = -1;
@@ -72,6 +72,12 @@ final class MaceSwap {
         if (player.fallDistance < WORTH_FALL || player.isFallFlying()) {
             if (holdingMace) {
                 MaceLog.attack(minecraft, target, heldSlot, heldSlot, "held, fall under " + WORTH_FALL);
+            } else if (player.fallDistance > SMASH_FALL_DISTANCE || player.isFallFlying()) {
+                SpearLog.log(String.format(java.util.Locale.ROOT,
+                        "mace swap: not swapped on %s, %s", target.getName().getString(), player.isFallFlying()
+                                ? "gliding (no slam while flying an elytra)"
+                                : "fell only " + String.format(java.util.Locale.ROOT, "%.1f", player.fallDistance)
+                                        + " blocks, a swap needs " + WORTH_FALL));
             }
             return -1;
         }

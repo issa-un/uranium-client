@@ -147,19 +147,19 @@ tasks.jar {
 
 // A zip to hand to someone else: the jar, its own Java 25 in runtime/ (so it works on a PC
 // where Start.bat finds no other Java), Start.bat and a short how-to.
-// `gradle shareZip` writes build/distributions/Lumen.zip. The Java is the Minecraft
+// `gradle shareZip` writes build/distributions/Uranium.zip. The Java is the Minecraft
 // Launcher's own (Microsoft Build of OpenJDK, GPLv2 with the Classpath Exception, its
-// licenses in runtime/legal); override with -PlumenRuntime=PATH to a Java 25 folder.
-val lumenRuntime = file(providers.gradleProperty("lumenRuntime")
+// licenses in runtime/legal); override with -PuraniumRuntime=PATH to a Java 25 folder.
+val uraniumRuntime = file(providers.gradleProperty("uraniumRuntime")
     .orElse(providers.gradleProperty("org.gradle.java.installations.paths")).get())
 tasks.register<Zip>("shareZip") {
-    archiveFileName.set("Lumen.zip")
+    archiveFileName.set("Uranium.zip")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
-    into("Lumen") {
-        from(tasks.jar) { rename { "lumen.jar" } }
+    into("Uranium") {
+        from(tasks.jar) { rename { "uranium.jar" } }
         from("share")
-        if (lumenRuntime.resolve("bin/javaw.exe").isFile) {
-            from(lumenRuntime) { into("runtime") }
+        if (uraniumRuntime.resolve("bin/javaw.exe").isFile) {
+            from(uraniumRuntime) { into("runtime") }
         }
     }
 }

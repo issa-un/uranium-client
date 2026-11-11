@@ -69,6 +69,7 @@ final class ShieldBreak {
     // holding something that reaches further (a spear's 4.5) stretches the break to match,
     // past your crosshair. The server takes melee hits up to a weapon's reach + 3 blocks.
     private static final double BASE_REACH = 3;
+    private static final double RANGE_MARGIN = 0.6;
     // The stretch the press started with; your hand holds the axe and mace during it.
     private static double pressExtra;
     // This press is a ranged one: no delays (render thread only).
@@ -208,8 +209,16 @@ final class ShieldBreak {
             return true; // extra clicks during a break would hit with whatever is selected
         }
         if (blockingTarget(minecraft) == null) {
-            if (minecraft.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof LivingEntity living) {
-                explainSkip(minecraft, living, "click");
+            LivingEntity looked = minecraft.hitResult instanceof EntityHitResult hit
+                    && hit.getEntity() instanceof LivingEntity living ? living : null;
+            double extra = extraReach(minecraft.player);
+            if (looked == null && extra > 0) {
+                looked = farTarget(minecraft.player, extra);
+            }
+            if (looked != null) {
+                explainSkip(minecraft, looked, spear ? "spear click" : "click");
+            } else if (spear) {
+                explainSpearMiss(minecraft, extra);
             }
             return false;
         }
@@ -237,6 +246,43 @@ final class ShieldBreak {
             SpearLog.log("shield break: held-back hit on " + entity.getName().getString()
                     + " went out as a plain hit (" + MinecraftSpearDash.status() + ")");
             AttackHook.resend(minecraft, attack);
+        }
+    }
+
+    /**
+     * A spear click that found nobody along your view: if someone with a shield up was close
+     * to your crosshair, logs how far off you were, so a missed spear stun slam shows in
+     * the log.
+     */
+    private static void explainSpearMiss(Minecraft minecraft, double extra) {
+        LocalPlayer player = minecraft.player;
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0F);
+        LivingEntity near = null;
+        double nearAngle = 30;
+        for (net.minecraft.world.entity.player.Player other : minecraft.level.players()) {
+            if (other == player || !other.isUsingItem()
+                    || other.getUseItem().get(DataComponents.BLOCKS_ATTACKS) == null) {
+                continue;
+            }
+            Vec3 to = other.getBoundingBox().getCenter().subtract(eye);
+            double angle = Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, look.dot(to.normalize())))));
+            if (angle < nearAngle && to.length() < BASE_REACH + extra + 4) {
+                nearAngle = angle;
+                near = other;
+            }
+        }
+        if (near == null) {
+            return;
+        }
+        String reason = String.format(java.util.Locale.ROOT,
+                "your crosshair was %.0f degrees off them at %.1f blocks (spear reaches %.1f)",
+                nearAngle, player.distanceTo(near), BASE_REACH + extra);
+        long now = nowMs();
+        if (!reason.equals(lastSkipReason) || now - lastSkipMs > 1000) {
+            lastSkipReason = reason;
+            lastSkipMs = now;
+            SpearLog.log("shield break: skipped " + near.getName().getString() + " via spear click: " + reason);
         }
     }
 
@@ -711,6 +757,15 @@ final class ShieldBreak {
                 + (shieldUpForHit(minecraft, entity) ? " (hit ok)" : "");
     }
 
+    /** Who the last Shield Break hit, and when (for Punish Alerts). */
+    static LivingEntity lastBroken() {
+        return lastBroken;
+    }
+
+    static long lastBrokenMs() {
+        return lastBrokenMs;
+    }
+
     static int breaksTried() {
         return breaksTried;
     }
@@ -745,8 +800,14 @@ final class ShieldBreak {
         return weapon != null && weapon.disableBlockingForSeconds() > 0;
     }
 
+    /**
+     * Whether the weapon in the slot reaches them, with the held weapon's extra reach plus
+     * RANGE_MARGIN: the server accepts hits up to 3 blocks past your reach (for lag), and
+     * your clicks at the edge of a spear's 4.5 were being skipped by a few tenths.
+     */
     private static boolean inRange(LocalPlayer player, int slot, LivingEntity entity, double extra) {
-        return player.isWithinAttackRange(player.getInventory().getItem(slot), entity.getBoundingBox(), extra);
+        return player.isWithinAttackRange(player.getInventory().getItem(slot), entity.getBoundingBox(),
+                extra + RANGE_MARGIN);
     }
 
     /** How much further than the axe's 3 blocks the weapon in your hand reaches (a spear: 1.5). */

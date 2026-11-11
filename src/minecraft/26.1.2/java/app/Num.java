@@ -16,6 +16,8 @@ final class Num {
     private final int defaultHigh;
     // A pitch: the slider runs over raw tenths of a degree, PITCH_ZERO being level.
     private final boolean pitch;
+    // Stored as tenths, shown as the value (45 shows as 4.5).
+    private final boolean inTenths;
     private volatile int low;
     private volatile int high;
 
@@ -24,6 +26,12 @@ final class Num {
     }
 
     private Num(boolean range, int limit, int step, String unit, int low, int high, boolean pitch) {
+        this(range, limit, step, unit, low, high, pitch, false);
+    }
+
+    private Num(boolean range, int limit, int step, String unit, int low, int high, boolean pitch,
+            boolean inTenths) {
+        this.inTenths = inTenths;
         this.pitch = pitch;
         this.range = range;
         this.limit = limit;
@@ -76,6 +84,22 @@ final class Num {
     /** A chance from 0 to 100%. */
     static Num percent(int value) {
         return new Num(false, 100, 1, "%", value, value);
+    }
+
+    /** A single value from 0 to limit in steps, shown with its unit (like 600°/s). */
+    static Num value(int value, int limit, int step, String unit) {
+        return new Num(false, limit, step, unit, value, value);
+    }
+
+    /** A single value in tenths, from 0 to max (like 4.5 blocks); read it with tenths(). */
+    static Num tenths(double value, double max, String unit) {
+        int raw = (int) Math.round(value * 10);
+        return new Num(false, (int) Math.round(max * 10), 1, unit, raw, raw, false, true);
+    }
+
+    /** For a tenths value: the value itself. */
+    double tenths() {
+        return low / 10.0;
     }
 
     int low() {
@@ -132,7 +156,7 @@ final class Num {
             return low == high ? degrees(low) : degrees(low) + " to " + degrees(high);
         }
         if (!range) {
-            return low + unit;
+            return (inTenths ? String.valueOf(low / 10.0) : String.valueOf(low)) + unit;
         }
         if (high == 0) {
             return "Off";

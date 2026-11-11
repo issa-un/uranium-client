@@ -28,6 +28,8 @@ final class MinecraftSpearDash {
     static final Num JAB_DELAY = Num.ms(0, 0, 300);
     static final Num RETURN = Num.ms(0, 0, 500);
     static final Num CHAIN_GAP = Num.ms(0, 0, 500);
+    // How long the spear shows in your hand after the jab when Return is 0.
+    private static final Num SHOW = Num.ms(120, 120, 500);
     private static final SwapAction SWAP = new SwapAction();
     private static volatile String status = "Ready";
     // A short warning shown on screen even with the menu closed.
@@ -81,15 +83,17 @@ final class MinecraftSpearDash {
         if (!enabled || minecraft.player == null || minecraft.gameMode == null) {
             return false;
         }
+        // A press while a dash is still on its way (or the spear still shows) is used up, so
+        // a binding that is also a hotbar key cannot switch you to that slot mid-dash.
+        if (dashesLeft > 0 || SWAP.busy()) {
+            return true;
+        }
         if (onlyFromWindCharge && !minecraft.player.getMainHandItem().is(Items.WIND_CHARGE)) {
             return false;
         }
         if (!SpearSettings.combatAllowed(minecraft)) {
             status = "Off on this server";
             return false;
-        }
-        if (dashesLeft > 0) {
-            return false; // this press's dashes are still on their way
         }
         if (minecraft.hitResult == null || minecraft.hitResult.getType() != HitResult.Type.MISS) {
             status = "Aim at open air";
@@ -248,7 +252,10 @@ final class MinecraftSpearDash {
         }
         dashLevelled = levelled;
         jabResult = false;
-        SWAP.start(minecraft, spearSlot, true, SWAP_DELAY, JAB_DELAY, RETURN,
+        // A new dash is ours: the last dash's switch-back watch must not take it for the server.
+        MinecraftInputController.stopGuard();
+        // With Return at 0 the spear still stays in hand for a moment, so the swap shows.
+        SWAP.start(minecraft, spearSlot, true, SWAP_DELAY, JAB_DELAY, RETURN.isZero() ? SHOW : RETURN,
                 MinecraftSpearDash::jab, MinecraftSpearDash::dashDone);
         // Without delays the dash is already over; dashDone cancelled the press if it failed.
         return SWAP.busy() || jabResult;
@@ -386,6 +393,11 @@ final class MinecraftSpearDash {
             carriedIndex = field;
         }
         return field;
+    }
+
+    /** True while a dash press is on its way (levelling, swapping, or waiting to chain). */
+    static boolean isDashing() {
+        return dashesLeft > 0 || SWAP.busy();
     }
 
     static boolean hasLungeSpearInHotbar(Minecraft minecraft) {

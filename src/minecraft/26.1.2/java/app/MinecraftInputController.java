@@ -31,6 +31,8 @@ final class MinecraftInputController {
     // When the loop last ran a tick; the injector's Status reads it to tell a live loop.
     private static volatile long lastTickMs;
     private static ScheduledExecutorService scheduler;
+    // Modules whose update has thrown, each logged once.
+    private static final java.util.Set<String> FAILED = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     private static volatile boolean numpad8WasDown;
     private static volatile boolean dashKeyWasDown;
@@ -166,12 +168,18 @@ final class MinecraftInputController {
         MaceLog.reset();
         Hit.reset();
         AimHelper.reset();
-        Adapt.reset();
+        SlamMeter.reset();
+        SlamSteer.reset(minecraft);
+        SlamSaver.reset();
+        SlamFollowUp.reset();
+        PunishAlerts.reset();
+        WorldSlash.reset();
         Wheels.reset(minecraft);
         WebEscape.reset();
         WebTrap.reset();
         MlgWater.reset();
         WindClutch.reset();
+        ElytraMace.reset();
         View.reset();
         AutoTotem.reset(minecraft);
         AutoWeapon.reset(minecraft);
@@ -229,11 +237,11 @@ final class MinecraftInputController {
             }
             // The attack key can be rebound to the keyboard.
             boolean consumed = minecraft.options.keyAttack.matches(event) && attackClick(minecraft);
-            if (MinecraftSpearDash.mouseButton() < 0 && key == MinecraftSpearDash.keyCode()
+            if (MinecraftSpearDash.mouseButton() < 0 && key >= 0 && key == MinecraftSpearDash.keyCode()
                     && dash(minecraft)) {
                 consumed = true;
             }
-            if (!consumed && ShieldBreak.mouseButton() < 0 && key == ShieldBreak.keyCode()
+            if (!consumed && ShieldBreak.mouseButton() < 0 && key >= 0 && key == ShieldBreak.keyCode()
                     && shieldBreak(minecraft)) {
                 consumed = true;
             }
@@ -337,7 +345,8 @@ final class MinecraftInputController {
     private static boolean attackClick(Minecraft minecraft) {
         WTap.onAttackClick(minecraft);
         Utilities.onAttackClick(minecraft);
-        return ShieldBreak.handleAttackClick(minecraft) || ReachSwap.handleAttackClick(minecraft) || AutoWeapon.onAttackClick(minecraft);
+        return ShieldBreak.handleAttackClick(minecraft) || SlamSaver.onAttackClick(minecraft)
+                || ReachSwap.handleAttackClick(minecraft) || AutoWeapon.onAttackClick(minecraft);
     }
 
     private static boolean shieldBreak(Minecraft minecraft) {
@@ -432,33 +441,38 @@ final class MinecraftInputController {
     private static void tick(Minecraft minecraft) {
         lastTickMs = System.nanoTime() / 1_000_000;
         SpearSettings.followServer(minecraft);
-        AttackHook.update(minecraft);
-        MinecraftSpearDash.updateReadySound(minecraft);
-        enforceSwitchBack(minecraft);
-        MinecraftSpearDash.updateDash(minecraft, true);
-        ShieldBreak.update(minecraft);
-        AutoWeapon.update(minecraft);
-        ReachSwap.update(minecraft);
-        QuickThrow.update(minecraft);
-        PearlCatch.update(minecraft);
-        MaceLog.update(minecraft);
-        Hit.update(minecraft);
-        AimHelper.update(minecraft);
-        Adapt.update(minecraft);
-        Wheels.update(minecraft);
-        ChestSwap.update(minecraft);
-        WebEscape.update(minecraft);
-        MlgWater.update(minecraft);
-        WindClutch.update(minecraft);
-        WTap.update(minecraft);
-        JumpReset.update(minecraft);
-        AutoTotem.update(minecraft);
-        AutoGapple.update(minecraft);
-        AutoTool.update(minecraft);
-        Utilities.update(minecraft);
-        AutoEat.update(minecraft);
-        AutoFish.update(minecraft);
-        View.update(minecraft);
+        guard("AttackHook", () -> AttackHook.update(minecraft));
+        guard("Spear Dash ready sound", () -> MinecraftSpearDash.updateReadySound(minecraft));
+        guard("switch-back watch", () -> enforceSwitchBack(minecraft));
+        guard("Spear Dash", () -> MinecraftSpearDash.updateDash(minecraft, true));
+        guard("ShieldBreak", () -> ShieldBreak.update(minecraft));
+        guard("AutoWeapon", () -> AutoWeapon.update(minecraft));
+        guard("ReachSwap", () -> ReachSwap.update(minecraft));
+        guard("QuickThrow", () -> QuickThrow.update(minecraft));
+        guard("PearlCatch", () -> PearlCatch.update(minecraft));
+        guard("MaceLog", () -> MaceLog.update(minecraft));
+        guard("Hit", () -> Hit.update(minecraft));
+        guard("AimHelper", () -> AimHelper.update(minecraft));
+        guard("WorldSlash", () -> WorldSlash.update(minecraft));
+        guard("SlamSteer", () -> SlamSteer.update(minecraft));
+        guard("SlamSaver", () -> SlamSaver.update(minecraft));
+        guard("SlamFollowUp", () -> SlamFollowUp.update(minecraft));
+        guard("PunishAlerts", () -> PunishAlerts.update(minecraft));
+        guard("Wheels", () -> Wheels.update(minecraft));
+        guard("ChestSwap", () -> ChestSwap.update(minecraft));
+        guard("WebEscape", () -> WebEscape.update(minecraft));
+        guard("MlgWater", () -> MlgWater.update(minecraft));
+        guard("WindClutch", () -> WindClutch.update(minecraft));
+        guard("ElytraMace", () -> ElytraMace.update(minecraft));
+        guard("WTap", () -> WTap.update(minecraft));
+        guard("JumpReset", () -> JumpReset.update(minecraft));
+        guard("AutoTotem", () -> AutoTotem.update(minecraft));
+        guard("AutoGapple", () -> AutoGapple.update(minecraft));
+        guard("AutoTool", () -> AutoTool.update(minecraft));
+        guard("Utilities", () -> Utilities.update(minecraft));
+        guard("AutoEat", () -> AutoEat.update(minecraft));
+        guard("AutoFish", () -> AutoFish.update(minecraft));
+        guard("View", () -> View.update(minecraft));
 
         // Polling is only the fallback for when the event listeners could not be installed.
         if (!keyEventsInstalled) {
@@ -500,6 +514,20 @@ final class MinecraftInputController {
     }
 
     /**
+     * Runs one module's part of the tick. A module that throws only loses its own turn: the
+     * rest of the tick still runs (Auto Totem included), and the error is logged once.
+     */
+    private static void guard(String module, Runnable update) {
+        try {
+            update.run();
+        } catch (RuntimeException error) {
+            if (FAILED.add(module)) {
+                SpearLog.log("error in " + module + ", the other modules keep running: " + error);
+            }
+        }
+    }
+
+    /**
      * Watches the hotbar for a moment after switching back. If it lands on the spear
      * again without you picking a slot (the server can force the slot), it switches
      * back and tells the server explicitly.
@@ -521,6 +549,9 @@ final class MinecraftInputController {
     private static void enforceSwitchBack(Minecraft minecraft) {
         if (guardSpearSlot < 0) {
             return;
+        }
+        if (MinecraftSpearDash.isDashing()) {
+            return; // the spear in your hand is a dash of ours, still showing
         }
         if (minecraft.player == null || userPickedSlot
                 || System.nanoTime() / 1_000_000 > guardUntil) {

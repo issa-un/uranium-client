@@ -65,6 +65,10 @@ public final class MinecraftProcessService {
                     .orElse(executable);
         } catch (RuntimeException ignored) {
         }
-        return new JavaProcess(descriptor.id(), executable);
+        String name = descriptor.displayName().toLowerCase(java.util.Locale.ROOT);
+        boolean minecraft = !name.contains("injector") && !descriptor.id().equals(String.valueOf(ProcessHandle.current().pid()))
+                && (name.contains("net.minecraft") || name.contains("knot") || name.contains("fabric")
+                        || name.contains("minecraft"));
+        return new JavaProcess(descriptor.id(), executable, minecraft);
     }
 }

@@ -1,11 +1,11 @@
 @echo off
-rem Starts Lumen. It ships with its own Java 25 (the runtime folder next to this file);
+rem Starts Uranium. It ships with its own Java 25 (the runtime folder next to this file);
 rem without it, it looks for the Java 25 that comes with the Minecraft Launcher.
 setlocal
-set "JAR=%~dp0lumen.jar"
+set "JAR=%~dp0uranium.jar"
 set "RT=runtime\java-runtime-epsilon\windows-x64\java-runtime-epsilon\bin\javaw.exe"
 
-rem The Java that comes with Lumen
+rem The Java that comes with Uranium
 set "JAVAW=%~dp0runtime\bin\javaw.exe"
 if exist "%JAVAW%" goto run
 rem Microsoft Store / Xbox app launcher
@@ -28,7 +28,7 @@ set "JAVAW=%JAVA_HOME%\bin\javaw.exe"
 if defined JAVA_HOME if exist "%JAVAW%" goto run
 
 echo Could not find Java 25.
-echo The "runtime" folder that comes with Lumen is missing. Unzip the whole Lumen.zip
+echo The "runtime" folder that comes with Uranium is missing. Unzip the whole Uranium.zip
 echo (not just Start.bat) and run Start.bat from the unzipped folder.
 pause
 exit /b 1

@@ -46,21 +46,21 @@ public final class ClickGuiScreen extends Screen {
     private static final int SLIDER_VALUE = 52;
     private static final int LABEL_INSET = 10;
     // macOS dark appearance.
-    private static final int WINDOW = 0xF21C1C1E;
-    private static final int SIDEBAR_COLOR = 0xF2262629;
-    private static final int GROUP = 0xFF2C2C2E;
-    private static final int GROUP_INSET = 0xFF232325;
-    private static final int SEPARATOR = 0x22FFFFFF;
-    private static final int HOVER = 0x12FFFFFF;
-    private static final int TEXT = 0xFFF5F5F7;
-    private static final int TEXT_SOFT = 0xFFD1D1D6;
-    private static final int SECONDARY = 0xFF98989F;
-    private static final int TERTIARY = 0xFF636366;
-    private static final int ACCENT = 0xFF0A84FF;
-    private static final int GREEN = 0xFF30D158;
-    private static final int SWITCH_OFF = 0xFF3A3A3C;
-    private static final int PILL = 0xFF3A3A3C;
-    private static final int PILL_HOVER = 0xFF48484A;
+    private static final int WINDOW = 0xF20B110C;
+    private static final int SIDEBAR_COLOR = 0xF2101A12;
+    private static final int GROUP = 0xFF16221A;
+    private static final int GROUP_INSET = 0xFF111B14;
+    private static final int SEPARATOR = 0x2239FF14;
+    private static final int HOVER = 0x1439FF14;
+    private static final int TEXT = 0xFFEAFFE4;
+    private static final int TEXT_SOFT = 0xFFC2E3BA;
+    private static final int SECONDARY = 0xFF86A882;
+    private static final int TERTIARY = 0xFF5A7356;
+    private static final int ACCENT = 0xFF39FF14;
+    private static final int GREEN = 0xFF7CFC00;
+    private static final int SWITCH_OFF = 0xFF243326;
+    private static final int PILL = 0xFF1E2D21;
+    private static final int PILL_HOVER = 0xFF2A3F2D;
     private static final int RED = 0xFFFF453A;
     private static final int[] LIGHTS = {0xFFFF5F57, 0xFFFEBC2E, 0xFF28C840};
     private static final String VERSION = ClickGuiScreen.class.getPackageName().replace("app.", "");
@@ -198,7 +198,7 @@ public final class ClickGuiScreen extends Screen {
         drawSidebar(graphics, minecraft, categories, x, y, h, mouseX, mouseY);
         drawContent(graphics, minecraft, categories, x + SIDEBAR, y, w - SIDEBAR, h, mouseX, mouseY, frameSeconds);
         // A hairline around the window, as macOS draws it.
-        outline(graphics, x, y, x + w, y + h, 0x30FFFFFF);
+        outline(graphics, x, y, x + w, y + h, 0x6039FF14);
 
         graphics.pose().popMatrix();
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
@@ -225,16 +225,16 @@ public final class ClickGuiScreen extends Screen {
         int sx1 = x + 10;
         int sx2 = x + SIDEBAR - 10;
         int sy = y + TOP_BAR;
-        roundRect(graphics, sx1, sy, sx2, sy + 16, 6, searchFocused ? 0xFF3A3A3C : 0xFF323235, true, true);
+        roundRect(graphics, sx1, sy, sx2, sy + 16, 6, searchFocused ? 0xFF1E2D21 : 0xFF17241A, true, true);
         if (searchFocused) {
-            outline(graphics, sx1, sy, sx2, sy + 16, 0x900A84FF);
+            outline(graphics, sx1, sy, sx2, sy + 16, 0x9039FF14);
         }
         String shown = query.isEmpty() ? "Search" : query;
         boolean caret = searchFocused && (System.nanoTime() / 500_000_000L) % 2 == 0;
         shown = font.plainSubstrByWidth(shown, sx2 - sx1 - 22, true);
         // A magnifying glass: a ring and a short handle.
         roundRect(graphics, sx1 + 5, sy + 4, sx1 + 11, sy + 10, 3, SECONDARY, true, true);
-        roundRect(graphics, sx1 + 6, sy + 5, sx1 + 10, sy + 9, 2, searchFocused ? 0xFF3A3A3C : 0xFF323235, true, true);
+        roundRect(graphics, sx1 + 6, sy + 5, sx1 + 10, sy + 9, 2, searchFocused ? 0xFF1E2D21 : 0xFF17241A, true, true);
         graphics.fill(sx1 + 10, sy + 10, sx1 + 11, sy + 11, SECONDARY);
         graphics.fill(sx1 + 11, sy + 11, sx1 + 12, sy + 12, SECONDARY);
         graphics.text(font, shown + (caret ? "|" : ""), sx1 + 15, sy + 4, query.isEmpty() ? TERTIARY : TEXT, false);
@@ -245,7 +245,7 @@ public final class ClickGuiScreen extends Screen {
 
         // Categories.
         int cy = sy + 26;
-        graphics.text(font, "Uranium", x + 12, cy - 6, TERTIARY, false);
+        graphics.text(font, Component.literal("☢ URANIUM").withStyle(ChatFormatting.BOLD), x + 12, cy - 6, ACCENT, false);
         cy += 6;
         for (int i = 0; i < categories.size(); i++) {
             Modules.Category entry = categories.get(i);
@@ -256,8 +256,8 @@ public final class ClickGuiScreen extends Screen {
                         current ? ACCENT : HOVER, true, true);
             }
             roundRect(graphics, x + 12, cy + 4, x + 24, cy + 16, 3, entry.color(), true, true);
-            graphics.centeredText(font, entry.icon(), x + 18, cy + 6, 0xFFFFFFFF);
-            graphics.text(font, entry.name(), x + 30, cy + 6, current ? 0xFFFFFFFF : TEXT_SOFT, false);
+            graphics.centeredText(font, entry.icon(), x + 18, cy + 6, 0xFF0B110C);
+            graphics.text(font, entry.name(), x + 30, cy + 6, current ? 0xFF0B110C : TEXT_SOFT, false);
             int on = 0;
             for (Modules.Module module : entry.modules()) {
                 on += module.on().getAsBoolean() ? 1 : 0;
@@ -265,7 +265,7 @@ public final class ClickGuiScreen extends Screen {
             if (on > 0) {
                 String count = String.valueOf(on);
                 graphics.text(font, count, x + SIDEBAR - 12 - font.width(count), cy + 6,
-                        current ? 0xCCFFFFFF : TERTIARY, false);
+                        current ? 0xCC0B110C : TERTIARY, false);
             }
             int index = i;
             hit(x + 6, cy, x + SIDEBAR - 6, cy + CATEGORY_ROW, () -> {
@@ -329,7 +329,7 @@ public final class ClickGuiScreen extends Screen {
         graphics.pose().scale(1.5F, 1.5F);
         graphics.text(font, Component.literal(title).withStyle(ChatFormatting.BOLD), 0, 0, TEXT, false);
         graphics.pose().popMatrix();
-        graphics.text(font, "Uranium " + VERSION, x + w - MARGIN - font.width("Uranium " + VERSION), y + 13, TERTIARY, false);
+        graphics.text(font, "URANIUM " + VERSION, x + w - MARGIN - font.width("URANIUM " + VERSION), y + 13, SECONDARY, false);
         hit(x, y, x + w, y + TOP_BAR, this::startDrag, null);
 
         int viewTop = y + TOP_BAR + 4;
@@ -516,7 +516,7 @@ public final class ClickGuiScreen extends Screen {
                 hit(x1, top, x2, bottom, bind.await(), null);
             }
             case Modules.Action action -> {
-                graphics.text(font, action.label().get(), x1 + LABEL_INSET, textY, over ? 0xFF409CFF : ACCENT, false);
+                graphics.text(font, action.label().get(), x1 + LABEL_INSET, textY, over ? 0xFFB6FF8A : ACCENT, false);
                 hit(x1, top, x2, bottom, action.run(), null);
             }
             case Modules.Slider slider -> {

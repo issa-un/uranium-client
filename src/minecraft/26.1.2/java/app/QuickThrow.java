@@ -1,5 +1,6 @@
 package app;
 
+import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
@@ -44,7 +45,7 @@ final class QuickThrow {
         }
         int slot = BucketUse.findSlot(player, ITEMS[item]);
         if (slot < 0) {
-            MinecraftSpearDash.setStatus("No " + ITEM_NAMES[item].toLowerCase() + " in hotbar");
+            MinecraftSpearDash.setStatus("No " + ITEM_NAMES[item].toLowerCase(Locale.ROOT) + " in hotbar");
             return false;
         }
         if (player.getCooldowns().isOnCooldown(player.getInventory().getItem(slot))) {
@@ -66,7 +67,7 @@ final class QuickThrow {
             MinecraftInputController.stopGuard();
             if (thrown) {
                 MinecraftSpearDash.setStatus(name + " thrown");
-                SpearLog.log("quick throw: " + name.toLowerCase() + " from hotbar " + (used + 1));
+                SpearLog.log("quick throw: " + name.toLowerCase(Locale.ROOT) + " from hotbar " + (used + 1));
             }
         });
         return true;

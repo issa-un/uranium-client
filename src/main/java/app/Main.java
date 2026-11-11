@@ -9,7 +9,7 @@ public class Main {
             String command = args.length == 4 ? args[3] : "open";
             try {
                 System.out.println(MinecraftProcessService.attach(
-                        new JavaProcess(args[1], "java"), Path.of(args[2]), command));
+                        new JavaProcess(args[1], "java", true), Path.of(args[2]), command));
             } catch (Exception exception) {
                 throw new IllegalStateException("Could not run \"" + command + "\" in the game.", exception);
             }

@@ -28,9 +28,11 @@ import net.minecraft.world.phys.Vec3;
  * almost 0 every time. The input loop notes it each frame instead (strengthBeforeAttack).
  */
 final class MaceLog {
-    // A mace hit is a slam past this fall (MaceItem.canSmashAttack); the mace's reach.
+    // A mace hit is a slam past this fall (MaceItem.canSmashAttack); the mace's reach, and
+    // the extra the server allows on top of it (ServerGamePacketListenerImpl.handleAttack).
     private static final double SMASH_FALL = 1.5;
     private static final double REACH = 3.0;
+    private static final double SERVER_SLACK = 3.0;
     // How long past your ping to watch for the result.
     private static final long WATCH_MS = 400;
     // A totem leaves you on 1 health with Absorption II (8).
@@ -142,8 +144,8 @@ final class MaceLog {
         if (player.isFallFlying()) {
             problems.add("gliding: no slam while flying an elytra");
         }
-        if (reach > REACH) {
-            problems.add("out of reach (" + f2(reach) + " > " + REACH + ")");
+        if (reach > REACH + SERVER_SLACK) {
+            problems.add("out of reach (" + f2(reach) + " > " + (REACH + SERVER_SLACK) + ")");
         }
         if (!slam && cooldown < 0.9F) {
             problems.add("attack cooldown at " + Math.round(cooldown * 100) + "%: a plain hit's damage is cut");
@@ -161,6 +163,9 @@ final class MaceLog {
 
         PENDING_LINES.add(line.toString());
         NEW.add(new Shot(number, target, slam, nowMs() + ping + WATCH_MS));
+        if (slam) {
+            SlamFollowUp.onSlam(target);
+        }
     }
 
     /** Called from the input loop: notes your cooldown, writes new lines and finished results. */

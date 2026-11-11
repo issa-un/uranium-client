@@ -100,6 +100,11 @@ final class MlgWater {
         View.release(VIEW_HOLD_MS);
     }
 
+    /** True while its water is down and waiting for you to land in it. */
+    static boolean isActive() {
+        return waterAt != null;
+    }
+
     static boolean isEnabled() {
         return enabled;
     }
