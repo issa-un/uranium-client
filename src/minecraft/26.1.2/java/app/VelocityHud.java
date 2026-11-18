@@ -167,6 +167,12 @@ final class VelocityHud {
         MinecraftSpearDash.updateDash(minecraft, false);
         AimHelper.update(minecraft);
         WorldSlash.update(minecraft);
+        CartLowTier.frame(minecraft);
+        CartHighTier.frame(minecraft);
+        Hit.frame(minecraft);
+        KnockbackSteer.frame(minecraft);
+        CartBlock.frame(minecraft);
+        CartRefill.update(minecraft);
         if (HudFilter.isHideAll()) {
             return; // Hide UI: nothing of Uranium's on screen, only the game's own HUD
         }
@@ -186,7 +192,13 @@ final class VelocityHud {
             drawLanding(graphics, minecraft, player);
         }
         SlamMeter.draw(graphics, minecraft);
+        CartHighTier.drawUnloaded(graphics, minecraft);
         PunishAlerts.draw(graphics, minecraft);
+        PopChams.drawHud(graphics, minecraft);
+        NightShift.draw(graphics, minecraft);
+        ArmorSlots.draw(graphics, minecraft);
+        Debug.drawBadge(graphics, minecraft);
+        CartBlock.drawAlert(graphics, minecraft);
         if (CombatStats.isOn()) {
             int[] panel = position(COMBAT_STATS, graphics.guiWidth(), graphics.guiHeight());
             CombatStats.draw(graphics, minecraft, player, panel[0], panel[1]);

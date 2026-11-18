@@ -27,6 +27,7 @@ final class PunishAlerts {
     private static final float TOTEM_HEALTH = 1.5F;
     private static final float TOTEM_ABSORPTION = 7.5F;
     private static final int HOT = 0xFFFF5040;
+    private static long shownAtMs;
     private static final int GLOW = 0xFF39FF14;
     private static volatile boolean enabled;
     private static volatile boolean sound = true;
@@ -76,10 +77,24 @@ final class PunishAlerts {
         if (sound && !kind.equals(lastShown)) {
             minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING.value(), 1.6F, 0.6F));
         }
+        if (!kind.equals(lastShown)) {
+            shownAtMs = System.nanoTime() / 1_000_000;
+        }
         lastShown = kind;
         int width = minecraft.font.width(alert);
         int x = graphics.guiWidth() / 2 - width / 2;
         int y = graphics.guiHeight() / 2 - 26;
+        if (NightShift.isEnabled()) {
+            // 2AM: lowercase, its palette, and it fades in instead of popping up
+            String quiet = alert.toLowerCase(java.util.Locale.ROOT);
+            double in = Math.min(1, (System.nanoTime() / 1_000_000 - shownAtMs) / 200.0);
+            width = minecraft.font.width(quiet);
+            x = graphics.guiWidth() / 2 - width / 2;
+            graphics.fill(x - 3, y - 2, x + width + 3, y + 9, NightShift.color(0x000000, 0.35 * in));
+            graphics.text(minecraft.font, quiet, x, y,
+                    NightShift.color(quiet.contains("popped") ? NightShift.AMBER : NightShift.CREAM, in));
+            return;
+        }
         graphics.fill(x - 3, y - 2, x + width + 3, y + 9, 0x88000000);
         graphics.text(minecraft.font, alert, x, y, alert.contains("POPPED") ? HOT : GLOW);
     }

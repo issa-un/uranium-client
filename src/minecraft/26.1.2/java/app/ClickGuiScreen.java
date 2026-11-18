@@ -169,6 +169,12 @@ public final class ClickGuiScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        if (!HandProfile.isAsked()) {
+            // The very first time: the mouse test, so the aim moves like your hand.
+            HandProfile.markAsked();
+            Mc.setScreen(Minecraft.getInstance(), new MouseTestScreen());
+            return;
+        }
         long now = System.nanoTime();
         float frameSeconds = lastFrameNs == 0 ? 0 : Math.min(0.1F, (now - lastFrameNs) / 1.0E9F);
         lastFrameNs = now;
@@ -298,6 +304,9 @@ public final class ClickGuiScreen extends Screen {
             String needle = query.toLowerCase(Locale.ROOT);
             for (Modules.Category entry : categories) {
                 for (Modules.Module module : entry.modules()) {
+                    if (module.name().equals("Debug") && !needle.contains("deb")) {
+                        continue; // Debug only shows when you search for it
+                    }
                     if (module.name().toLowerCase(Locale.ROOT).contains(needle)
                             || module.about().toLowerCase(Locale.ROOT).contains(needle)) {
                         modules.add(module);
@@ -307,6 +316,9 @@ public final class ClickGuiScreen extends Screen {
             }
         } else {
             for (Modules.Module module : categories.get(category).modules()) {
+                if (module.name().equals("Debug")) {
+                    continue; // hidden until searched
+                }
                 modules.add(module);
                 owners.add(categories.get(category));
             }
@@ -760,6 +772,10 @@ public final class ClickGuiScreen extends Screen {
     public boolean charTyped(CharacterEvent event) {
         if (swallowNextChar) {
             swallowNextChar = false;
+            return true;
+        }
+        if (System.nanoTime() - openedNs < 200_000_000L) {
+            // The Numpad 8 that opened the menu also arrives as a typed 8; not a search.
             return true;
         }
         if (!event.isAllowedChatCharacter() || query.length() >= 24) {

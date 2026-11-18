@@ -17,7 +17,8 @@ import net.minecraft.world.phys.EntityHitResult;
  * enough for Mace Swap to bring the mace out (MaceSwap.WORTH_FALL); hitting sooner would
  * go out with what you hold and leave the target immune to the real slam. The hit goes out like your own click, so Mace Swap, Auto Weapon
  * and Shield Break's Any attack trigger still act on it. Chance is how many of those moments
- * it takes; a moment it skips waits SKIP_MS before the next try.
+ * it takes; a moment it skips waits SKIP_MS before the next try. Random delay holds each
+ * plain hit a new random time first, so no two hits come the same ms after they could.
  */
 final class Hit {
     // A plain hit waits for this much cooldown; a slam goes at once.
@@ -26,7 +27,29 @@ final class Hit {
     private static final long OWN_SLAM_IMMUNITY_MS = 500;
     private static final long SKIP_MS = 250;
     static final Num CHANCE = Num.percent(100);
+    // Random delay: each plain hit waits a fresh time in this range after it could go.
+    static final Num DELAY = Num.ms(80, 160, 400);
     private static volatile boolean enabled;
+    private static volatile boolean randomDelay;
+    // Auto: Hit only acts while you look like you're fighting (see fighting()).
+    private static volatile boolean auto;
+    // How long a sign of a fight keeps Auto on after it, so it doesn't flicker.
+    private static final long SIGN_MS = 2500;
+    // A player this close and this near your crosshair counts as "looking at someone".
+    private static final double LOOK_RANGE = 8;
+    private static final double LOOK_ANGLE = 25;
+    private static long lookedMs;
+    private static long jumpedMs;
+    private static long switchedMs;
+    private static long swungMs;
+    private static long hurtMs;
+    private static long chasedMs;
+    private static int lastSlot = -1;
+    private static boolean wasFighting;
+    // A plain hit waiting out its random delay (-1: none), on that target.
+    private static double pendingAtMs = -1;
+    private static double pendingDelayMs;
+    private static int pendingTargetId = -1;
     // Render thread only.
     private static long nextTryMs;
     private static int lastSlamTargetId = -1;
@@ -37,27 +60,48 @@ final class Hit {
     /** Called from the input loop: one hit if this is a moment where it counts. */
     static void update(Minecraft minecraft) {
         LocalPlayer player = minecraft.player;
+        if (enabled && auto && player != null && !fighting(minecraft, player)) {
+            pendingAtMs = -1;
+            return;
+        }
         if (!enabled || player == null || minecraft.gameMode == null || Mc.screen(minecraft) != null
                 || !SpearSettings.combatAllowed(minecraft) || player.isUsingItem()
-                || ShieldBreak.isRunning() || PearlCatch.isRunning()) {
+                || ShieldBreak.isRunning() || PearlCatch.isRunning()
+                || CartHighTier.isBusy() || CartLowTier.isBusy() || CartBlock.isBusy() || CartRefill.isBusy()) {
             return;
         }
         if (!(minecraft.hitResult instanceof EntityHitResult result)
                 || !(result.getEntity() instanceof LivingEntity target)
                 || !target.isAlive() || target instanceof ArmorStand
                 || target instanceof Player other && VelocityHud.isFriend(other)) {
+            pendingAtMs = -1;
             return;
         }
         long now = System.nanoTime() / 1_000_000;
-        if (now < nextTryMs) {
+        int ready = now < nextTryMs ? -1 : ready(minecraft, player, target, now);
+        if (pendingAtMs >= 0) {
+            if (ready != PLAIN || target.getId() != pendingTargetId) {
+                pendingAtMs = -1; // the hit stopped counting, or someone else is under the crosshair
+            } else if (System.nanoTime() / 1.0E6 >= pendingAtMs) {
+                pendingAtMs = -1;
+                strike(minecraft, player, target, false, now);
+                SpearLog.log(String.format(java.util.Locale.ROOT, "hit: went %.1f ms after it could", pendingDelayMs));
+            }
             return;
         }
-        int ready = ready(minecraft, player, target, now);
         if (ready < 0) {
             return;
         }
         if (!CHANCE.roll()) {
             nextTryMs = now + SKIP_MS;
+            return;
+        }
+        if (randomDelay && ready == PLAIN && !DELAY.isZero()) {
+            // A new wait every hit, to a tenth of a ms (100 ms, then 142.1, ...). Slams don't
+            // wait: you would land before the hit.
+            pendingDelayMs = Math.round((PlayStyle.delay(DELAY.pick()) + java.util.concurrent.ThreadLocalRandom.current().nextDouble()) * 10) / 10.0;
+            pendingAtMs = System.nanoTime() / 1.0E6 + pendingDelayMs;
+            pendingTargetId = target.getId();
             return;
         }
         strike(minecraft, player, target, ready == SLAM, now);
@@ -86,12 +130,117 @@ final class Hit {
 
     /** One hit, like your own click (so Mace Swap, Auto Weapon and Shield Break act on it). */
     static void strike(Minecraft minecraft, LocalPlayer player, LivingEntity target, boolean slam, long now) {
+        Debug.click(slam ? "slam hit" : "hit");
         minecraft.gameMode.attack(player, target);
         Mc.swingAttack(player, InteractionHand.MAIN_HAND);
         if (slam) {
             lastSlamTargetId = target.getId();
             lastSlamMs = now;
         }
+    }
+
+    /** Called every frame by the HUD: lets a waiting hit go on time instead of on the next loop. */
+    static void frame(Minecraft minecraft) {
+        if (pendingAtMs >= 0 && System.nanoTime() / 1.0E6 >= pendingAtMs) {
+            update(minecraft);
+        }
+    }
+
+    /**
+     * Auto: reads what you're doing. Holding a wind charge: off (you're about to throw it).
+     * Otherwise on while you look at a player (near your crosshair, close) and show at least
+     * one sign of a fight in the last few seconds: jumping, switching hotbar slots (scroll
+     * or keys), swinging yourself, getting hit by a player, or sprinting at them.
+     */
+    private static boolean fighting(Minecraft minecraft, LocalPlayer player) {
+        long now = System.nanoTime() / 1_000_000;
+        int slot = player.getInventory().getSelectedSlot();
+        if (lastSlot >= 0 && slot != lastSlot) {
+            switchedMs = now;
+        }
+        lastSlot = slot;
+        if (minecraft.options.keyJump.isDown() && !player.onGround() || player.getDeltaMovement().y > 0.2) {
+            jumpedMs = now;
+        }
+        if (WTap.physicallyDown(minecraft, minecraft.options.keyAttack)) {
+            swungMs = now;
+        }
+        if (player.hurtTime > 0 && player.getLastHurtByMob() instanceof Player) {
+            hurtMs = now;
+        }
+        Player near = nearestLooked(minecraft, player);
+        if (near != null) {
+            lookedMs = now;
+            net.minecraft.world.phys.Vec3 to = near.position().subtract(player.position());
+            net.minecraft.world.phys.Vec3 move = player.getDeltaMovement();
+            if (player.isSprinting() && move.x * to.x + move.z * to.z > 0) {
+                chasedMs = now;
+            }
+        }
+        boolean windCharge = player.getMainHandItem().is(Items.WIND_CHARGE);
+        java.util.List<String> signs = new java.util.ArrayList<>();
+        if (now - jumpedMs < SIGN_MS) signs.add("jumping");
+        if (now - switchedMs < SIGN_MS) signs.add("switching slots");
+        if (now - swungMs < SIGN_MS) signs.add("swinging");
+        if (now - hurtMs < SIGN_MS) signs.add("got hit");
+        if (now - chasedMs < SIGN_MS) signs.add("sprinting at them");
+        boolean fighting = !windCharge && now - lookedMs < SIGN_MS && !signs.isEmpty();
+        if (fighting != wasFighting) {
+            wasFighting = fighting;
+            SpearLog.log("hit auto: " + (fighting ? "on (" + String.join(", ", signs) + ")"
+                    : "off (" + (windCharge ? "wind charge in hand" : now - lookedMs >= SIGN_MS
+                    ? "nobody in front of you" : "no signs of a fight") + ")"));
+            MinecraftSpearDash.setStatus(fighting ? "Hit on" : "Hit off");
+        }
+        return fighting;
+    }
+
+    /** The closest other player near your crosshair and within LOOK_RANGE (friends don't count). */
+    private static Player nearestLooked(Minecraft minecraft, LocalPlayer player) {
+        net.minecraft.world.phys.Vec3 eye = player.getEyePosition();
+        net.minecraft.world.phys.Vec3 look = player.getViewVector(1.0F);
+        Player best = null;
+        double bestDistance = LOOK_RANGE;
+        for (Player other : minecraft.level.players()) {
+            if (other == player || !other.isAlive() || other.isSpectator() || VelocityHud.isFriend(other)) {
+                continue;
+            }
+            net.minecraft.world.phys.Vec3 to = other.getBoundingBox().getCenter().subtract(eye);
+            double distance = to.length();
+            if (distance >= bestDistance) {
+                continue;
+            }
+            double angle = Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, look.dot(to.normalize())))));
+            if (angle <= LOOK_ANGLE) {
+                best = other;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    static boolean isAuto() {
+        return auto;
+    }
+
+    static void setAuto(boolean on) {
+        auto = on;
+    }
+
+    static void toggleAuto() {
+        auto = !auto;
+    }
+
+    static boolean isRandomDelay() {
+        return randomDelay;
+    }
+
+    static void setRandomDelay(boolean on) {
+        randomDelay = on;
+    }
+
+    static void toggleRandomDelay() {
+        randomDelay = !randomDelay;
     }
 
     static boolean isEnabled() {
@@ -109,6 +258,9 @@ final class Hit {
     /** Turns the module off when this injection is unloaded. */
     static void reset() {
         enabled = false;
+        lastSlot = -1;
+        wasFighting = false;
         lastSlamTargetId = -1;
+        pendingAtMs = -1;
     }
 }

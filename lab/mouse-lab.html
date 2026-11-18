@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uranium Mouse Lab</title>
+<style>
+  :root {
+    --bg: #0b0f0c; --panel: #121915; --line: #24312a; --text: #d9e6dd; --dim: #7f9488;
+    --green: #39ff14; --amber: #e0a84e; --red: #ff5a4a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13px/1.4 ui-monospace, Consolas, monospace; overflow: hidden; }
+  #bar { position: fixed; top: 0; left: 0; right: 0; height: 44px; display: flex; gap: 10px;
+    align-items: center; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--line); z-index: 2; flex-wrap: wrap; }
+  #bar b { color: var(--green); margin-right: 6px; }
+  button { background: #18221c; color: var(--text); border: 1px solid var(--line); padding: 5px 10px;
+    border-radius: 6px; cursor: pointer; font: inherit; }
+  button.on { border-color: var(--green); color: var(--green); }
+  input { width: 56px; background: #0e1410; color: var(--text); border: 1px solid var(--line);
+    border-radius: 4px; padding: 3px 5px; font: inherit; }
+  #count { color: var(--dim); }
+  #view { position: fixed; left: 0; top: 44px; }
+  #side { position: fixed; right: 0; top: 44px; bottom: 0; width: 340px; background: var(--panel);
+    border-left: 1px solid var(--line); padding: 12px; overflow-y: auto; }
+  #side h3 { margin: 4px 0 8px; font-size: 13px; color: var(--green); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  td { padding: 3px 0; border-bottom: 1px solid #1a241e; }
+  td:last-child { text-align: right; color: #fff; }
+  td small { color: var(--dim); }
+  #graph { width: 316px; height: 150px; background: #0e1410; border: 1px solid var(--line); border-radius: 6px; }
+  #path { width: 316px; height: 200px; background: #0e1410; border: 1px solid var(--line); border-radius: 6px; margin-top: 8px; }
+  #hint { position: fixed; left: calc((100% - 340px) / 2); top: 50%; transform: translate(-50%, -50%);
+    background: rgba(18,25,21,.92); border: 1px solid var(--line); padding: 16px 20px; border-radius: 10px;
+    text-align: center; max-width: 440px; z-index: 1; }
+  #hint b { color: var(--green); }
+  .note { color: var(--dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <b>Mouse Lab</b>
+  <button data-mode="flick" class="on">Flicks</button>
+  <button data-mode="track">Tracking</button>
+  <label>MC sensitivity <input id="sens" type="number" value="100" min="1" max="200">%</label>
+  <label>FOV <input id="fov" type="number" value="70" min="30" max="110"></label>
+  <span id="count"></span>
+  <span style="flex:1"></span>
+  <button id="save">Save recording</button>
+  <button id="clear">Clear</button>
+</div>
+<canvas id="view"></canvas>
+<div id="side">
+  <h3>Last flick</h3>
+  <table id="last"></table>
+  <canvas id="graph" width="632" height="300"></canvas>
+  <div class="note">Speed over time. A clean hand flick is one bell; extra bumps are corrections.</div>
+  <canvas id="path" width="632" height="400"></canvas>
+  <div class="note">Path from where you looked (left) to the target (right dot). Up/down is how far it bent off the straight line.</div>
+  <h3 style="margin-top:14px">All flicks</h3>
+  <table id="all"></table>
+  <h3>Tracking</h3>
+  <table id="trackStats"></table>
+</div>
+<div id="hint">
+  <b>Click here to start.</b><br><br>
+  Your mouse turns the camera like in Minecraft (set your real sensitivity and FOV up top).<br><br>
+  <b>Flicks:</b> a player-sized target pops up somewhere. Flick onto it and click it, like a hit.
+  Off screen? Follow the arrow.<br>
+  <b>Tracking:</b> keep your crosshair on a strafing target for 8 seconds.<br><br>
+  Play like you do in a real fight. 30+ flicks gives good numbers.<br>
+  <span class="note">Esc stops. Save recording downloads everything as a file.</span>
+</div>
+<script>
+(() => {
+  const view = document.getElementById('view');
+  const ctx = view.getContext('2d');
+  const hint = document.getElementById('hint');
+  const SIDE = 340, TOP = 44;
+  const EYE = 1.62;
+
+  // ---------- state ----------
+  let mode = 'flick';
+  let yaw = 0, pitch = 0;          // camera, degrees (pitch + is down, like Minecraft)
+  let locked = false;
+  let target = null;               // {yaw, pitch, hw, hh, dist}
+  let trial = null;                // the trial being recorded
+  let waitUntil = 0;
+  const data = { version: 1, made: new Date().toISOString(), sensitivityPct: 100, fov: 70, flicks: [], tracks: [] };
+  window.uraniumRecording = data;
+
+  const $ = id => document.getElementById(id);
+  const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+  const wrap = d => { d = ((d + 180) % 360 + 360) % 360 - 180; return d; };
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  function degPerCount() {
+    const s = Math.max(0.005, (+$('sens').value || 100) / 200);
+    const f = s * 0.6 + 0.2;
+    return f * f * f * 8 * 0.15;   // Minecraft's mouse to degrees
+  }
+  function fov() { return Math.min(110, Math.max(30, +$('fov').value || 70)); }
+
+  function resize() {
+    view.width = Math.max(200, innerWidth - SIDE) * devicePixelRatio;
+    view.height = Math.max(200, innerHeight - TOP) * devicePixelRatio;
+    view.style.width = (innerWidth - SIDE) + 'px';
+    view.style.height = (innerHeight - TOP) + 'px';
+  }
+  addEventListener('resize', resize); resize();
+
+  // ---------- modes ----------
+  document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => {
+    document.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('on', x === b));
+    mode = b.dataset.mode; target = null; trial = null; waitUntil = performance.now() + 400;
+  });
+
+  function boxFor(dist, yawOff, pitchOff) {
+    // a player hitbox (0.6 wide, 1.8 tall) this far away, its middle at this angle
+    return { yaw: yaw + yawOff, pitch: pitch + pitchOff, dist,
+      hw: deg(Math.atan(0.3 / dist)), hh: deg(Math.atan(0.9 / dist)) };
+  }
+
+  function newFlick(now) {
+    const dist = rand(2.2, 6);
+    const ang = rand(0, Math.PI * 2);
+    const amount = Math.random() < 0.7 ? rand(8, 60) : rand(60, 150);   // mostly fight-sized flicks
+    let yo = Math.cos(ang) * amount, po = Math.sin(ang) * amount * 0.35;
+    po = Math.max(-40 - pitch, Math.min(40 - pitch, po));
+    target = boxFor(dist, yo, po);
+    trial = { mode: 'flick', appearT: now, target: { ...target, yaw: wrap(target.yaw - yaw), pitch: target.pitch - pitch },
+      start: { yaw, pitch }, samples: [], clicks: [], firstOnT: null, hitT: null };
+  }
+
+  function newTrack(now) {
+    const dist = 3;
+    target = boxFor(dist, 0, 0);
+    target.baseYaw = target.yaw; target.t0 = now; target.phase = rand(0, 6.28);
+    trial = { mode: 'track', appearT: now, dist, samples: [], frames: [], endT: now + 8000 };
+  }
+
+  function trackYaw(now) {
+    const t = (now - target.t0) / 1000;
+    // a strafing player: a side to side swing with speed changes, like A-D strafes
+    return target.baseYaw + 18 * Math.sin(t * 2.1 + target.phase) + 7 * Math.sin(t * 5.3 + target.phase * 2)
+      + 3 * Math.sin(t * 9.7);
+  }
+
+  // ---------- input ----------
+  view.addEventListener('click', () => { if (!locked) view.requestPointerLock({ unadjustedMovement: true }).catch(() => view.requestPointerLock()); });
+  hint.addEventListener('click', () => view.requestPointerLock({ unadjustedMovement: true }).catch(() => view.requestPointerLock()));
+  document.addEventListener('pointerlockchange', () => {
+    locked = document.pointerLockElement === view;
+    hint.style.display = locked ? 'none' : 'block';
+    if (locked) { data.sensitivityPct = +$('sens').value; data.fov = fov(); waitUntil = performance.now() + 500; target = null; trial = null; }
+  });
+
+  document.addEventListener('pointermove', e => {
+    if (!locked) return;
+    const k = degPerCount();
+    const list = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of (list.length ? list : [e])) {
+      const dx = ev.movementX, dy = ev.movementY;
+      if (!dx && !dy) continue;
+      yaw += dx * k; pitch = Math.max(-90, Math.min(90, pitch + dy * k));
+      if (trial) {
+        trial.samples.push([+(ev.timeStamp - trial.appearT).toFixed(2), dx, dy]);
+        if (trial.mode === 'flick' && trial.firstOnT == null && onTarget()) trial.firstOnT = ev.timeStamp - trial.appearT;
+      }
+    }
+  });
+
+  function onTarget() {
+    if (!target) return false;
+    return Math.abs(wrap(target.yaw - yaw)) <= target.hw && Math.abs(target.pitch - pitch) <= target.hh;
+  }
+
+  document.addEventListener('mousedown', e => {
+    if (!locked || e.button !== 0 || !trial) return;
+    const t = e.timeStamp - trial.appearT, hit = onTarget();
+    if (trial.mode === 'flick') {
+      trial.clicks.push([+t.toFixed(2), hit]);
+      if (hit) {
+        trial.hitT = t;
+        trial.degPerCount = degPerCount();
+        data.flicks.push(trial);
+        showFlick(analyze(trial));
+        showAll();
+        trial = null; target = null; waitUntil = performance.now() + rand(250, 700);
+      }
+    } else {
+      trial.clicks = trial.clicks || [];
+      trial.clicks.push([+t.toFixed(2), hit]);
+    }
+  });
+
+  // ---------- analysis ----------
+  function analyze(tr) {
+    const k = tr.degPerCount;
+    const T = [tr.target.yaw, tr.target.pitch];
+    const D = Math.hypot(T[0], T[1]);
+    const ux = T[0] / D, uy = T[1] / D;
+    // cumulative path in degrees, from where you looked when it appeared
+    let x = 0, y = 0;
+    const pts = [[0, 0, 0]];
+    for (const [t, dx, dy] of tr.samples) { x += dx * k; y += dy * k; pts.push([t, x, y]); }
+    // speed in 8 ms bins, smoothed
+    const end = tr.hitT;
+    const bin = 8, n = Math.max(2, Math.ceil(end / bin) + 1);
+    const moved = new Array(n).fill(0);
+    for (let i = 1; i < pts.length; i++) {
+      const b = Math.min(n - 1, Math.floor(pts[i][0] / bin));
+      moved[b] += Math.hypot(pts[i][1] - pts[i - 1][1], pts[i][2] - pts[i - 1][2]);
+    }
+    const speed = moved.map((_, i) => {
+      let s = 0, c = 0;
+      for (let j = i - 2; j <= i + 2; j++) if (j >= 0 && j < n) { s += moved[j]; c++; }
+      return s / c / (bin / 1000);   // degrees a second
+    });
+    let peak = 0, peakI = 0;
+    speed.forEach((v, i) => { if (v > peak) { peak = v; peakI = i; } });
+    let startI = speed.findIndex(v => v > Math.max(20, peak * 0.05));
+    if (startI < 0) startI = 0;
+    const reaction = startI * bin;
+    // the first flick ends where the speed first drops under 30% of the peak after it
+    let firstEnd = speed.length - 1;
+    for (let i = peakI; i < speed.length; i++) if (speed[i] < peak * 0.3) { firstEnd = i; break; }
+    const progressAt = tms => {
+      let p = pts[0];
+      for (const q of pts) { if (q[0] <= tms) p = q; else break; }
+      return (p[1] * ux + p[2] * uy) / D;
+    };
+    let maxProg = 0, maxBend = 0, bendSign = 0;
+    for (const p of pts) {
+      if (p[0] > end) break;
+      const along = (p[1] * ux + p[2] * uy) / D;
+      const side = (-p[1] * uy + p[2] * ux) / D;
+      maxProg = Math.max(maxProg, along);
+      if (Math.abs(side) > Math.abs(maxBend)) { maxBend = side; }
+    }
+    // extra pushes: how many times the speed climbs back over 30% of the peak
+    let bursts = 0, above = false;
+    for (const v of speed) { if (!above && v > peak * 0.3) { bursts++; above = true; } else if (above && v < peak * 0.18) above = false; }
+    // hand shake: how far the path wobbles around its own smoothed line (4 ms grid, 28 ms average)
+    const grid = [];
+    for (let t = 0, j = 0; t <= end; t += 4) {
+      while (j + 1 < pts.length && pts[j + 1][0] <= t) j++;
+      grid.push([pts[j][1], pts[j][2]]);
+    }
+    let wob = 0;
+    for (let i = 3; i < grid.length - 3; i++) {
+      let ax = 0, ay = 0;
+      for (let j = i - 3; j <= i + 3; j++) { ax += grid[j][0]; ay += grid[j][1]; }
+      wob += (grid[i][0] - ax / 7) ** 2 + (grid[i][1] - ay / 7) ** 2;
+    }
+    const shake = Math.sqrt(wob / Math.max(1, grid.length - 6));
+    const id = Math.log2(D / (2 * tr.target.hw) + 1);
+    const res = {
+      distance: D, width: 2 * tr.target.hw, id,
+      reaction, moveTime: end - reaction, total: end,
+      peak, peakAt: (peakI * bin - reaction) / Math.max(1, end - reaction),
+      firstReach: progressAt(firstEnd * bin), maxReach: maxProg,
+      overshot: maxProg > 1 + (tr.target.hw / Math.max(1, D)),
+      bend: maxBend, corrections: Math.max(0, bursts - 1), shake,
+      clickDelay: tr.firstOnT == null ? null : end - tr.firstOnT,
+      misses: tr.clicks.filter(c => !c[1]).length,
+      speed, bin, pts, T,
+    };
+    tr.result = { distance: +D.toFixed(2), width: +res.width.toFixed(2), id: +id.toFixed(2),
+      reactionMs: Math.round(reaction), moveMs: Math.round(res.moveTime), peakDegPerS: Math.round(peak),
+      peakAt: +res.peakAt.toFixed(2), firstReach: +res.firstReach.toFixed(3), maxReach: +maxProg.toFixed(3),
+      bend: +maxBend.toFixed(3), corrections: res.corrections, shakeDeg: +shake.toFixed(4),
+      clickDelayMs: res.clickDelay == null ? null : Math.round(res.clickDelay), misses: res.misses };
+    return res;
+  }
+
+  const row = (name, val, note) => `<tr><td>${name}${note ? ' <small>' + note + '</small>' : ''}</td><td>${val}</td></tr>`;
+  const pct = v => (v * 100).toFixed(0) + '%';
+
+  function showFlick(r) {
+    $('last').innerHTML =
+      row('Turn', r.distance.toFixed(1) + '°') +
+      row('Reaction', Math.round(r.reaction) + ' ms', 'before you moved') +
+      row('Flick time', Math.round(r.moveTime) + ' ms') +
+      row('Top speed', Math.round(r.peak) + '°/s') +
+      row('Top speed at', pct(r.peakAt), 'of the flick') +
+      row('First flick reached', pct(r.firstReach), 'of the way') +
+      row('Furthest', pct(r.maxReach), r.overshot ? 'went past' : '') +
+      row('Bend', pct(Math.abs(r.bend)), 'off the straight line') +
+      row('Corrections', r.corrections) +
+      row('Click after on target', r.clickDelay == null ? '-' : Math.round(r.clickDelay) + ' ms') +
+      row('Missed clicks', r.misses);
+    drawGraph(r); drawPath(r);
+  }
+
+  function mean(a) { return a.length ? a.reduce((s, v) => s + v, 0) / a.length : 0; }
+  function sd(a) { const m = mean(a); return Math.sqrt(mean(a.map(v => (v - m) ** 2))); }
+
+  function showAll() {
+    const rs = data.flicks.map(f => f.result).filter(Boolean);
+    $('count').textContent = rs.length + ' flicks · ' + data.tracks.length + ' tracks';
+    if (!rs.length) { $('all').innerHTML = ''; return; }
+    // Fitts: flick time = a + b * difficulty
+    const xs = rs.map(r => r.id), ys = rs.map(r => r.moveMs);
+    const mx = mean(xs), my = mean(ys);
+    let num = 0, den = 0;
+    xs.forEach((x, i) => { num += (x - mx) * (ys[i] - my); den += (x - mx) ** 2; });
+    const b = den ? num / den : 0, a = my - b * mx;
+    const reach = rs.map(r => r.firstReach);
+    const clicks = rs.map(r => r.clickDelayMs).filter(v => v != null);
+    const head = t => `<tr><td colspan="2" style="color:var(--amber);padding-top:8px">${t}</td></tr>`;
+    $('all').innerHTML =
+      row('Flicks', rs.length) +
+      head('Hand feel: Uranium copies these') +
+      row('First flick reach', pct(mean(reach)) + ' ± ' + pct(sd(reach)), 'Uranium: 95% ± 4%') +
+      row('Went past', pct(mean(rs.map(r => r.maxReach > 1.02 ? 1 : 0)))) +
+      row('Bend', pct(mean(rs.map(r => Math.abs(r.bend)))), 'Uranium: up to 8%') +
+      row('Top speed at', pct(mean(rs.map(r => r.peakAt))), 'of the flick') +
+      row('Corrections', mean(rs.map(r => r.corrections)).toFixed(2), 'a flick') +
+      row('Hand shake', mean(rs.map(r => r.shakeDeg)).toFixed(3) + '°', 'Uranium: 0.025°') +
+      row('Speed spread', Math.round(sd(ys)) + ' ms', 'how uneven your flick times are') +
+      head('Skill: only for reference, not copied') +
+      row('Flick time', Math.round(a) + ' + ' + Math.round(b) + ' × bits', 'ms (Uranium: 70 + 90)') +
+      row('Reaction', Math.round(mean(rs.map(r => r.reactionMs))) + ' ± ' + Math.round(sd(rs.map(r => r.reactionMs))) + ' ms') +
+      row('Click after on target', clicks.length ? Math.round(mean(clicks)) + ' ± ' + Math.round(sd(clicks)) + ' ms' : '-') +
+      row('Missed clicks', mean(rs.map(r => r.misses)).toFixed(2), 'a flick');
+  }
+
+  function drawGraph(r) {
+    const g = $('graph').getContext('2d'), W = 632, H = 300;
+    g.clearRect(0, 0, W, H);
+    const max = Math.max(...r.speed, 1);
+    g.strokeStyle = '#24312a'; g.lineWidth = 1;
+    for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(0, H * i / 4); g.lineTo(W, H * i / 4); g.stroke(); }
+    g.strokeStyle = '#39ff14'; g.lineWidth = 3; g.beginPath();
+    r.speed.forEach((v, i) => { const x = i / (r.speed.length - 1) * W, y = H - 10 - v / max * (H - 30); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+    g.stroke();
+    g.fillStyle = '#7f9488'; g.font = '22px monospace';
+    g.fillText(Math.round(max) + '°/s', 8, 26);
+    g.fillText(Math.round(r.total) + ' ms', W - 110, H - 12);
+  }
+
+  function drawPath(r) {
+    const g = $('path').getContext('2d'), W = 632, H = 400;
+    g.clearRect(0, 0, W, H);
+    const D = r.distance, ux = r.T[0] / D, uy = r.T[1] / D;
+    const sx = (W - 80) / Math.max(1.15, r.maxReach + 0.05), cy = H / 2, sy = sx;
+    g.strokeStyle = '#24312a'; g.beginPath(); g.moveTo(40, cy); g.lineTo(W - 20, cy); g.stroke();
+    g.fillStyle = 'rgba(57,255,20,.15)';
+    const half = r.width / 2 / D * sx;
+    g.fillRect(40 + sx - half, cy - half * 2.5, half * 2, half * 5);
+    g.strokeStyle = '#e0a84e'; g.lineWidth = 3; g.beginPath();
+    r.pts.forEach((p, i) => {
+      const along = (p[1] * ux + p[2] * uy) / D, side = (-p[1] * uy + p[2] * ux) / D;
+      const x = 40 + along * sx, y = cy + side * sy;
+      i ? g.lineTo(x, y) : g.moveTo(x, y);
+    });
+    g.stroke();
+    g.fillStyle = '#39ff14'; g.beginPath(); g.arc(40 + sx, cy, 6, 0, 7); g.fill();
+  }
+
+  function finishTrack(now) {
+    const fr = trial.frames;
+    const err = fr.map(f => Math.hypot(f[1], f[2]));
+    const on = fr.filter(f => Math.abs(f[1]) <= target.hw && Math.abs(f[2]) <= target.hh).length;
+    // lag: how far behind your yaw runs the target's, by best match
+    let bestLag = 0, bestErr = Infinity;
+    for (let lag = 0; lag <= 300; lag += 10) {
+      let s = 0, c = 0;
+      for (const f of fr) {
+        const tt = f[0] - lag; if (tt < 0) continue; const g = fr.find(q => q[0] >= tt); if (!g) continue;
+        s += Math.abs(f[4] - g[3]); c++;   // your view now vs where they were lag ms ago
+      }
+      if (c && s / c < bestErr) { bestErr = s / c; bestLag = lag; }
+    }
+    trial.result = { onTargetPct: +(on / Math.max(1, fr.length) * 100).toFixed(1),
+      meanErrorDeg: +mean(err).toFixed(2), lagMs: bestLag };
+    trial.degPerCount = degPerCount();
+    data.tracks.push(trial);
+    const ts = data.tracks.map(t => t.result);
+    $('trackStats').innerHTML =
+      row('Runs', ts.length) +
+      row('On target', mean(ts.map(t => t.onTargetPct)).toFixed(0) + '%') +
+      row('Off by', mean(ts.map(t => t.meanErrorDeg)).toFixed(1) + '°', 'on average') +
+      row('Behind by', Math.round(mean(ts.map(t => t.lagMs))) + ' ms', 'your reaction to their strafe');
+    showAll();
+    trial = null; target = null; waitUntil = now + 1200;
+  }
+
+  // ---------- drawing ----------
+  function project(dy, dp, f, cx, cy) {
+    if (Math.abs(dy) >= 85 || Math.abs(dp) >= 85) return null;
+    return [cx + Math.tan(rad(dy)) * f, cy + Math.tan(rad(dp)) * f];
+  }
+
+  function frame(now) {
+    const W = view.width, H = view.height, s = devicePixelRatio;
+    const cx = W / 2, cy = H / 2;
+    const f = (H / 2) / Math.tan(rad(fov() / 2));
+    ctx.fillStyle = '#0b0f0c'; ctx.fillRect(0, 0, W, H);
+
+    // world grid so turning feels like turning
+    ctx.strokeStyle = '#16201a'; ctx.lineWidth = s;
+    for (let gy = Math.ceil((yaw - 90) / 15) * 15; gy <= yaw + 90; gy += 15) {
+      const p = project(gy - yaw, 0, f, cx, cy); if (!p) continue;
+      ctx.beginPath(); ctx.moveTo(p[0], 0); ctx.lineTo(p[0], H); ctx.stroke();
+    }
+    for (let gp = -75; gp <= 75; gp += 15) {
+      const p = project(0, gp - pitch, f, cx, cy); if (!p) continue;
+      ctx.strokeStyle = gp === 0 ? '#24312a' : '#16201a';
+      ctx.beginPath(); ctx.moveTo(0, p[1]); ctx.lineTo(W, p[1]); ctx.stroke();
+    }
+
+    if (locked) {
+      if (mode === 'flick') {
+        if (!trial && now >= waitUntil) newFlick(now);
+      } else {
+        if (!trial && now >= waitUntil) newTrack(now);
+        if (trial) {
+          target.yaw = trackYaw(now);
+          trial.frames.push([+(now - trial.appearT).toFixed(1), +wrap(target.yaw - yaw).toFixed(3),
+            +(target.pitch - pitch).toFixed(3), +target.yaw.toFixed(3), +yaw.toFixed(3)]);
+          if (now >= trial.endT) finishTrack(now);
+        }
+      }
+    }
+
+    if (target) {
+      const dy = wrap(target.yaw - yaw), dp = target.pitch - pitch;
+      const a = project(dy - target.hw, dp - target.hh, f, cx, cy);
+      const b = project(dy + target.hw, dp + target.hh, f, cx, cy);
+      const on = onTarget();
+      if (a && b) {
+        ctx.fillStyle = on ? 'rgba(57,255,20,.35)' : 'rgba(255,90,74,.25)';
+        ctx.strokeStyle = on ? '#39ff14' : '#ff5a4a';
+        ctx.lineWidth = 2 * s;
+        ctx.fillRect(a[0], a[1], b[0] - a[0], b[1] - a[1]);
+        ctx.strokeRect(a[0], a[1], b[0] - a[0], b[1] - a[1]);
+        // a head, so it reads as a player
+        const hx = (a[0] + b[0]) / 2, hs = (b[0] - a[0]) * 0.42;
+        ctx.strokeRect(hx - hs, a[1] + 2 * s, hs * 2, hs * 2);
+      }
+      const inView = a && b && b[0] > 0 && a[0] < W && b[1] > 0 && a[1] < H;
+      if (!inView) {
+        const ang = Math.atan2(dp, dy);
+        const r = Math.min(W, H) * 0.4;
+        const x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+        ctx.fillStyle = '#ff5a4a'; ctx.beginPath();
+        ctx.moveTo(18 * s, 0); ctx.lineTo(-10 * s, -11 * s); ctx.lineTo(-10 * s, 11 * s); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // crosshair
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2 * s;
+    ctx.beginPath(); ctx.moveTo(cx - 9 * s, cy); ctx.lineTo(cx + 9 * s, cy);
+    ctx.moveTo(cx, cy - 9 * s); ctx.lineTo(cx, cy + 9 * s); ctx.stroke();
+
+    if (mode === 'track' && trial) {
+      ctx.fillStyle = '#7f9488'; ctx.font = (14 * s) + 'px monospace';
+      ctx.fillText('stay on it: ' + Math.max(0, (trial.endT - now) / 1000).toFixed(1) + ' s', 16 * s, 26 * s);
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // ---------- save ----------
+  $('save').onclick = () => {
+    data.saved = new Date().toISOString();
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'mouse-recording-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+  $('clear').onclick = () => {
+    data.flicks.length = 0; data.tracks.length = 0;
+    $('last').innerHTML = ''; $('all').innerHTML = ''; $('trackStats').innerHTML = ''; showAll();
+  };
+  showAll();
+})();
+</script>
+</body>
+</html>

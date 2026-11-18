@@ -46,6 +46,7 @@ final class AimHelper {
     static final Num RANGE = Num.tenths(4.5, 6, " blocks");
     /** How fast it turns your view. */
     static final Num SPEED = Num.value(600, 3600, 10, "\u00B0/s");
+    private static final MouseSteps MOUSE = new MouseSteps();
     /** How wide around your crosshair it looks for players. */
     static final Num FOV = Num.value(120, 360, 10, "\u00B0");
     /** How much of your own mouse movement it holds back while aiming. */
@@ -146,18 +147,14 @@ final class AimHelper {
             return; // already on them
         }
         double seconds = Math.min(0.1, elapsed / 1000.0);
-        double step = SPEED.low() * seconds;
+        double step = PlayStyle.speed(SPEED.low()) * seconds;
         // One straight turn: yaw and pitch arrive together, never past the spot.
         double share = Math.min(1, step / off);
         double stepYaw = yawOff * share;
         float pitch = Mth.clamp(player.getXRot() + (float) (pitchOff * share), -90F, 90F);
         float turnedPitch = pitch - player.getXRot();
-        // Moved like a mouse turn (Entity.turn): the previous rotation goes along, so the
-        // step shows at once instead of being blended in over the next frames.
-        player.setYRot(player.getYRot() + (float) stepYaw);
-        player.setXRot(pitch);
-        player.yRotO += (float) stepYaw;
-        player.xRotO += turnedPitch;
+        // Moved like a mouse turn (Entity.turn), in whole mouse counts like a real mouse.
+        MOUSE.turn(player, stepYaw, turnedPitch, false);
         remember(player);
         note(String.format(java.util.Locale.ROOT, "helping onto %s: %.0f degrees off, turned %.1f",
                 name, off, Math.hypot(stepYaw, turnedPitch)), now);

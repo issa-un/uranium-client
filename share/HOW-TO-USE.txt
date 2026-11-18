@@ -30,8 +30,51 @@ COMBAT
   Spear Dash      Swaps to your spear, lunges, and swaps back, on one key.
   Shield Break    Axe through their shield, then a mace hit while it's down.
                   Reaches as far as the weapon in your hand (4.5 with a spear).
+  Play Style      How the aim and timing of Cart, Aim Helper, World Slash
+                  and Hit feel.
+                    Mouse test: the first time you open the menu, dots pop
+                    up and you click them. Uranium reads how your hand
+                    moves the mouse (where your push stops before you
+                    correct, how often you go past, where you're fastest,
+                    how much the path bends) and its aim moves the same
+                    way. Only the shape: being slow or missing doesn't
+                    matter and isn't copied. Take it again from here, or
+                    go back to an average hand. Your hand is saved in
+                    humans.txt in the Uranium folder (next to Uranium.bat),
+                    in plain words: keep it, share it, or delete it to go
+                    back to an average hand.
+                    Calm (off): smooth even turns, steady timing. Quietest.
+                    Cracked (on): plays like someone sweating a fight.
+                    Turns are quick and hard and go a hair past before
+                    snapping back. Waits are shorter and uneven: mostly
+                    quick, now and then a little late. And it heats up:
+                    every hit you land or take and every cart you shoot
+                    makes the next move faster. It cools off about 6
+                    seconds after the fight. Anticheats notice Cracked
+                    more than Calm, so use Calm on strict servers.
   Hit             Hits whatever you're looking at, but only when the hit will
-                  actually count. One setting: Chance.
+                  actually count. Settings: Chance, and Random delay: each
+                  hit waits a new random time first (100 ms, then 142.1,
+                  then ...) inside the Delay range, so no two hits come at
+                  the same moment. Slams never wait (you'd land first).
+                  Auto: Hit only works while you look like you're
+                  fighting: a player is in front of you (close, near your
+                  crosshair) and in the last 2.5 seconds you jumped,
+                  switched hotbar slots, swung, got hit by a player or
+                  sprinted at them. Holding a wind charge turns it off.
+  Knockback Steer Your sprint hit sends them where you want. The extra push of
+                  a sprint hit goes the way your camera faces, so when you
+                  sprint-hit a player it checks every way your crosshair can
+                  still be on them for lava, fire, a cobweb, a cactus, your
+                  TNT cart or a drop of 3+ blocks, turns your view that way
+                  (a small mouse-like turn) and sends your hit a tick later,
+                  once the server has your new view. Nothing to push them
+                  into: your hit goes out normally. Max turn: how far it may
+                  turn (it never turns off their hitbox anyway).
+                  Push: Hazards, Toward you, or Both (hazards first).
+                  Toward you is for cornering a player who strafes: no hit can
+                  pull them in, but the sideways push can cancel their run, so
+                  they land in your path and close enough for the next hit.
   Slam Saver      A slam you click while they're still immune from the last
                   hit would mostly be wasted. Slam Saver holds that click and
                   sends it the moment their immunity ends.
@@ -69,6 +112,153 @@ COMBAT
                   a pearl.
   Chest Swap      Swaps between elytra and chestplate on one key.
 
+CART (TNT minecarts)
+  High Tier       Right-click a block with a rail: it puts the rail down,
+                  puts a TNT minecart on it, lights the block your shot will
+                  fly through (beside the rail or on its corner) with your
+                  flint and steel, then pulls out your crossbow. Needs a rail and a TNT minecart in your hotbar;
+                  flint and steel is optional.
+                    Shoot: fixes your aim with a small flick so the arrow
+                    goes through the fire into the cart, then fires your
+                    loaded crossbow for you.
+                    Off, the shot is yours (load it with a fire arrow, or
+                    use a Flame crossbow).
+                    Delay: how long it waits before the cart (and before
+                    the shot).
+                  Can't light fire there (you shoot up at the cart from under
+                  it, or down at it, or you have no flint and steel)? With a
+                  lava bucket in your hotbar it turns your aim onto the spot,
+                  pours lava where the shot will pass, and turns back onto
+                  the cart. An arrow through lava catches fire too. The lava
+                  stays there after, so watch your step.
+                  No flint and steel and no lava at all: the rail and cart
+                  go down about twice as fast, with a small hand shake on
+                  each click instead of a smooth move.
+                  The faster you move (an elytra dive), the shorter every
+                  wait gets, so the cart still goes down before you're past
+                  it. Out of reach, it stops instead of trying anyway.
+                  No way to light it at all? It pulls out your
+                  bow instead, a Flame one first, and with Shoot on draws it
+                  and aims a little high for the arrow's drop.
+                  While it's on, any crossbow in your hotbar that isn't
+                  loaded gets a big red cover, so you load it in time (with
+                  Armor Slots' alerts on, the !!! over it does that instead).
+                    Chance: how often it acts (100% every time).
+                    Macro mode (same switch in High Tier and Low Tier,
+                    also used by Block): the module presses your own
+                    keys, your hotbar number key and your right-click,
+                    and the game itself does the switch and the click on
+                    its next tick, just like your fingers. Nothing gets
+                    sent by the module. Each press takes a game tick, so
+                    it is a bit slower. In High Tier your own right-click
+                    goes to the game as a real click: it puts the rail
+                    down (or, on a rail that's already there, just
+                    clicks it) and the module carries on from there with
+                    the cart, fire and shot.
+                    Overload: two TNT carts on the same rail, one tick
+                    apart, for a blast that goes through a single block
+                    (it takes 2 End Stone to stop). Not in Macro mode:
+                    the game's own click lands on the first cart.
+                    Look: Stutter turns in quick jumps, Smooth in one even
+                    turn. Either way it turns to the closest good spot on
+                    the rail or fire block, so the turn is short.
+                    The fire goes in any block the shot flies through on
+                    its way to the cart, not only next to the rail.
+                    Lava: after the blast, look back at the lava and it's
+                    picked up: the empty bucket comes out the moment your
+                    crosshair is on it, scoops it, and your hand goes back
+                    to what you held. Your view isn't moved for it. Look
+                    back within 10 seconds, or it's left there.
+                    Self guard: keeps your own blast off you. Block: right
+                    after the cart it puts a block (End Stone first) next
+                    to the cart on your side, jumps, and shoots over it;
+                    the block takes the blast for your whole body. Only
+                    under Guard under (hearts, 6 to start), or whenever the
+                    blast would surely pop you whatever your health (it
+                    counts the armor you really wear: an elytra instead of
+                    a chestplate about doubles the blast). Needs
+                    a block and room for it. Block + refuse: also no
+                    cart where the blast would still kill you or pop your
+                    totem. Off: nothing. After each shot the log says how
+                    much the blast really did to you.
+                    Too steep: when no shot can reach the cart from where you
+                    stand or from a jump (a wall, the guard block, the cart
+                    up high), it jumps and puts a block under your feet,
+                    lands on it, and jumps again to shoot from up there.
+                    If the cart didn't blow (the arrow missed or went out),
+                    it shoots once more with another loaded crossbow or the
+                    bow, lighting the fire again first if it's gone.
+                    Moved too far from the spot before the rail or cart went
+                    down? The rail and cart go about 3 blocks in front of you
+                    instead (the same way), and the shot follows from there.
+                    Go-ping (always on): it picks up wherever you are.
+                    Right-click a rail holding a TNT cart and it carries on
+                    from the cart. Right-click near a TNT cart already on a
+                    rail holding flint and steel or lava (say you put it
+                    down, went out of reach and came back) and it carries
+                    on from the fire, then the shot. Missing something? It
+                    skips it like always: no flint uses lava or nothing, no
+                    loaded crossbow uses the bow.
+                    Hard switch: with two crossbows in your hotbar, the
+                    shot always takes the loaded one, and Auto reload
+                    leaves the empty one alone until both are empty (then
+                    it loads them). Keeps your loaded crossbow ready instead
+                    of stopping to reload mid-fight.
+                    A loaded crossbow in your offhand counts: it fires from
+                    there with no swap.
+                    Auto reload: when a crossbow in your hotbar is empty and
+                    nothing is going on, it switches to it, loads it and
+                    switches back. Pick a slot yourself and it stops.
+                    Replenish: after your cart blows, if your rails, TNT
+                    carts or flint and steel ran out of your hotbar, it
+                    opens your inventory,
+                    moves the mouse to a stack (a different path each
+                    time), presses the number key of the slot it ran out
+                    of, so it lands in that exact slot (any junk there goes
+                    back into the inventory), then closes
+                    the inventory.
+  Block           A TNT cart that isn't yours comes within Range: it puts
+                  blocks between you and it (End Stone first, it takes
+                  blasts well, then obsidian, then any full block). It picks
+                  the spots that hide the most of you from the blast (a cart
+                  coming in on the diagonal gets a block on the diagonal,
+                  right in its line, not two beside it with a crack
+                  between), takes the block out, turns your view smoothly
+                  onto where it goes, places it and switches back. Blocks: how many (1-4). Your own
+                  carts from High Tier and Low Tier are left alone.
+                    Jump block: jump with a cart within Range and a block
+                    goes under your feet too, with a calm look down and
+                    back up.
+                    Alert: while a cart that isn't yours is within Alert
+                    range, red !!! hop at the right middle of your screen
+                    with a tan arrow under them pointing to it, and how
+                    many blocks away it is.
+  Low Tier        Fire your bow and it works out where the arrow will come
+                  down, then puts a rail and a TNT minecart there before it
+                  lands. Your camera turns there in one smooth flick, like
+                  your own hand, and it doesn't snap back. You can only
+                  place within your normal reach, so shoot up high and let
+                  it come down near you. Use a Flame bow or fire arrows so
+                  the cart goes off.
+                    Crossbow too: works for crossbow shots as well.
+                    Look: how your view turns onto the rail spot. Flick is
+                    a hand's quick flick with a small correction after;
+                    Smooth is one even turn; Stutter is quick jumps. Smooth
+                    and Stutter end right on the spot.
+                    Delay: how long it waits between the rail and the cart.
+                    Replenish: the same refill as High Tier, for rails and
+                    TNT carts.
+                    Auto reload: the same as High Tier's.
+                    Chance: how often it acts (100% every time).
+                    Lowest draw: your bow lets go by itself the moment it is
+                    drawn enough to shoot (4 ticks), so the arrow is slow and
+                    comes down close to you. One shot a click: hold right-click
+                    and it won't draw again until you let go.
+                  A flat (low angle) shot lands sooner, so the turns and the
+                  wait get quicker to fit it. A crossbow in your offhand
+                  counts too, but its arrow only blows a cart if it flies
+                  through fire or lava on the way.
+
 UHC
   Web Escape      Gets you out of cobwebs and fire with water.
   Web Trap        Webs the player you're looking at, on one key.
@@ -92,6 +282,18 @@ UTILITY
   Hit Sound       A ding when your hit lands.
   Middle Click Friend   Middle-click a player to add them as a friend.
                   Friends are never hit or targeted.
+  Debug           Hidden: type "debug" in the menu search to find it. While
+                  it's on, a badge in the top left shows Human % for the
+                  last minute. Its screen lists every mouse move the
+                  modules made (click one to see its path and speed) and
+                  everything that could get you flagged: snaps, moves at
+                  an even speed, the same timing again and again, landing
+                  dead on every time, two slot switches or two clicks in
+                  one tick, turning far and clicking in the same tick.
+                  Test buttons make a flick, stutter, glide, shake or a
+                  Replenish cursor trip right there, so you can look at
+                  them without a fight. Play with it on to check Cart,
+                  Replenish and the rest.
 
 HUD
   Speed HUD       A speed ring above your hotbar.
@@ -101,6 +303,32 @@ HUD
   Slam Meter      While you fall with a mace, shows under your crosshair how
                   hard the slam will hit them after their armor, and KILL or
                   POP when it's enough.
+  2AM             A quiet HUD for late sessions. Out of a fight it fades
+                  almost to nothing; it comes back the moment you hit, get
+                  hit or draw a bow. Steel, cream and amber instead of bright
+                  green, and it dims itself after midnight. It has:
+                  - a thin record ring round the crosshair that fills with
+                    your crossbow's charge or your attack charge,
+                  - a line in the corner like "carts 7 · rails 12 · xbow
+                    loaded" that shows when a count changes, then fades,
+                  - dots over players for every totem they popped: amber
+                    this life, grey for lives before.
+                  Only one alert shows at a time.
+  Armor Slots     Your four armor pieces in hotbar-style slots on the left of
+                  your hotbar (past the offhand slot), with durability bars.
+                    Alerts (on by default):
+                    three red !!! hop over anything that needs you: armor
+                    under 20% or a missing piece, a hotbar item under 10%,
+                    a crossbow that isn't loaded, 2 or fewer carts, pearls or
+                    golden apples, 8 or fewer rails, or an empty offhand while
+                    you carry a totem.
+  Pop Chams       When anyone pops a totem (you too), a see-through ghost of
+                  them stays where it happened and floats up as it fades,
+                  with "Name popped 3" over it: red for them, green for you.
+                  The middle of your screen says who popped too.
+  Damage Particles  Old 1.8.9 style: every hit on a player throws a shower of
+                  red -1s off them, one per point of damage, for about 2
+                  seconds. Combos make a lot of them.
   Punish Alerts   Shows when a nearby player is open: EATING (with the time
                   left), POPPED a totem, or SHIELD DOWN after your Shield
                   Break (with the seconds until they can block). Optional

@@ -44,6 +44,12 @@ final class ShieldBreak {
     // A shield blocks hits within this horizontal angle of its holder's head (the shield's
     // damage reduction; LivingEntity.applyItemBlocking).
     private static final double BLOCKING_ANGLE = Math.toRadians(90);
+    // Your screen shows their head a little behind the server (your ping and theirs), and a
+    // shield that is turning toward you is often already facing you there, so this much
+    // past the edge still counts as toward you. Leaning this way costs little: an axe hit on
+    // a shield that wasn't facing you just lands as a normal hit, and the slam right after
+    // it still deals all of its extra damage.
+    private static final double FACING_MARGIN = Math.toRadians(30);
     // After a break your client keeps showing the old shield until the server's update
     // arrives. Until the shield is seen dropping, or this long past your ping, that player
     // does not count as blocking; after that a shield is a real one (the break missed, or
@@ -311,7 +317,8 @@ final class ShieldBreak {
         } else if (entity == lastBroken && !sawShieldDrop) {
             reason = "just broke this one, waiting for your screen to catch up";
         } else if (!facingYou(minecraft, entity)) {
-            reason = "their shield faces away from you";
+            reason = String.format(java.util.Locale.ROOT, "their shield faces away from you (%.0f degrees off, %.0f counts)",
+                    Math.toDegrees(shieldAngle(minecraft, entity)), Math.toDegrees(BLOCKING_ANGLE + FACING_MARGIN));
         } else if (findSlot(player, ShieldBreak::disablesShields) < 0) {
             reason = "no axe in your hotbar";
         } else if (!inRange(player, findSlot(player, ShieldBreak::disablesShields), entity, extraReach(player))) {
@@ -334,11 +341,29 @@ final class ShieldBreak {
 
     /** Whether you stand within the shield's blocking angle (see blockingToward). */
     private static boolean facingYou(Minecraft minecraft, LivingEntity entity) {
-        double headYaw = Math.toRadians(entity.getYHeadRot());
-        Vec3 facing = new Vec3(-Math.sin(headYaw), 0, Math.cos(headYaw));
+        return shieldAngle(minecraft, entity) <= BLOCKING_ANGLE + FACING_MARGIN;
+    }
+
+    /**
+     * How far you are from the middle of their shield, the game's way (their head's
+     * direction against the flat line to you; straight overhead counts as 90 degrees).
+     * Taken at their head now and where it will be when your hit arrives if it keeps
+     * turning, whichever is closer to you.
+     */
+    private static double shieldAngle(Minecraft minecraft, LivingEntity entity) {
         Vec3 offset = minecraft.player.position().subtract(entity.position());
         Vec3 toAttacker = new Vec3(offset.x, 0, offset.z).normalize();
-        return Math.acos(Math.max(-1, Math.min(1, facing.dot(toAttacker)))) <= BLOCKING_ANGLE;
+        int ticks = (pingMs(minecraft) + 49) / 50 + 1;
+        float turn = net.minecraft.util.Mth.wrapDegrees(entity.getYHeadRot() - entity.yHeadRotO);
+        double now = angleTo(entity.getYHeadRot(), toAttacker);
+        double ahead = angleTo(entity.getYHeadRot() + turn * ticks, toAttacker);
+        return Math.min(now, ahead);
+    }
+
+    private static double angleTo(float headYawDegrees, Vec3 toAttacker) {
+        double headYaw = Math.toRadians(headYawDegrees);
+        Vec3 facing = new Vec3(-Math.sin(headYaw), 0, Math.cos(headYaw));
+        return Math.acos(Math.max(-1, Math.min(1, facing.dot(toAttacker))));
     }
 
     /** Whether an attack on the entity would start a shield break: blocking, axe in reach. */
@@ -664,13 +689,8 @@ final class ShieldBreak {
                 < Math.min(CONFIRM_MAX_MS, 2L * pingMs + CONFIRM_MARGIN_MS)) {
             return false; // your client still shows the shield the last break hit
         }
-        double headYaw = Math.toRadians(entity.getYHeadRot());
-        Vec3 facing = new Vec3(-Math.sin(headYaw), 0, Math.cos(headYaw));
-        Vec3 offset = minecraft.player.position().subtract(entity.position());
         // Straight overhead normalizes to zero, which the game treats as 90 degrees: blocked.
-        Vec3 toAttacker = new Vec3(offset.x, 0, offset.z).normalize();
-        double angle = Math.acos(Math.max(-1, Math.min(1, facing.dot(toAttacker))));
-        return angle <= BLOCKING_ANGLE;
+        return shieldAngle(minecraft, entity) <= BLOCKING_ANGLE + FACING_MARGIN;
     }
 
     /**

@@ -168,9 +168,20 @@ final class MinecraftInputController {
         MaceLog.reset();
         Hit.reset();
         AimHelper.reset();
+        CartHighTier.reset();
+        CartLowTier.reset();
+        CartRefill.reset();
+        PopChams.reset();
+        CrossbowReload.reset(minecraft);
+        DamageParticles.reset();
+        NightShift.reset();
+        ArmorSlots.reset();
+        CartBlock.reset();
+        PlayStyle.reset();
         SlamMeter.reset();
         SlamSteer.reset(minecraft);
         SlamSaver.reset();
+        KnockbackSteer.reset();
         SlamFollowUp.reset();
         PunishAlerts.reset();
         WorldSlash.reset();
@@ -235,6 +246,31 @@ final class MinecraftInputController {
             if (toggleHudModule(minecraft, VelocityHud.toggleFor(key, -1))) {
                 return true;
             }
+            // Replenish has your inventory open with the mouse over a stack: a hotbar key
+            // would swap it, Q drop it, F put it in your offhand. The refill stops instead and
+            // a hotbar key just picks that slot.
+            if (CartRefill.isBusy()) {
+                int pick = -1;
+                for (int slot = 0; slot < 9; slot++) {
+                    if (minecraft.options.keyHotbarSlots[slot].matches(event)) {
+                        pick = slot;
+                    }
+                }
+                if (pick >= 0 || minecraft.options.keyDrop.matches(event) || minecraft.options.keySwapOffhand.matches(event)) {
+                    CartRefill.abort(minecraft, pick >= 0 ? "you pressed hotbar " + (pick + 1) : "you pressed a key");
+                    if (pick >= 0 && minecraft.player != null) {
+                        Cart.select(minecraft, minecraft.player, pick);
+                    }
+                    return true;
+                }
+            }
+            // A hotbar key the game has not acted on yet (it does on its next tick); a
+            // right-click right after it counts with that slot in hand (Cart High Tier).
+            for (int slot = 0; slot < 9; slot++) {
+                if (minecraft.options.keyHotbarSlots[slot].matches(event)) {
+                    CartHighTier.onHotbarPress(slot);
+                }
+            }
             // The attack key can be rebound to the keyboard.
             boolean consumed = minecraft.options.keyAttack.matches(event) && attackClick(minecraft);
             if (MinecraftSpearDash.mouseButton() < 0 && key >= 0 && key == MinecraftSpearDash.keyCode()
@@ -261,7 +297,8 @@ final class MinecraftInputController {
                     && PearlCatch.activate(minecraft)) {
                 consumed = true;
             }
-            if (!consumed && minecraft.options.keyUse.matches(event) && PearlCatch.onUseClick(minecraft)) {
+            if (!consumed && minecraft.options.keyUse.matches(event)
+                    && (PearlCatch.onUseClick(minecraft) || CartHighTier.onUseClick(minecraft))) {
                 consumed = true;
             }
             if (!consumed && ChestSwap.mouseButton() < 0 && key >= 0 && key == ChestSwap.keyCode()
@@ -285,6 +322,16 @@ final class MinecraftInputController {
             if (toggleHudModule(minecraft, VelocityHud.toggleFor(-1, button))) {
                 return true;
             }
+            if (CartRefill.isBusy()) {
+                // a click would pick up the stack under the mouse
+                CartRefill.abort(minecraft, "you clicked");
+                return true;
+            }
+            for (int slot = 0; slot < 9; slot++) {
+                if (minecraft.options.keyHotbarSlots[slot].matchesMouse(event)) {
+                    CartHighTier.onHotbarPress(slot);
+                }
+            }
             boolean consumed = minecraft.options.keyAttack.matchesMouse(event) && attackClick(minecraft);
             if (button == MinecraftSpearDash.mouseButton() && dash(minecraft)) {
                 consumed = true;
@@ -304,7 +351,8 @@ final class MinecraftInputController {
             if (!consumed && button == PearlCatch.mouseButton() && PearlCatch.activate(minecraft)) {
                 consumed = true;
             }
-            if (!consumed && minecraft.options.keyUse.matchesMouse(event) && PearlCatch.onUseClick(minecraft)) {
+            if (!consumed && minecraft.options.keyUse.matchesMouse(event)
+                    && (PearlCatch.onUseClick(minecraft) || CartHighTier.onUseClick(minecraft))) {
                 consumed = true;
             }
             if (!consumed && button == ChestSwap.mouseButton() && ChestSwap.activate(minecraft)) {
@@ -346,7 +394,8 @@ final class MinecraftInputController {
         WTap.onAttackClick(minecraft);
         Utilities.onAttackClick(minecraft);
         return ShieldBreak.handleAttackClick(minecraft) || SlamSaver.onAttackClick(minecraft)
-                || ReachSwap.handleAttackClick(minecraft) || AutoWeapon.onAttackClick(minecraft);
+                || ReachSwap.handleAttackClick(minecraft) || AutoWeapon.onAttackClick(minecraft)
+                || KnockbackSteer.onAttackClick(minecraft);
     }
 
     private static boolean shieldBreak(Minecraft minecraft) {
@@ -456,8 +505,23 @@ final class MinecraftInputController {
         guard("WorldSlash", () -> WorldSlash.update(minecraft));
         guard("SlamSteer", () -> SlamSteer.update(minecraft));
         guard("SlamSaver", () -> SlamSaver.update(minecraft));
+        guard("KnockbackSteer", () -> KnockbackSteer.update(minecraft));
+        guard("CartBlock", () -> CartBlock.update(minecraft));
         guard("SlamFollowUp", () -> SlamFollowUp.update(minecraft));
         guard("PunishAlerts", () -> PunishAlerts.update(minecraft));
+        guard("CartMacro", () -> Cart.macroTick(minecraft));
+        guard("CartHighTier", () -> CartHighTier.update(minecraft));
+        guard("CartLowTier", () -> {
+            CartLowTier.update(minecraft);
+            CartLowTier.frame(minecraft);
+        });
+        guard("CartRefill", () -> CartRefill.update(minecraft));
+        guard("PopChams", () -> PopChams.update(minecraft));
+        guard("CrossbowReload", () -> CrossbowReload.update(minecraft));
+        guard("DamageParticles", () -> DamageParticles.update(minecraft));
+        guard("NightShift", () -> NightShift.update(minecraft));
+        guard("PlayStyle", () -> PlayStyle.update(minecraft));
+        guard("InventoryDump", () -> InventoryDump.update(minecraft));
         guard("Wheels", () -> Wheels.update(minecraft));
         guard("ChestSwap", () -> ChestSwap.update(minecraft));
         guard("WebEscape", () -> WebEscape.update(minecraft));

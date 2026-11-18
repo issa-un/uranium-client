@@ -43,6 +43,7 @@ final class WorldSlash {
     private static final long LOG_GAP_MS = 1000;
     static final Num RANGE = Num.tenths(3.0, 4.5, " blocks");
     static final Num SPEED = Num.value(300, 1200, 10, "°/s");
+    private static final MouseSteps MOUSE = new MouseSteps();
     static final Num FOV = Num.value(90, 360, 10, "°");
     static final Num REACTION = Num.ms(70, 150, 500);
     static final Num CHANCE = Num.percent(90);
@@ -133,15 +134,12 @@ final class WorldSlash {
         }
         double seconds = Math.min(0.1, elapsed / 1000.0);
         double settle = Mth.clamp(off / SETTLE_DEGREES, SLOWEST_SHARE, 1);
-        double step = SPEED.low() * wobble * settle * seconds;
+        double step = PlayStyle.speed(SPEED.low()) * wobble * settle * seconds;
         double share = Math.min(1, step / off);
         double stepYaw = yawOff * share;
         float pitch = Mth.clamp(player.getXRot() + (float) (pitchOff * share), -90F, 90F);
         float turnedPitch = pitch - player.getXRot();
-        player.setYRot(player.getYRot() + (float) stepYaw);
-        player.setXRot(pitch);
-        player.yRotO += (float) stepYaw;
-        player.xRotO += turnedPitch;
+        MOUSE.turn(player, stepYaw, turnedPitch, false); // whole mouse counts, like a real mouse
     }
 
     /** Hits once the game's own crosshair is on them, after the reaction delay, when it counts. */
@@ -153,7 +151,7 @@ final class WorldSlash {
         }
         if (onTargetSinceMs < 0) {
             onTargetSinceMs = now;
-            reactionMs = REACTION.pick();
+            reactionMs = PlayStyle.delay(REACTION.pick());
         }
         if (now - onTargetSinceMs < reactionMs || now < nextTryMs) {
             return;
@@ -169,7 +167,7 @@ final class WorldSlash {
         Hit.strike(minecraft, player, target, ready == Hit.SLAM, now);
         // A fresh reaction for the next hit, like a person re-timing their click.
         onTargetSinceMs = now;
-        reactionMs = REACTION.pick();
+        reactionMs = PlayStyle.delay(REACTION.pick());
     }
 
     /** The one closest to your crosshair, in range, in front of you and in sight. */

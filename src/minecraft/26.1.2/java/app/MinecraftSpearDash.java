@@ -349,6 +349,13 @@ final class MinecraftSpearDash {
         if (minecraft.gameMode == null) {
             return;
         }
+        if (Debug.isEnabled() && minecraft.player != null) {
+            int before = sentSlot(minecraft);
+            int now = minecraft.player.getInventory().getSelectedSlot();
+            if (before != now || force) {
+                Debug.slot(now, before != now);
+            }
+        }
         try {
             if (force) {
                 carriedIndexField().setInt(minecraft.gameMode, -1);

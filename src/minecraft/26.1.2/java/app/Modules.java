@@ -40,6 +40,16 @@ final class Modules {
         boolean hud = VelocityHud.isAvailable();
         return List.of(
                 new Category("Combat", "C", 0xFF39FF14, List.of(
+                        new Module("Play Style", "On: Cracked, snappy flicks and quick uneven timing that speed up as a fight heats up. Off: Calm",
+                                PlayStyle::isCracked, PlayStyle::toggle, List.of(
+                                new Choice("Style", PlayStyle::label, PlayStyle::toggle),
+                                new Action(() -> HandProfile.isMeasured() ? "Mouse test again" : "Take the mouse test",
+                                        () -> Mc.setScreen(minecraft, new MouseTestScreen())),
+                                new Action(() -> HandProfile.isMeasured() ? "Back to an average hand" : "Using an average hand",
+                                        () -> {
+                                            HandProfile.reset();
+                                            SpearSettings.save(minecraft);
+                                        }))),
                         new Module("Spear Dash", "Swap, lunge and swap back on a key",
                                 MinecraftSpearDash::isEnabled, MinecraftSpearDash::toggleEnabled, List.of(
                                 new Bind("Key", () -> bindLabel(MinecraftSpearDash.keyCode(), MinecraftSpearDash.mouseButton()),
@@ -69,7 +79,14 @@ final class Modules {
                                 new Slider("Swap back", ShieldBreak.SWAP_BACK))),
                         new Module("Hit", "Hits what you look at whenever the hit will count",
                                 Hit::isEnabled, Hit::toggleEnabled, List.of(
-                                new Slider("Chance", Hit.CHANCE))),
+                                new Toggle("Auto", Hit::isAuto, Hit::toggleAuto),
+                                new Slider("Chance", Hit.CHANCE),
+                                new Toggle("Random delay", Hit::isRandomDelay, Hit::toggleRandomDelay),
+                                new Slider("Delay", Hit.DELAY))),
+                        new Module("Knockback Steer", "Your sprint hit pushes them into a hazard, or keeps them in your path",
+                                KnockbackSteer::isEnabled, KnockbackSteer::toggleEnabled, List.of(
+                                new Choice("Push", KnockbackSteer::modeLabel, KnockbackSteer::cycleMode),
+                                new Slider("Max turn", KnockbackSteer.MAX_TURN))),
                         new Module("Slam Saver", "Holds a slam clicked into their hit immunity and sends it the tick it counts",
                                 SlamSaver::isEnabled, SlamSaver::toggleEnabled, List.of()),
                         new Module("Slam Follow-up", "After your slam, a sword hit the moment their immunity ends",
@@ -145,6 +162,37 @@ final class Modules {
                                 new Slider("Swap delay", ChestSwap.SWAP_DELAY),
                                 new Slider("Use delay", ChestSwap.USE_DELAY),
                                 new Slider("Swap back", ChestSwap.SWAP_BACK))))),
+                new Category("Cart", "K", 0xFFB2FF59, List.of(
+                        new Module("High Tier", "Rail, TNT cart, fire or lava in front of it, then your crossbow",
+                                CartHighTier::isEnabled, CartHighTier::toggleEnabled, List.of(
+                                new Toggle("Shoot", CartHighTier::isShoot, CartHighTier::toggleShoot),
+                                new Toggle("Replenish", CartHighTier::isReplenish, CartHighTier::toggleReplenish),
+                                new Toggle("Macro mode", Cart::isMacro, Cart::toggleMacro),
+                                new Choice("Self guard", SelfBlast::modeLabel, SelfBlast::cycleMode),
+                                new Slider("Guard under", CartHighTier.GUARD_UNDER),
+                                new Toggle("Auto reload", CartHighTier::isAutoReload, CartHighTier::toggleAutoReload),
+                                new Toggle("Hard switch", CartHighTier::isHardSwitch, CartHighTier::toggleHardSwitch),
+                                new Toggle("Overload", CartHighTier::isOverload, CartHighTier::toggleOverload),
+                                new Choice("Look", CartHighTier::lookLabel, CartHighTier::cycleLook),
+                                new Slider("Delay", CartHighTier.DELAY),
+                                new Slider("Chance", CartHighTier.CHANCE))),
+                        new Module("Block", "Blocks between you and a TNT cart that gets too close",
+                                CartBlock::isEnabled, CartBlock::toggleEnabled, List.of(
+                                new Slider("Range", CartBlock.RANGE),
+                                new Slider("Blocks", CartBlock.BLOCKS),
+                                new Toggle("Jump block", CartBlock::isJumpBlock, CartBlock::toggleJumpBlock),
+                                new Toggle("Alert", CartBlock::isAlert, CartBlock::toggleAlert),
+                                new Slider("Alert range", CartBlock.ALERT_RANGE))),
+                        new Module("Low Tier", "Fire your bow: a rail and TNT cart where the arrow comes down",
+                                CartLowTier::isEnabled, CartLowTier::toggleEnabled, List.of(
+                                new Toggle("Crossbow too", CartLowTier::isCrossbowToo, CartLowTier::toggleCrossbowToo),
+                                new Toggle("Lowest draw", CartLowTier::isLowestDraw, CartLowTier::toggleLowestDraw),
+                                new Choice("Look", CartLowTier::lookLabel, CartLowTier::cycleLook),
+                                new Toggle("Replenish", CartLowTier::isReplenish, CartLowTier::toggleReplenish),
+                                new Toggle("Macro mode", Cart::isMacro, Cart::toggleMacro),
+                                new Toggle("Auto reload", CartLowTier::isAutoReload, CartLowTier::toggleAutoReload),
+                                new Slider("Delay", CartLowTier.DELAY),
+                                new Slider("Chance", CartLowTier.CHANCE))))),
                 new Category("UHC", "U", 0xFFC6FF00, List.of(
                         new Module("Web Escape", "Water out of cobwebs and fire",
                                 WebEscape::isEnabled, WebEscape::toggleEnabled, List.of(
@@ -204,7 +252,11 @@ final class Modules {
                         new Module("Hit Sound", "A ding when your hit lands",
                                 Utilities::isHitSound, Utilities::toggleHitSound, List.of()),
                         new Module("Middle Click Friend", "Middle-click a player to friend them",
-                                Utilities::isMiddleClickFriend, Utilities::toggleMiddleClickFriend, List.of()))),
+                                Utilities::isMiddleClickFriend, Utilities::toggleMiddleClickFriend, List.of()),
+                        // Only shows when you search "debug".
+                        new Module("Debug", "Shows how human the modules look and what could get you flagged",
+                                Debug::isEnabled, Debug::toggleEnabled, List.of(
+                                new Action(() -> "Open the debug screen", () -> Mc.setScreen(minecraft, new DebugScreen())))))),
                 new Category("HUD", "H", 0xFF64DD17, List.of(
                         new Module("Speed HUD", hud ? "Speed ring above the hotbar" : "Needs Fabric API's HUD module",
                                 VelocityHud::isSpeedHudOn, VelocityHud::toggleSpeedHud, List.of(
@@ -223,6 +275,19 @@ final class Modules {
                         new Module("Punish Alerts", "Shows when they eat, pop a totem or lose their shield",
                                 PunishAlerts::isEnabled, PunishAlerts::toggleEnabled, List.of(
                                 new Toggle("Sound", PunishAlerts::isSound, PunishAlerts::toggleSound))),
+                        new Module("2AM", hud ? "A quiet HUD: record ring, ticker, pop dots; fades out of fights"
+                                : "Needs Fabric API's HUD module",
+                                NightShift::isEnabled, NightShift::toggleEnabled, List.of()),
+                        new Module("Armor Slots", hud ? "Your armor in slots by the hotbar; red !!! hop over anything that needs you"
+                                : "Needs Fabric API's HUD module",
+                                ArmorSlots::isEnabled, ArmorSlots::toggleEnabled, List.of(
+                                new Toggle("Alerts", ArmorSlots::isAlerts, ArmorSlots::toggleAlerts))),
+                        new Module("Pop Chams", hud ? "A ghost where someone pops a totem, with who and how many"
+                                : "Needs Fabric API's rendering module",
+                                PopChams::isEnabled, PopChams::toggleEnabled, List.of()),
+                        new Module("Damage Particles", hud ? "Old-school red -1s showering off players you hurt"
+                                : "Needs Fabric API's rendering module",
+                                DamageParticles::isEnabled, DamageParticles::toggleEnabled, List.of()),
                         new Module("Wheels", hud ? "A wheel above players' heads that turns when they get hit"
                                 : "Needs Fabric API's rendering module",
                                 Wheels::isEnabled, Wheels::toggleEnabled, List.of(
