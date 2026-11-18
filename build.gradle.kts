@@ -1,4 +1,6 @@
 import java.security.MessageDigest
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 plugins {
     application
@@ -113,7 +115,11 @@ tasks.jar {
             // Hide other clients adds a check to a class the game has already loaded.
             "Can-Retransform-Classes" to "true",
             // The same jar opens the injector window, which then injects itself.
-            "Main-Class" to "app.$buildTag.Main"
+            "Main-Class" to "app.$buildTag.Main",
+            // When it was built: the launcher runs the newest build, and the Update tab
+            // compares this with the latest release on GitHub.
+            "Build-Time" to Instant.now().truncatedTo(ChronoUnit.SECONDS).toString(),
+            "Build-Tag" to buildTag
         )
     }
 }
@@ -162,6 +168,65 @@ tasks.register<Zip>("shareZip") {
             from(uraniumRuntime) { into("runtime") }
         }
     }
+}
+
+// Uranium.exe: a folder with the exe, its own Java (only the parts it needs) and the
+// build, made by jpackage (from a JDK 25, Eclipse Adoptium's by default; pass
+// -Pjpackage=PATH to jpackage.exe otherwise). The exe starts a tiny launcher, which runs the
+// newest build it finds: the one packed in app/, or one the Update tab downloaded into
+// builds/. `gradle packageZip` writes dist/Uranium (the folder) and dist/Uranium.zip.
+val launcherSource = sourceSets.create("launcher") {
+    java.setSrcDirs(listOf("src/launcher/java"))
+}
+val launcherJar = tasks.register<Jar>("launcherJar") {
+    from(launcherSource.output)
+    archiveFileName.set("uranium-launcher.jar")
+    destinationDirectory.set(layout.buildDirectory.dir("launcher"))
+    manifest { attributes("Main-Class" to "uranium.Launcher") }
+}
+val jpackageTool: File? = providers.gradleProperty("jpackage").map { file(it) }.orNull
+    ?: File("C:/Program Files/Eclipse Adoptium").listFiles()?.sortedDescending()
+        ?.map { File(it, "bin/jpackage.exe") }?.firstOrNull { it.isFile }
+val packageApp = tasks.register("packageApp") {
+    dependsOn(tasks.jar, launcherJar)
+    val jar = tasks.jar.flatMap { it.archiveFile }
+    val launcher = launcherJar.flatMap { it.archiveFile }
+    doLast {
+        val tool = jpackageTool ?: throw GradleException("No jpackage found: install a JDK 25 or pass -Pjpackage=PATH")
+        val input = layout.buildDirectory.dir("jpackage-input").get().asFile
+        input.deleteRecursively()
+        input.mkdirs()
+        jar.get().asFile.copyTo(File(input, jar.get().asFile.name))
+        launcher.get().asFile.copyTo(File(input, "uranium-launcher.jar"))
+        val dist = file("dist")
+        File(dist, "Uranium").deleteRecursively()
+        dist.mkdirs()
+        val command = listOf(tool.absolutePath,
+            "--type", "app-image",
+            "--name", "Uranium",
+            "--input", input.absolutePath,
+            "--main-jar", "uranium-launcher.jar",
+            "--main-class", "uranium.Launcher",
+            "--dest", dist.absolutePath,
+            "--icon", file("packaging/uranium.ico").absolutePath,
+            "--add-modules", "java.base,java.desktop,java.net.http,jdk.attach,java.logging",
+            "--java-options", "--add-modules=jdk.attach",
+            "--app-version", "1.0." + (System.currentTimeMillis() / 60_000 % 60_000),
+            "--vendor", "Uranium",
+            "--description", "Uranium injector")
+        val process = ProcessBuilder(command).redirectErrorStream(true).start()
+        val output = process.inputStream.bufferedReader().readText()
+        if (process.waitFor() != 0) {
+            throw GradleException("jpackage failed: $output")
+        }
+        file("share/HOW-TO-USE.txt").copyTo(File(dist, "Uranium/HOW-TO-USE.txt"), overwrite = true)
+    }
+}
+tasks.register<Zip>("packageZip") {
+    dependsOn(packageApp)
+    archiveFileName.set("Uranium.zip")
+    destinationDirectory.set(file("dist"))
+    from(file("dist/Uranium")) { into("Uranium") }
 }
 
 tasks.named<JavaExec>("run") {

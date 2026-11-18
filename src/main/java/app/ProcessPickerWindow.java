@@ -71,7 +71,7 @@ final class ProcessPickerWindow {
     private static final Color FAINT = new Color(0x4C6650);
     private static final Color INK = new Color(0x08100A);
     private static final int REFRESH_MS = 2000;
-    private static final String[] TABS = {"Inject", "Advanced", "Manage"};
+    private static final String[] TABS = {"Inject", "Advanced", "Manage", "Update"};
 
     private final JFrame frame = new JFrame("Uranium");
     private final Path agentJar = locateAgentJar();
@@ -88,6 +88,17 @@ final class ProcessPickerWindow {
     private final Pill unloadButton = new Pill("Unload", "Switch Uranium off in the game", false);
     private final Pill statusButton = new Pill("Status", "Which builds are in the game", false);
     private final JLabel hand = label(" ", Font.PLAIN, 13, SOFT);
+    // Update tab
+    private final JLabel current = label(" ", Font.PLAIN, 13, SOFT);
+    private final JLabel latestLine = label("Checking GitHub...", Font.BOLD, 16, TEXT);
+    private final javax.swing.JTextArea notes = new javax.swing.JTextArea();
+    private final JLabel progress = label(" ", Font.PLAIN, 13, SOFT);
+    private final Pill checkButton = new Pill("Check again", "", false);
+    private final Pill downloadButton = new Pill("Download update", "", true);
+    private final Pill restartButton = new Pill("Restart Uranium", "", true);
+    private final JLabel news = label(" ", Font.PLAIN, 13, AMBER);
+    private Updater.Release release;
+    private boolean checking;
     // breathing animations: the found dot and the Inject button's glow
     private final Timer pulse;
     private float phase;
@@ -108,6 +119,7 @@ final class ProcessPickerWindow {
         body.add(injectPage(), TABS[0]);
         body.add(advancedPage(), TABS[1]);
         body.add(managePage(), TABS[2]);
+        body.add(updatePage(), TABS[3]);
         root.add(body, BorderLayout.CENTER);
         root.add(footer(), BorderLayout.SOUTH);
         frame.setContentPane(root);
@@ -117,6 +129,17 @@ final class ProcessPickerWindow {
         updateButton.addActionListener(event -> run(target(), "update", "Updating"));
         unloadButton.addActionListener(event -> run(target(), "unload", "Unloading from"));
         statusButton.addActionListener(event -> run(target(), "status", "Checking"));
+        checkButton.addActionListener(event -> checkForUpdate());
+        downloadButton.addActionListener(event -> downloadUpdate());
+        restartButton.addActionListener(event -> {
+            try {
+                Updater.restart();
+            } catch (IOException exception) {
+                progress.setText("Couldn't restart by itself: close Uranium and open it again.");
+            }
+        });
+        downloadButton.setVisible(false);
+        restartButton.setVisible(false);
         processList.addListSelectionListener(event -> updateButtons());
         pulse = new Timer(40, event -> {
             phase = (phase + 0.04F) % 1F;
@@ -132,6 +155,7 @@ final class ProcessPickerWindow {
         pulse.start();
         refresh();
         new Timer(REFRESH_MS, event -> refresh()).start();
+        checkForUpdate(); // on startup: is there a newer Uranium on GitHub?
     }
 
     // ---- layout ----
@@ -180,15 +204,21 @@ final class ProcessPickerWindow {
         c.gridy = 0;
         c.weighty = 0.25;
         c.anchor = GridBagConstraints.SOUTH;
+        news.setVisible(false);
+        c.insets = new Insets(0, 0, 10, 0);
+        page.add(news, c);
+        c.gridy = 1;
+        c.weighty = 0;
+        c.insets = new Insets(0, 0, 0, 0);
         statusCard.setPreferredSize(new Dimension(440, 70));
         page.add(statusCard, c);
-        c.gridy = 1;
+        c.gridy = 2;
         c.weighty = 0;
         c.anchor = GridBagConstraints.CENTER;
         c.insets = new Insets(26, 0, 0, 0);
         injectButton.setPreferredSize(new Dimension(220, 220));
         page.add(injectButton, c);
-        c.gridy = 2;
+        c.gridy = 3;
         c.weighty = 0.4;
         c.anchor = GridBagConstraints.NORTH;
         c.insets = new Insets(18, 0, 0, 0);
@@ -252,6 +282,174 @@ final class ProcessPickerWindow {
         handCard.setPreferredSize(new Dimension(598, 46));
         page.add(handCard, c);
         return page;
+    }
+
+    private JComponent updatePage() {
+        JPanel page = new JPanel(new BorderLayout(0, 12));
+        page.setOpaque(false);
+        page.setBorder(BorderFactory.createEmptyBorder(20, 26, 8, 26));
+        JPanel head = new Card(new BorderLayout(0, 4));
+        head.setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
+        latestLine.setHorizontalAlignment(SwingConstants.LEFT);
+        current.setHorizontalAlignment(SwingConstants.LEFT);
+        head.add(latestLine, BorderLayout.NORTH);
+        head.add(current, BorderLayout.SOUTH);
+        page.add(head, BorderLayout.NORTH);
+        notes.setEditable(false);
+        notes.setLineWrap(true);
+        notes.setWrapStyleWord(true);
+        notes.setOpaque(false);
+        notes.setForeground(TEXT);
+        notes.setFont(notes.getFont().deriveFont(13F));
+        notes.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        JScrollPane scroll = new JScrollPane(notes) {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = smooth(graphics);
+                g.setColor(new Color(CARD.getRed(), CARD.getGreen(), CARD.getBlue(), 220));
+                g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
+                g.setColor(CARD_EDGE);
+                g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
+                g.dispose();
+            }
+        };
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        scroll.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        page.add(scroll, BorderLayout.CENTER);
+        JPanel actions = new JPanel(new BorderLayout());
+        actions.setOpaque(false);
+        progress.setHorizontalAlignment(SwingConstants.LEFT);
+        actions.add(progress, BorderLayout.CENTER);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        buttons.setOpaque(false);
+        checkButton.setPreferredSize(new Dimension(140, 44));
+        downloadButton.setPreferredSize(new Dimension(180, 44));
+        restartButton.setPreferredSize(new Dimension(170, 44));
+        buttons.add(checkButton);
+        buttons.add(downloadButton);
+        buttons.add(restartButton);
+        actions.add(buttons, BorderLayout.EAST);
+        page.add(actions, BorderLayout.SOUTH);
+        current.setText("You have " + version() + ", made " + day(Updater.builtAt(agentJar)));
+        return page;
+    }
+
+    private static String day(java.time.Instant instant) {
+        return java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm")
+                .withZone(java.time.ZoneId.systemDefault()).format(instant);
+    }
+
+    /** Asks GitHub for the latest release (and the news line), in the background. */
+    private void checkForUpdate() {
+        if (checking) {
+            return;
+        }
+        checking = true;
+        checkButton.setEnabled(false);
+        latestLine.setText("Checking GitHub...");
+        latestLine.setForeground(TEXT);
+        new SwingWorker<Object[], Void>() {
+            @Override
+            protected Object[] doInBackground() {
+                Object found;
+                try {
+                    found = Updater.latest();
+                } catch (Exception exception) {
+                    found = exception.getMessage() == null ? "Couldn't reach GitHub" : exception.getMessage();
+                }
+                return new Object[] {found, Updater.news()};
+            }
+
+            @Override
+            protected void done() {
+                checking = false;
+                checkButton.setEnabled(true);
+                Object[] result;
+                try {
+                    result = get();
+                } catch (InterruptedException | ExecutionException exception) {
+                    latestLine.setText("Couldn't check for updates");
+                    return;
+                }
+                if (result[1] instanceof String line) {
+                    news.setText("News: " + line);
+                    news.setVisible(true);
+                }
+                if (!(result[0] instanceof Updater.Release latest)) {
+                    latestLine.setText("Couldn't check: " + result[0]);
+                    latestLine.setForeground(SOFT);
+                    notes.setText("Uranium looks for new versions on GitHub (" + Updater.REPO + ") every time it opens.");
+                    return;
+                }
+                release = latest;
+                String mine = agentJar.getFileName().toString();
+                notes.setText(latest.notes().isBlank() ? "(no notes for this release)" : latest.notes());
+                notes.setCaretPosition(0);
+                boolean same = mine.equals(latest.jarName());
+                boolean newer = !same && latest.jarName() != null && latest.published().isAfter(Updater.builtAt(agentJar));
+                updateReady = newer;
+                tabs.repaint();
+                downloadButton.setVisible(newer);
+                if (same) {
+                    latestLine.setText("You're up to date");
+                    latestLine.setForeground(GLOW);
+                } else if (newer) {
+                    latestLine.setText("New: " + (latest.name().isBlank() ? latest.tag() : latest.name())
+                            + "  ·  " + day(latest.published()));
+                    latestLine.setForeground(AMBER);
+                    status.setText("A new Uranium is out: see Update");
+                } else {
+                    latestLine.setText("Your build is newer than the latest release (" + latest.tag() + ")");
+                    latestLine.setForeground(SOFT);
+                }
+            }
+        }.execute();
+    }
+
+    /** Downloads the release's build into the builds folder next to Uranium.exe. */
+    private void downloadUpdate() {
+        if (release == null || release.jarUrl() == null) {
+            return;
+        }
+        downloadButton.setEnabled(false);
+        Path builds = homeFolder().resolve("builds");
+        new SwingWorker<Path, Long>() {
+            @Override
+            protected Path doInBackground() throws Exception {
+                return Updater.download(release, builds, bytes -> publish(bytes));
+            }
+
+            @Override
+            protected void process(List<Long> chunks) {
+                long bytes = chunks.get(chunks.size() - 1);
+                progress.setText(release.jarSize() > 0
+                        ? String.format(java.util.Locale.ROOT, "Downloading... %d%%", bytes * 100 / release.jarSize())
+                        : String.format(java.util.Locale.ROOT, "Downloading... %d KB", bytes / 1024));
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Path jar = get();
+                    progress.setText("Downloaded " + jar.getFileName() + ". Restart Uranium to use it.");
+                    progress.setForeground(GLOW);
+                    downloadButton.setVisible(false);
+                    restartButton.setVisible(true);
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException exception) {
+                    progress.setText("Download failed: " + exception.getCause().getMessage());
+                    downloadButton.setEnabled(true);
+                }
+            }
+        }.execute();
+    }
+
+    /** Where Uranium lives: next to Uranium.exe (or Uranium.bat when run from the source folder). */
+    private Path homeFolder() {
+        String home = System.getProperty("uranium.home");
+        return home != null ? Path.of(home) : appFolder();
     }
 
     private JComponent footer() {
@@ -434,7 +632,7 @@ final class ProcessPickerWindow {
     /** The Uranium folder: up from the jar to the folder with Uranium.bat. */
     private Path appFolder() {
         for (Path dir = agentJar.toAbsolutePath().getParent(); dir != null; dir = dir.getParent()) {
-            if (Files.isRegularFile(dir.resolve("Uranium.bat"))) {
+            if (Files.isRegularFile(dir.resolve("Uranium.bat")) || Files.isRegularFile(dir.resolve("Uranium.exe"))) {
                 return dir;
             }
         }
@@ -531,12 +729,14 @@ final class ProcessPickerWindow {
     }
 
     /** The tabs: a dark rounded track with a glowing pill under the open one. */
+    private boolean updateReady;
+
     private final class Tabs extends JComponent {
         private int selected;
         private int hover = -1;
 
         Tabs() {
-            setPreferredSize(new Dimension(330, 38));
+            setPreferredSize(new Dimension(430, 38));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             setFont(new JLabel().getFont().deriveFont(Font.BOLD, 14F));
             MouseAdapter mouse = new MouseAdapter() {
@@ -598,6 +798,12 @@ final class ProcessPickerWindow {
                 int tx = x + (width - metrics.stringWidth(TABS[i])) / 2;
                 int ty = (h - metrics.getHeight()) / 2 + metrics.getAscent();
                 g.drawString(TABS[i], tx, ty);
+                if (i == 3 && updateReady) {
+                    // a new Uranium is out: a dot on the Update tab
+                    g.setColor(i == selected ? INK : AMBER);
+                    int dx = tx + metrics.stringWidth(TABS[i]) + 5;
+                    g.fill(new Ellipse2D.Double(dx, ty - metrics.getAscent() + 2, 7, 7));
+                }
             }
             g.dispose();
         }

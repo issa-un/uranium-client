@@ -3,3 +3,8 @@ build/
 .idea/
 *.iml
 out/
+dist/
+builds/
+humans.txt
+*.rar
+java-env.zip

@@ -111,7 +111,8 @@ final class HandProfile {
             java.nio.file.Path at = java.nio.file.Path.of(HandProfile.class.getProtectionDomain().getCodeSource()
                     .getLocation().toURI());
             for (java.nio.file.Path dir = at.getParent(); dir != null; dir = dir.getParent()) {
-                if (java.nio.file.Files.isRegularFile(dir.resolve("Uranium.bat"))) {
+                if (java.nio.file.Files.isRegularFile(dir.resolve("Uranium.bat"))
+                        || java.nio.file.Files.isRegularFile(dir.resolve("Uranium.exe"))) {
                     return dir.resolve("humans.txt");
                 }
             }

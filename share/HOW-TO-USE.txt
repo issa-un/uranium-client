@@ -4,13 +4,13 @@ URANIUM — how to use it
 WHAT YOU NEED
 - Minecraft 26.1.2, 26.2 or 26.3, running with Fabric Loader and Fabric API.
   (One file works on all three. Older versions won't work.)
-- The official Minecraft Launcher. Uranium borrows its Java, so you don't
-  need to install anything else.
+- Nothing else: Uranium.exe brings its own Java.
 
 GETTING STARTED
 1. Start Minecraft and wait for the main menu.
-2. Double-click Start.bat.
-3. Pick your Minecraft from the list and click Open GUI.
+2. Unzip Uranium.zip anywhere and double-click Uranium.exe.
+3. Click the big Inject button (it lights up once it sees Minecraft).
+   Advanced lists every Java program if you need to pick one by hand.
 4. In the game, press Numpad 8 to open the menu.
    - Left-click a module to turn it on or off.
    - Right-click a module to see its settings.
@@ -21,6 +21,13 @@ each other (double hits, lag). Restart Minecraft first, then inject.
 
 To turn everything off, click Unload in the menu or in the Uranium window.
 Your settings are saved automatically.
+
+UPDATES
+Every time Uranium opens it checks GitHub for a newer version. When there
+is one, the Update tab gets a dot: open it to read what's new, click
+Download update, then Restart Uranium. The new version goes in the builds
+folder next to Uranium.exe; nothing else changes. A news line from us can
+show above the Inject button too.
 
 
 WHAT EACH MODULE DOES
