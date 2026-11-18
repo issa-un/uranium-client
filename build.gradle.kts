@@ -201,7 +201,12 @@ val packageApp = tasks.register("packageApp") {
         val dist = file("dist")
         File(dist, "Uranium").deleteRecursively()
         dist.mkdirs()
+        // Builder.exe next to Uranium.exe: the same Java and build, opened on the Builder
+        val builderProps = layout.buildDirectory.file("jpackage-builder.properties").get().asFile
+        builderProps.writeText(listOf("arguments=builder", "description=Uranium Builder",
+            "icon=" + file("packaging/uranium.ico").absolutePath.replace('\\', '/')).joinToString(System.lineSeparator()))
         val command = listOf(tool.absolutePath,
+            "--add-launcher", "Builder=" + builderProps.absolutePath,
             "--type", "app-image",
             "--name", "Uranium",
             "--input", input.absolutePath,

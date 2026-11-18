@@ -16,8 +16,14 @@ public class Main {
             return;
         }
 
+        if (args.length == 1 && "builder".equals(args[0])) {
+            // Builder.exe: updates, repair and clean
+            SwingUtilities.invokeLater(() -> new BuilderWindow().show());
+            return;
+        }
+
         if (args.length > 0) {
-            System.err.println("Usage: attach <pid> <agent-jar> [open|update|unload|status]");
+            System.err.println("Usage: attach <pid> <agent-jar> [open|update|unload|status], or builder");
             return;
         }
 

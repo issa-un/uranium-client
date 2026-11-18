@@ -29,6 +29,19 @@ Download update, then Restart Uranium. The new version goes in the builds
 folder next to Uranium.exe; nothing else changes. A news line from us can
 show above the Inject button too.
 
+BUILDER
+Builder.exe, next to Uranium.exe, looks after Uranium for you:
+- Updates: the version you have, the newest one on GitHub with what's new,
+  and Download & install. Open Uranium.exe afterwards to use it.
+- Checks your setup: Minecraft 26.1.2, Fabric Loader and Fabric API
+  installed, and whether Minecraft is running. A red dot says what's
+  missing.
+- Clean old builds: deletes downloaded versions you don't use any more.
+- Reset settings: every module back to default (close Minecraft first;
+  your old settings are kept as spear-injector.properties.old).
+- Reset my hand: deletes humans.txt, back to an average hand.
+- Open logs, Open config, Open Uranium folder.
+
 
 WHAT EACH MODULE DOES
 --------------------

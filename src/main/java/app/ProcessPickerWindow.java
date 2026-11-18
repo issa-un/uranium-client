@@ -58,18 +58,18 @@ import javax.swing.Timer;
  * aim moves like (from humans.txt). Near-black green with a radioactive glow.
  */
 final class ProcessPickerWindow {
-    private static final Color TOP = new Color(0x0C130E);
-    private static final Color BOTTOM = new Color(0x060A07);
-    private static final Color BAR = new Color(0x0A100B);
-    private static final Color CARD = new Color(0x131D15);
-    private static final Color CARD_EDGE = new Color(0x22362A);
-    private static final Color GLOW = new Color(0x39FF14);
-    private static final Color GLOW_DIM = new Color(0x1F6B12);
-    private static final Color AMBER = new Color(0xFFC14D);
-    private static final Color TEXT = new Color(0xEAFFE4);
-    private static final Color SOFT = new Color(0x86A882);
-    private static final Color FAINT = new Color(0x4C6650);
-    private static final Color INK = new Color(0x08100A);
+    static final Color TOP = new Color(0x0C130E);
+    static final Color BOTTOM = new Color(0x060A07);
+    static final Color BAR = new Color(0x0A100B);
+    static final Color CARD = new Color(0x131D15);
+    static final Color CARD_EDGE = new Color(0x22362A);
+    static final Color GLOW = new Color(0x39FF14);
+    static final Color GLOW_DIM = new Color(0x1F6B12);
+    static final Color AMBER = new Color(0xFFC14D);
+    static final Color TEXT = new Color(0xEAFFE4);
+    static final Color SOFT = new Color(0x86A882);
+    static final Color FAINT = new Color(0x4C6650);
+    static final Color INK = new Color(0x08100A);
     private static final int REFRESH_MS = 2000;
     private static final String[] TABS = {"Inject", "Advanced", "Manage", "Update"};
 
@@ -335,7 +335,7 @@ final class ProcessPickerWindow {
         return page;
     }
 
-    private static String day(java.time.Instant instant) {
+    static String day(java.time.Instant instant) {
         return java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm")
                 .withZone(java.time.ZoneId.systemDefault()).format(instant);
     }
@@ -477,7 +477,7 @@ final class ProcessPickerWindow {
         return footer;
     }
 
-    private static JLabel label(String text, int style, float size, Color color) {
+    static JLabel label(String text, int style, float size, Color color) {
         JLabel label = new JLabel(text, SwingConstants.CENTER);
         label.setFont(label.getFont().deriveFont(style, size));
         label.setForeground(color);
@@ -491,7 +491,7 @@ final class ProcessPickerWindow {
         return dash < 0 ? "dev build" : "build " + name.substring(dash + 1).replace(".jar", "");
     }
 
-    private static Graphics2D smooth(Graphics graphics) {
+    static Graphics2D smooth(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -660,7 +660,7 @@ final class ProcessPickerWindow {
         }
     }
 
-    private static Path locateAgentJar() {
+    static Path locateAgentJar() {
         try {
             Path location = Path.of(ProcessPickerWindow.class
                     .getProtectionDomain().getCodeSource().getLocation().toURI());
@@ -684,7 +684,7 @@ final class ProcessPickerWindow {
     // ---- pieces ----
 
     /** The window's background: a dark green fade, a faint dot grid, a soft glow in the middle. */
-    private static final class Backdrop extends JPanel {
+    static final class Backdrop extends JPanel {
         Backdrop(java.awt.LayoutManager layout) {
             super(layout);
         }
@@ -711,7 +711,7 @@ final class ProcessPickerWindow {
     }
 
     /** A rounded dark card with a thin edge. */
-    private static class Card extends JPanel {
+    static class Card extends JPanel {
         Card(java.awt.LayoutManager layout) {
             super(layout);
             setOpaque(false);
@@ -948,7 +948,7 @@ final class ProcessPickerWindow {
     }
 
     /** A rounded button: glowing green when it's the main action, a dark tile otherwise. */
-    private static final class Pill extends JButton {
+    static final class Pill extends JButton {
         private final boolean main;
         private final String caption;
         private boolean hover;
