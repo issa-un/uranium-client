@@ -48,10 +48,10 @@ WHAT EACH MODULE DOES
 
 COMBAT
   Spear Dash      Swaps to your spear, lunges, and swaps back, on one key.
-  Shield Break    Axe through their shield, then a mace hit while it's down.
+  Auto Stun       Axe through their shield, then a mace hit while it's down.
                   Reaches as far as the weapon in your hand (4.5 with a spear).
-  Play Style      How the aim and timing of Cart, Aim Helper, World Slash
-                  and Hit feel.
+  Play Style      How the aim and timing of Cart, Aim Assist, Kill Aura
+                  and Trigger Bot feel.
                     Mouse test: the first time you open the menu, dots pop
                     up and you click them. Uranium reads how your hand
                     moves the mouse (where your push stops before you
@@ -72,7 +72,7 @@ COMBAT
                     makes the next move faster. It cools off about 6
                     seconds after the fight. Anticheats notice Cracked
                     more than Calm, so use Calm on strict servers.
-  Hit             Hits whatever you're looking at, but only when the hit will
+  Trigger Bot     Hits whatever you're looking at, but only when the hit will
                   actually count. Settings: Chance, and Random delay: each
                   hit waits a new random time first (100 ms, then 142.1,
                   then ...) inside the Delay range, so no two hits come at
@@ -82,7 +82,8 @@ COMBAT
                   crosshair) and in the last 2.5 seconds you jumped,
                   switched hotbar slots, swung, got hit by a player or
                   sprinted at them. Holding a wind charge turns it off.
-  Knockback Steer Your sprint hit sends them where you want. The extra push of
+  Knockback Displacement
+                  Your sprint hit sends them where you want. The extra push of
                   a sprint hit goes the way your camera faces, so when you
                   sprint-hit a player it checks every way your crosshair can
                   still be on them for lava, fire, a cobweb, a cactus, your
@@ -95,26 +96,41 @@ COMBAT
                   Toward you is for cornering a player who strafes: no hit can
                   pull them in, but the sideways push can cancel their run, so
                   they land in your path and close enough for the next hit.
-  Slam Saver      A slam you click while they're still immune from the last
-                  hit would mostly be wasted. Slam Saver holds that click and
+  Hit Select      A slam you click while they're still immune from the last
+                  hit would mostly be wasted. Hit Select holds that click and
                   sends it the moment their immunity ends.
   Slam Follow-up  Slam, then sword: the moment their immunity from your slam
                   ends, it pulls out your sword, hits, and goes back.
-  Slam Steer      While you fall into a slam, holds W A S D toward the player
+  Target Strafe   While you fall into a slam, holds W A S D toward the player
                   below you so you land on them, not past them. Your own keys
                   always win.
-  World Slash     A quiet kill aura. Turns your view onto the player in
+  Kill Aura       Turns your view onto the player in
                   front of you and hits when the hit counts, only once your
                   crosshair is really on them, after a human reaction delay.
                   Settings: Range, Rotation speed, FOV, Reaction, Chance,
                   Mobs too.
-  Aim Helper      Hold Left Alt (change it, or pick Toggle / Always, in the
+  Aim Assist      Hold Left Alt (change it, or pick Toggle / Always, in the
                   menu) and your aim turns onto the player nearest your
-                  crosshair, with any item in your hand. Settings: Range,
-                  Rotation speed, FOV, Aim at (Auto / Head / Center / Feet),
-                  Ignore mouse input, Check line of sight, Aim while
-                  blocking, Ignore invisible, Ignore creative.
+                  crosshair, with any item in your hand. Aim mode:
+                    Simple  speeds up, then eases onto them. Speed is a
+                            range: each target gets its own top speed.
+                    Wind    copies Doomsday's aim, measured from a
+                            recording: a small nudge, then one flick
+                            nearly all the way (Snap), then it lets go
+                            for a moment. A step every game tick (Step
+                            every). The sharpest mode, and the easiest
+                            for an anticheat to spot.
+                    Human   reacts like a person: aims where they were a
+                            moment ago (Reaction), flicks a little past on
+                            big turns and comes back (Overshoot).
+                  It sticks to one player until another is clearly nearer
+                  your crosshair. Prediction aims ahead of a moving player
+                  (0% is smoothest). Vertical aim off turns you only left
+                  and right. Also: Range, FOV, Aim at (Auto / Head /
+                  Center / Feet), Ignore mouse input, Check line of sight,
+                  Aim while blocking, Ignore invisible, Ignore creative.
                   Off on the ground unless Ground too is on.
+                  While it's on, your spear's hotbar slot glows gold.
   Mace Swap       Pulls out your mace for slams from 4.5+ blocks. Smaller
                   drops and normal hits keep your weapon, which hits harder.
   Elytra Mace     Dive at a player with an elytra on and look at them: your
@@ -130,7 +146,7 @@ COMBAT
   Pearl Catch     Throws your pearl and sends a wind charge to meet it in the
                   air, so you teleport up. Works on a key or by right-clicking
                   a pearl.
-  Chest Swap      Swaps between elytra and chestplate on one key.
+  Elytra Swap     Swaps between elytra and chestplate on one key.
 
 CART (TNT minecarts)
   High Tier       Right-click a block with a rail: it puts the rail down,
@@ -281,7 +297,7 @@ CART (TNT minecarts)
 
 UHC
   Web Escape      Gets you out of cobwebs and fire with water.
-  Web Trap        Webs the player you're looking at, on one key.
+  Auto Web        Webs the player you're looking at, on one key.
   Wind Clutch     Throws a wind charge under you right before a fall that
                   would leave you near death, so you take no fall damage.
   MLG Water       Places water under you before a hard landing.
@@ -296,7 +312,8 @@ UTILITY
   Auto Eat        Eats when you get hungry.
   Auto Fish       Reels in when a fish bites and casts again.
   Fullbright      Lights up caves and nights.
-  Zoom            Hold a key to zoom in.
+  Zoom            Hold a key to zoom in. Zoom in: Smooth (glides in and
+                  out, the default) or Snap.
   Clear Weather   No rain or thunder on your screen.
   Auto Respawn    Skips the death screen.
   Hit Sound       A ding when your hit lands.

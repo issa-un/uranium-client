@@ -13,12 +13,12 @@ import net.minecraft.world.entity.player.Player;
  */
 final class Modules {
     /** A setting row under a module. */
-    sealed interface Row permits Toggle, Choice, Bind, Action, Slider {}
+    sealed interface Row permits Toggle, Choice, Bind, Action, Slider, Shown {}
 
     /** On or off, shown as a switch. */
     record Toggle(String label, BooleanSupplier on, Runnable flip) implements Row {}
 
-    /** One of a few values; clicking steps to the next. */
+    /** One of a few values; clicking opens a dropdown of them (found by stepping through). */
     record Choice(String label, Supplier<String> value, Runnable next) implements Row {}
 
     /** A key or mouse button; clicking waits for the next press. */
@@ -29,6 +29,24 @@ final class Modules {
 
     /** A number on a track: drag it (a range has a min and a max knob); right-click resets it. */
     record Slider(String label, Num num) implements Row {}
+
+    /** A setting that only shows while it matters (like the sliders of one aim mode). */
+    record Shown(BooleanSupplier when, Row row) implements Row {}
+
+    /** The settings to show right now: hidden ones left out. */
+    static List<Row> visible(List<Row> rows) {
+        List<Row> out = new java.util.ArrayList<>();
+        for (Row row : rows) {
+            if (row instanceof Shown shown) {
+                if (shown.when().getAsBoolean()) {
+                    out.add(shown.row());
+                }
+            } else {
+                out.add(row);
+            }
+        }
+        return out;
+    }
 
     record Module(String name, String about, BooleanSupplier on, Runnable flip, List<Row> settings) {}
 
@@ -63,7 +81,7 @@ final class Modules {
                                 new Slider("Jab delay", MinecraftSpearDash.JAB_DELAY),
                                 new Slider("Return", MinecraftSpearDash.RETURN),
                                 new Slider("Chain gap", MinecraftSpearDash.CHAIN_GAP))),
-                        new Module("Shield Break", "Axe, then mace, through a raised shield",
+                        new Module("Auto Stun", "Axe, then mace, through a raised shield",
                                 ShieldBreak::isEnabled, ShieldBreak::toggleEnabled, List.of(
                                 new Bind("Key", () -> bindLabel(ShieldBreak.keyCode(), ShieldBreak.mouseButton()),
                                         ShieldBreak::isAwaitingBinding, ShieldBreak::awaitBinding),
@@ -77,23 +95,23 @@ final class Modules {
                                 new Slider("Between hits", ShieldBreak.BETWEEN_HITS),
                                 new Slider("Axe to mace", ShieldBreak.AXE_TO_MACE),
                                 new Slider("Swap back", ShieldBreak.SWAP_BACK))),
-                        new Module("Hit", "Hits what you look at whenever the hit will count",
+                        new Module("Trigger Bot", "Hits what you look at whenever the hit will count",
                                 Hit::isEnabled, Hit::toggleEnabled, List.of(
                                 new Toggle("Auto", Hit::isAuto, Hit::toggleAuto),
                                 new Slider("Chance", Hit.CHANCE),
                                 new Toggle("Random delay", Hit::isRandomDelay, Hit::toggleRandomDelay),
                                 new Slider("Delay", Hit.DELAY))),
-                        new Module("Knockback Steer", "Your sprint hit pushes them into a hazard, or keeps them in your path",
+                        new Module("Knockback Displacement", "Your sprint hit pushes them into a hazard, or keeps them in your path",
                                 KnockbackSteer::isEnabled, KnockbackSteer::toggleEnabled, List.of(
                                 new Choice("Push", KnockbackSteer::modeLabel, KnockbackSteer::cycleMode),
                                 new Slider("Max turn", KnockbackSteer.MAX_TURN))),
-                        new Module("Slam Saver", "Holds a slam clicked into their hit immunity and sends it the tick it counts",
+                        new Module("Hit Select", "Holds a slam clicked into their hit immunity and sends it the tick it counts",
                                 SlamSaver::isEnabled, SlamSaver::toggleEnabled, List.of()),
                         new Module("Slam Follow-up", "After your slam, a sword hit the moment their immunity ends",
                                 SlamFollowUp::isEnabled, SlamFollowUp::toggleEnabled, List.of()),
-                        new Module("Slam Steer", "Air-strafes you onto the player below while you fall into a slam",
+                        new Module("Target Strafe", "Air-strafes you onto the player below while you fall into a slam",
                                 SlamSteer::isEnabled, SlamSteer::toggleEnabled, List.of()),
-                        new Module("World Slash", "Quiet kill aura: turns onto who's in front of you and hits when it counts",
+                        new Module("Kill Aura", "Quiet kill aura: turns onto who's in front of you and hits when it counts",
                                 WorldSlash::isEnabled, WorldSlash::toggleEnabled, List.of(
                                 new Slider("Range", WorldSlash.RANGE),
                                 new Slider("Rotation speed", WorldSlash.SPEED),
@@ -101,15 +119,23 @@ final class Modules {
                                 new Slider("Reaction", WorldSlash.REACTION),
                                 new Slider("Chance", WorldSlash.CHANCE),
                                 new Toggle("Mobs too", WorldSlash::isMobs, WorldSlash::toggleMobs))),
-                        new Module("Aim Helper", "Hold Alt in the air to glide your aim onto one player",
+                        new Module("Aim Assist", "Hold Alt to bring your aim onto one player",
                                 AimHelper::isEnabled, AimHelper::toggleEnabled, List.of(
                                 new Bind("Key", () -> bindLabel(AimHelper.keyCode(), AimHelper.mouseButton()),
                                         AimHelper::isAwaitingBinding, AimHelper::awaitBinding),
                                 new Choice("Key mode", AimHelper::keyModeLabel, AimHelper::cycleKeyMode),
+                                new Choice("Aim mode", AimHelper::modeLabel, AimHelper::cycleMode),
+                                new Shown(() -> AimHelper.mode() == 0, new Slider("Speed", AimHelper.SPEED)),
+                                new Shown(() -> AimHelper.mode() == 1, new Slider("Snap", AimHelper.WIND_SNAP)),
+                                new Shown(() -> AimHelper.mode() == 1, new Slider("Step every", AimHelper.WIND_GAP)),
+                                new Shown(() -> AimHelper.mode() == 2, new Slider("Speed", AimHelper.HUMAN_SPEED)),
+                                new Shown(() -> AimHelper.mode() == 2, new Slider("Reaction", AimHelper.REACTION)),
+                                new Shown(() -> AimHelper.mode() == 2, new Slider("Overshoot", AimHelper.OVERSHOOT)),
+                                new Slider("Prediction", AimHelper.PREDICTION),
                                 new Slider("Range", AimHelper.RANGE),
-                                new Slider("Rotation speed", AimHelper.SPEED),
                                 new Slider("FOV", AimHelper.FOV),
                                 new Choice("Aim at", AimHelper::aimAtLabel, AimHelper::cycleAimAt),
+                                new Toggle("Vertical aim", AimHelper::isVertical, AimHelper::toggleVertical),
                                 new Slider("Ignore mouse input", AimHelper.IGNORE_MOUSE),
                                 new Toggle("Check line of sight", AimHelper::isLineOfSight,
                                         AimHelper::toggleLineOfSight),
@@ -155,7 +181,7 @@ final class Modules {
                                 new Toggle("On right-click pearl", PearlCatch::isOnRightClick,
                                         PearlCatch::toggleOnRightClick),
                                 new Choice("Timing", PearlCatch::timingLabel, PearlCatch::cycleTiming))),
-                        new Module("Chest Swap", "Elytra or chestplate on a key",
+                        new Module("Elytra Swap", "Elytra or chestplate on a key",
                                 ChestSwap::isEnabled, ChestSwap::toggleEnabled, List.of(
                                 new Bind("Key", () -> bindLabel(ChestSwap.keyCode(), ChestSwap.mouseButton()),
                                         ChestSwap::isAwaitingBinding, ChestSwap::awaitBinding),
@@ -198,7 +224,7 @@ final class Modules {
                                 WebEscape::isEnabled, WebEscape::toggleEnabled, List.of(
                                 new Toggle("On fire too", WebEscape::isOnFire, WebEscape::toggleOnFire),
                                 new Toggle("Pick up water", WebEscape::isPickUp, WebEscape::togglePickUp))),
-                        new Module("Web Trap", "Webs the player you look at, on a key",
+                        new Module("Auto Web", "Webs the player you look at, on a key",
                                 WebTrap::isEnabled, WebTrap::toggleEnabled, List.of(
                                 new Bind("Key", () -> bindLabel(WebTrap.keyCode(), WebTrap.mouseButton()),
                                         WebTrap::isAwaitingBinding, WebTrap::awaitBinding),
@@ -243,7 +269,8 @@ final class Modules {
                                 Utilities::isZoom, Utilities::toggleZoom, List.of(
                                 new Bind("Hold", () -> bindLabel(Utilities.zoomKey(), Utilities.zoomMouse()),
                                         Utilities::isAwaitingZoomBinding, Utilities::awaitZoomBinding),
-                                new Choice("Zoom", () -> Utilities.zoomFactor() + "x", Utilities::cycleZoomFactor))),
+                                new Choice("Zoom", () -> Utilities.zoomFactor() + "x", Utilities::cycleZoomFactor),
+                                new Choice("Zoom in", Utilities::zoomStyleLabel, Utilities::cycleZoomStyle))),
                         new Module("Clear Weather", "No rain or thunder on your screen",
                                 Utilities::isClearWeather, Utilities::toggleClearWeather, List.of()),
                         new Module("Auto Respawn", "Skips the death screen",
@@ -256,7 +283,8 @@ final class Modules {
                         // Only shows when you search "debug".
                         new Module("Debug", "Shows how human the modules look and what could get you flagged",
                                 Debug::isEnabled, Debug::toggleEnabled, List.of(
-                                new Action(() -> "Open the debug screen", () -> Mc.setScreen(minecraft, new DebugScreen())))))),
+                                new Action(() -> "Open the debug screen", () -> Mc.setScreen(minecraft, new DebugScreen())),
+                                new Action(AimRecorder::label, AimRecorder::toggle))))),
                 new Category("HUD", "H", 0xFF64DD17, List.of(
                         new Module("Speed HUD", hud ? "Speed ring above the hotbar" : "Needs Fabric API's HUD module",
                                 VelocityHud::isSpeedHudOn, VelocityHud::toggleSpeedHud, List.of(

@@ -166,6 +166,8 @@ final class VelocityHud {
         // HUD is not drawn (F1).
         MinecraftSpearDash.updateDash(minecraft, false);
         AimHelper.update(minecraft);
+        AimRecorder.frame(minecraft);
+        Utilities.zoomFrame(minecraft);
         WorldSlash.update(minecraft);
         CartLowTier.frame(minecraft);
         CartHighTier.frame(minecraft);
@@ -198,6 +200,8 @@ final class VelocityHud {
         NightShift.draw(graphics, minecraft);
         ArmorSlots.draw(graphics, minecraft);
         Debug.drawBadge(graphics, minecraft);
+        AimHelper.drawSpearGlow(graphics, minecraft);
+        AimRecorder.drawBadge(graphics, minecraft);
         CartBlock.drawAlert(graphics, minecraft);
         if (CombatStats.isOn()) {
             int[] panel = position(COMBAT_STATS, graphics.guiWidth(), graphics.guiHeight());

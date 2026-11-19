@@ -81,6 +81,11 @@ final class Num {
         return (tenths % 10 == 0 ? String.valueOf(tenths / 10) : String.valueOf(tenths / 10.0)) + "°";
     }
 
+    /** A min-max value picked at random in between each time (like 450-600°/s). */
+    static Num range(int low, int high, int limit, int step, String unit) {
+        return new Num(true, limit, step, unit, low, high);
+    }
+
     /** A chance from 0 to 100%. */
     static Num percent(int value) {
         return new Num(false, 100, 1, "%", value, value);

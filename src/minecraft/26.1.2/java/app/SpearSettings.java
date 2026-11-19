@@ -180,6 +180,7 @@ final class SpearSettings {
         Utilities.setAutoSprint(p.bool("util.autoSprint", Utilities.isAutoSprint()));
         Utilities.setFullbright(p.bool("util.fullbright", Utilities.isFullbright()));
         Utilities.setZoom(p.bool("util.zoom", Utilities.isZoom()));
+        Utilities.setZoomSmooth(p.bool("util.zoomSmooth", Utilities.isZoomSmooth()));
         Utilities.setZoomFactor(p.integer("util.zoomFactor", Utilities.zoomFactor()));
         Utilities.setZoomBinding(p.integer("util.zoomKey", Utilities.zoomKey()),
                 p.integer("util.zoomMouse", Utilities.zoomMouse()));
@@ -255,7 +256,15 @@ final class SpearSettings {
         WorldSlash.setMobs(p.bool("worldSlash.mobs", WorldSlash.isMobs()));
         AimHelper.setEnabled(p.bool("aimHelper.enabled", AimHelper.isEnabled()));
         p.num("aimHelper.range", AimHelper.RANGE);
-        p.num("aimHelper.speed", AimHelper.SPEED);
+        p.num("aimHelper.speed2", AimHelper.SPEED);
+        AimHelper.setMode(p.integer("aimHelper.mode", AimHelper.mode()));
+        AimHelper.setVertical(p.bool("aimHelper.vertical", AimHelper.isVertical()));
+        p.num("aimHelper.prediction", AimHelper.PREDICTION);
+        p.num("aimHelper.windSnap", AimHelper.WIND_SNAP);
+        p.num("aimHelper.windGap", AimHelper.WIND_GAP);
+        p.num("aimHelper.humanSpeed2", AimHelper.HUMAN_SPEED);
+        p.num("aimHelper.reaction", AimHelper.REACTION);
+        p.num("aimHelper.overshoot2", AimHelper.OVERSHOOT);
         p.num("aimHelper.fov", AimHelper.FOV);
         p.num("aimHelper.ignoreMouse", AimHelper.IGNORE_MOUSE);
         AimHelper.setAimAt(p.integer("aimHelper.aimAt", AimHelper.aimAt()));
@@ -366,6 +375,7 @@ final class SpearSettings {
         put(file, prefix, "util.autoSprint", Utilities.isAutoSprint());
         put(file, prefix, "util.fullbright", Utilities.isFullbright());
         put(file, prefix, "util.zoom", Utilities.isZoom());
+        put(file, prefix, "util.zoomSmooth", Utilities.isZoomSmooth());
         put(file, prefix, "util.zoomFactor", Utilities.zoomFactor());
         put(file, prefix, "util.zoomKey", Utilities.zoomKey());
         put(file, prefix, "util.zoomMouse", Utilities.zoomMouse());
@@ -441,7 +451,15 @@ final class SpearSettings {
         put(file, prefix, "worldSlash.mobs", WorldSlash.isMobs());
         put(file, prefix, "aimHelper.enabled", AimHelper.isEnabled());
         putNum(file, prefix, "aimHelper.range", AimHelper.RANGE);
-        putNum(file, prefix, "aimHelper.speed", AimHelper.SPEED);
+        putNum(file, prefix, "aimHelper.speed2", AimHelper.SPEED);
+        put(file, prefix, "aimHelper.mode", AimHelper.mode());
+        put(file, prefix, "aimHelper.vertical", AimHelper.isVertical());
+        putNum(file, prefix, "aimHelper.prediction", AimHelper.PREDICTION);
+        putNum(file, prefix, "aimHelper.windSnap", AimHelper.WIND_SNAP);
+        putNum(file, prefix, "aimHelper.windGap", AimHelper.WIND_GAP);
+        putNum(file, prefix, "aimHelper.humanSpeed2", AimHelper.HUMAN_SPEED);
+        putNum(file, prefix, "aimHelper.reaction", AimHelper.REACTION);
+        putNum(file, prefix, "aimHelper.overshoot2", AimHelper.OVERSHOOT);
         putNum(file, prefix, "aimHelper.fov", AimHelper.FOV);
         putNum(file, prefix, "aimHelper.ignoreMouse", AimHelper.IGNORE_MOUSE);
         put(file, prefix, "aimHelper.aimAt", AimHelper.aimAt());

@@ -20,7 +20,8 @@ import com.mojang.blaze3d.platform.InputConstants;
  * - Fullbright: turns brightness far past the slider's maximum so caves and nights are lit;
  *   your own brightness comes back when it is turned off.
  * - Zoom: while its key is held, narrows the field of view by Zoom (2x, 4x, 8x) and slows the
- *   mouse to match; both come back on release.
+ *   mouse to match; both come back on release. Smooth (default) glides in and out over about
+ *   a sixth of a second, every frame; Snap jumps straight there.
  * - Auto Respawn: on the death screen, respawns at once, and with Death coords puts where you
  *   died in your chat (only you see it) and in the log.
  * - Auto Walk: holds forward for you until you turn it off (or open a screen).
@@ -40,6 +41,10 @@ final class Utilities {
     private static volatile int zoomKey = -1;
     private static volatile int zoomMouse = -1;
     private static volatile boolean awaitingZoomBinding;
+    private static volatile boolean zoomSmooth = true;
+    // How far zoomed in right now (1 = not at all); render thread only.
+    private static double zoomLevel = 1;
+    private static long zoomFrameNs;
     private static volatile boolean autoRespawn;
     private static volatile boolean deathCoords = true;
     private static volatile boolean autoWalk;
@@ -158,20 +163,59 @@ final class Utilities {
         }
     }
 
+    /** Called every frame by the HUD (and from the input loop when the HUD is hidden). */
+    static void zoomFrame(Minecraft minecraft) {
+        updateZoom(minecraft);
+    }
+
     private static void updateZoom(Minecraft minecraft) {
+        long now = System.nanoTime();
+        double seconds = zoomFrameNs == 0 ? 0 : Math.min(0.1, (now - zoomFrameNs) / 1.0E9);
+        zoomFrameNs = now;
         boolean held = zoom && Mc.screen(minecraft) == null && (zoomKey >= 0 || zoomMouse >= 0)
                 && (zoomMouse >= 0
                         ? GLFW.glfwGetMouseButton(minecraft.getWindow().handle(), zoomMouse) == GLFW.GLFW_PRESS
                         : Mc.isKeyDown(minecraft, zoomKey));
-        if (held && savedFov == null) {
-            savedFov = minecraft.options.fov().get();
-            savedSensitivity = minecraft.options.sensitivity().get();
-            int factor = ZOOM_FACTORS[zoomIndex];
-            RawOption.set(minecraft.options.fov(), Math.max(1, savedFov / factor));
-            RawOption.set(minecraft.options.sensitivity(), savedSensitivity / factor);
-        } else if (!held && savedFov != null) {
+        double target = held ? ZOOM_FACTORS[zoomIndex] : 1;
+        if (zoomSmooth) {
+            // Eases toward the target: most of the way in about a sixth of a second.
+            zoomLevel += (target - zoomLevel) * (1 - Math.exp(-seconds * 16));
+            if (Math.abs(target - zoomLevel) < 0.01) {
+                zoomLevel = target;
+            }
+        } else {
+            zoomLevel = target;
+        }
+        if (zoomLevel > 1.001) {
+            if (savedFov == null) {
+                savedFov = minecraft.options.fov().get();
+                savedSensitivity = minecraft.options.sensitivity().get();
+            }
+            int fov = (int) Math.max(1, Math.round(savedFov / zoomLevel));
+            if (minecraft.options.fov().get() != fov) {
+                RawOption.set(minecraft.options.fov(), fov);
+            }
+            RawOption.set(minecraft.options.sensitivity(), savedSensitivity / zoomLevel);
+        } else if (savedFov != null) {
+            zoomLevel = 1;
             endZoom(minecraft);
         }
+    }
+
+    static String zoomStyleLabel() {
+        return zoomSmooth ? "Smooth" : "Snap";
+    }
+
+    static boolean isZoomSmooth() {
+        return zoomSmooth;
+    }
+
+    static void setZoomSmooth(boolean on) {
+        zoomSmooth = on;
+    }
+
+    static void cycleZoomStyle() {
+        zoomSmooth = !zoomSmooth;
     }
 
     private static void endZoom(Minecraft minecraft) {

@@ -73,9 +73,9 @@ final class Debug {
     private static final Map<String, String> NAMES = Map.ofEntries(
             Map.entry("CartHighTier", "High Tier"), Map.entry("CartLowTier", "Low Tier"),
             Map.entry("CartBlock", "Block"), Map.entry("CartRefill", "Replenish"),
-            Map.entry("CrossbowReload", "Auto reload"), Map.entry("KnockbackSteer", "Knockback Steer"),
-            Map.entry("AimHelper", "Aim Helper"), Map.entry("MaceSwap", "Mace Swap"),
-            Map.entry("ShieldBreak", "Shield Break"), Map.entry("SlamSteer", "Slam Steer"),
+            Map.entry("CrossbowReload", "Auto reload"), Map.entry("KnockbackSteer", "Knockback Displacement"),
+            Map.entry("AimHelper", "Aim Assist"), Map.entry("MaceSwap", "Mace Swap"),
+            Map.entry("ShieldBreak", "Auto Stun"), Map.entry("SlamSteer", "Target Strafe"),
             Map.entry("PearlCatch", "Pearl Catch"), Map.entry("DebugScreen", "Debug test"),
             Map.entry("MinecraftSpearDash", "Spear Dash"));
 

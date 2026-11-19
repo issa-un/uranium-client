@@ -437,7 +437,7 @@ final class MinecraftSpearDash {
         return -1;
     }
 
-    private static boolean isSpear(ItemStack stack) {
+    static boolean isSpear(ItemStack stack) {
         return stack.is(Items.WOODEN_SPEAR)
                 || stack.is(Items.GOLDEN_SPEAR)
                 || stack.is(Items.STONE_SPEAR)

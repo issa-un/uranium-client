@@ -84,6 +84,9 @@ final class MinecraftInputController {
         try {
             if (ownKeyCallback == null) {
                 ownKeyCallback = GLFWKeyCallback.create((handle, key, scancode, action, mods) -> {
+                    if (active) {
+                        AimRecorder.press(key, action);
+                    }
                     if (active && action == GLFW.GLFW_PRESS
                             && onKeyPressed(minecraft, key, scancode, mods)) {
                         return; // a module used the press; the game must not also act on it
@@ -101,6 +104,9 @@ final class MinecraftInputController {
         try {
             if (ownMouseCallback == null) {
                 ownMouseCallback = GLFWMouseButtonCallback.create((handle, button, action, mods) -> {
+                    if (active) {
+                        AimRecorder.press(-1 - button, action);
+                    }
                     if (active && action == GLFW.GLFW_PRESS && onMousePressed(minecraft, button, mods)) {
                         return; // a module used the click; the game must not also act on it
                     }
@@ -168,6 +174,7 @@ final class MinecraftInputController {
         MaceLog.reset();
         Hit.reset();
         AimHelper.reset();
+        AimRecorder.stop();
         CartHighTier.reset();
         CartLowTier.reset();
         CartRefill.reset();

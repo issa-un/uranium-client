@@ -114,6 +114,24 @@ public final class ClickGuiScreen extends Screen {
     private double dragOffsetY;
     private long lastFrameNs;
     private long openedNs;
+    // The open dropdown (a Choice's menu), if any.
+    private Modules.Choice openChoice;
+    private List<String> openOptions = List.of();
+    private int openIndex;
+    private int anchorRight;
+    private int anchorY;
+    private int anchorWidth;
+    private long menuOpenedNs;
+    private int menuX1;
+    private int menuY1;
+    private int menuX2;
+    private int menuY2;
+    // Each choice's options in the order first seen, so its menu keeps one order.
+    private static final Map<String, List<String>> OPTIONS = new HashMap<>();
+    private static final int MENU_ITEM = 14;
+    private static final int MENU_PAD = 4;
+    private static final int MENU = 0xF6141E16;
+    private static final int MENU_EDGE = 0x40FFFFFF;
 
     /** Somewhere clickable this frame, and what a left or right click there does. */
     private record Hit(int x1, int y1, int x2, int y2, Runnable left, Runnable right) {
@@ -205,6 +223,7 @@ public final class ClickGuiScreen extends Screen {
         drawContent(graphics, minecraft, categories, x + SIDEBAR, y, w - SIDEBAR, h, mouseX, mouseY, frameSeconds);
         // A hairline around the window, as macOS draws it.
         outline(graphics, x, y, x + w, y + h, 0x6039FF14);
+        drawDropdown(graphics, mouseX, mouseY);
 
         graphics.pose().popMatrix();
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
@@ -405,7 +424,7 @@ public final class ClickGuiScreen extends Screen {
         }
         y += 4;
 
-        List<Modules.Row> settings = module.settings();
+        List<Modules.Row> settings = Modules.visible(module.settings());
         int top = y;
         if (settings.isEmpty()) {
             graphics.text(font, "Nothing to set", px1 + 2, y + 4, TERTIARY, false);
@@ -509,11 +528,23 @@ public final class ClickGuiScreen extends Screen {
             }
             case Modules.Choice choice -> {
                 graphics.text(font, choice.label(), x1 + LABEL_INSET, textY, TEXT_SOFT, false);
+                // A macOS popup button: the value in a pill with the up-down arrows.
                 String value = choice.value().get();
-                int valueX = right - 8 - font.width(value);
-                graphics.text(font, value, valueX, textY, over ? TEXT : SECONDARY, false);
-                chevron(graphics, right - 3, y + 10, false, over ? TEXT_SOFT : TERTIARY);
-                hit(x1, top, x2, bottom, choice.next(), null);
+                boolean open = choice == openChoice;
+                int buttonRight = right + 4;
+                int buttonLeft = buttonRight - font.width(value) - 24;
+                roundRect(graphics, buttonLeft, y + 3, buttonRight, y + SETTING_ROW - 3, 5,
+                        open || over ? PILL_HOVER : PILL, true, true);
+                graphics.text(font, value, buttonLeft + 7, textY, TEXT, false);
+                roundRect(graphics, buttonRight - 13, y + 4, buttonRight - 1, y + SETTING_ROW - 4, 4,
+                        accent, true, true);
+                upDown(graphics, buttonRight - 7, y + SETTING_ROW / 2, 0xFF0B110C);
+                int rowY = y;
+                int width = buttonRight - buttonLeft;
+                hit(x1, top, x2, bottom, () -> openDropdown(choice, buttonRight, rowY, width), null);
+            }
+            case Modules.Shown shown -> {
+                // Unwrapped by Modules.visible before drawing.
             }
             case Modules.Bind bind -> {
                 graphics.text(font, bind.label(), x1 + LABEL_INSET, textY, TEXT_SOFT, false);
@@ -637,6 +668,135 @@ public final class ClickGuiScreen extends Screen {
         }
     }
 
+    /** The small up and down arrows of a macOS popup button. */
+    private static void upDown(GuiGraphicsExtractor graphics, int x, int y, int color) {
+        for (int i = 0; i < 3; i++) {
+            graphics.fill(x - i, y - 4 + i, x + i + 1, y - 3 + i, color);
+            graphics.fill(x - 2 + i, y + 1 + i, x + 3 - i, y + 2 + i, color);
+        }
+    }
+
+    /**
+     * Opens a choice's menu. Its options are found by stepping it all the way round (back to
+     * where it was), the first time, and kept in that order after.
+     */
+    private void openDropdown(Modules.Choice choice, int right, int rowY, int width) {
+        String key = choice.label() + "@" + System.identityHashCode(choice.next().getClass());
+        String current = choice.value().get();
+        List<String> options = OPTIONS.get(key);
+        if (options == null || !options.contains(current)) {
+            options = new ArrayList<>();
+            options.add(current);
+            for (int i = 0; i < 16; i++) {
+                choice.next().run();
+                String value = choice.value().get();
+                if (value.equals(current) || options.contains(value)) {
+                    break;
+                }
+                options.add(value);
+            }
+            for (int guard = 0; guard < 32 && !choice.value().get().equals(current); guard++) {
+                choice.next().run();
+            }
+            OPTIONS.put(key, options);
+        }
+        if (options.size() < 2) {
+            choice.next().run(); // nothing to pick between: just steps
+            changed();
+            return;
+        }
+        openChoice = choice;
+        openOptions = options;
+        openIndex = options.indexOf(current);
+        anchorRight = right;
+        anchorY = rowY;
+        anchorWidth = width;
+        menuOpenedNs = System.nanoTime();
+    }
+
+    private void closeDropdown() {
+        openChoice = null;
+    }
+
+    /**
+     * The open menu, macOS style: it opens over the button with the current value right on
+     * top of it, a check by the current one, and the row under the mouse lit up.
+     */
+    private void drawDropdown(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        if (openChoice == null) {
+            return;
+        }
+        int widest = 0;
+        for (String option : openOptions) {
+            widest = Math.max(widest, font.width(option));
+        }
+        int w = Math.max(anchorWidth + 8, widest + 30);
+        int h = openOptions.size() * MENU_ITEM + 2 * MENU_PAD;
+        int x2 = Math.min(width - 4, anchorRight + 4);
+        int x1 = Math.max(4, x2 - w);
+        int y1 = anchorY + (SETTING_ROW - MENU_ITEM) / 2 - MENU_PAD - openIndex * MENU_ITEM;
+        y1 = clamp(y1, 4, Math.max(4, height - h - 4));
+        int y2 = y1 + h;
+        menuX1 = x1;
+        menuY1 = y1;
+        menuX2 = x2;
+        menuY2 = y2;
+        // Pops in over about 0.08 s.
+        float open = Math.min(1.0F, (System.nanoTime() - menuOpenedNs) / 80.0E6F);
+        float scale = 0.94F + 0.06F * (1 - (1 - open) * (1 - open));
+        float cx = (x1 + x2) / 2.0F;
+        float cy = anchorY + SETTING_ROW / 2.0F;
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(cx, cy);
+        graphics.pose().scale(scale, scale);
+        graphics.pose().translate(-cx, -cy);
+        for (int spread = 1; spread <= 4; spread++) {
+            roundRect(graphics, x1 - spread, y1 - spread + 2, x2 + spread, y2 + spread + 2, 6 + spread,
+                    0x16000000, true, true);
+        }
+        roundRect(graphics, x1 - 1, y1 - 1, x2 + 1, y2 + 1, 7, MENU_EDGE, true, true);
+        roundRect(graphics, x1, y1, x2, y2, 6, MENU, true, true);
+        for (int i = 0; i < openOptions.size(); i++) {
+            int iy = y1 + MENU_PAD + i * MENU_ITEM;
+            boolean over = inside(mouseX, mouseY, x1 + MENU_PAD, iy, x2 - MENU_PAD, iy + MENU_ITEM);
+            if (over) {
+                roundRect(graphics, x1 + MENU_PAD, iy, x2 - MENU_PAD, iy + MENU_ITEM, 4, accent, true, true);
+            }
+            int color = over ? 0xFF0B110C : TEXT;
+            if (i == openIndex) {
+                check(graphics, x1 + MENU_PAD + 4, iy + 4, color);
+            }
+            graphics.text(font, openOptions.get(i), x1 + MENU_PAD + 14, iy + 3, color, false);
+        }
+        graphics.pose().popMatrix();
+    }
+
+    /** A small check mark, 7 by 5 pixels, its top-left at x, y. */
+    private static void check(GuiGraphicsExtractor graphics, int x, int y, int color) {
+        for (int i = 0; i < 7; i++) {
+            int dy = i <= 2 ? 2 + i : 4 - (i - 2);
+            graphics.fill(x + i, y + dy, x + i + 1, y + dy + 2, color);
+        }
+    }
+
+    /** A click while the menu is open: picks the option under it, or just closes the menu. */
+    private void clickDropdown(double mouseX, double mouseY) {
+        Modules.Choice choice = openChoice;
+        closeDropdown();
+        if (!inside(mouseX, mouseY, menuX1, menuY1, menuX2, menuY2)) {
+            return;
+        }
+        int picked = (int) Math.floor((mouseY - menuY1 - MENU_PAD) / MENU_ITEM);
+        if (picked < 0 || picked >= openOptions.size() || picked == openIndex) {
+            return;
+        }
+        int steps = Math.floorMod(picked - openIndex, openOptions.size());
+        for (int i = 0; i < steps; i++) {
+            choice.next().run();
+        }
+        changed();
+    }
+
     private void startDrag() {
         dragging = true;
     }
@@ -657,6 +817,14 @@ public final class ClickGuiScreen extends Screen {
             }
         }
         searchFocused = false;
+        if (openChoice != null) {
+            if (event.button() == 0) {
+                clickDropdown(event.x(), event.y());
+            } else {
+                closeDropdown();
+            }
+            return true;
+        }
         for (SliderHit slider : sliders) {
             if (!slider.contains(event.x(), event.y())) {
                 continue;
@@ -728,6 +896,7 @@ public final class ClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        closeDropdown();
         if (mouseX >= settingsX) {
             settingsScroll = clamp(settingsScroll - (int) Math.round(scrollY * 18), 0, maxSettingsScroll);
         } else {
@@ -749,6 +918,10 @@ public final class ClickGuiScreen extends Screen {
                 changed();
                 return true;
             }
+        }
+        if (openChoice != null && event.key() == 256) { // Esc closes the menu, not the screen
+            closeDropdown();
+            return true;
         }
         if (!query.isEmpty() || searchFocused) {
             if (event.key() == 259 && !query.isEmpty()) { // Backspace

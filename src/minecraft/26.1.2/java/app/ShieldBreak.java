@@ -307,7 +307,7 @@ final class ShieldBreak {
         }
         String reason;
         if (!enabled) {
-            reason = "Shield Break is off";
+            reason = "Auto Stun is off";
         } else if (!SpearSettings.combatAllowed(minecraft)) {
             reason = "combat modules are off on this server";
         } else if (!onAttackClick) {
@@ -490,7 +490,7 @@ final class ShieldBreak {
                 case MACE_HIT -> {
                     landedEarly = slamWanted && !MaceSwap.isSlam(player);
                     if (!landedEarly && target.isAlive() && inRange(player, maceSlot, target, pressExtra)) {
-                        MaceLog.attack(minecraft, target, maceSlot, previousSlot, "Shield Break follow-up");
+                        MaceLog.attack(minecraft, target, maceSlot, previousSlot, "Auto Stun follow-up");
                         hit(minecraft);
                         maceHit = true;
                     }

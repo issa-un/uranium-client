@@ -1,5 +1,7 @@
 package app;
 
+import java.util.ArrayDeque;
+import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.component.DataComponents;
@@ -15,19 +17,26 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Aim Helper: while its key works (hold Left Alt by default), turns your view toward the
  * player nearest your crosshair, with any item in your hand. Your own mouse always still
- * works on top of it.
- * Settings follow Wurst's Aim Assist:
- * - Range: every moment it picks the player closest to your crosshair within this many
- *   blocks of your eyes (measured to their hitbox, so reach).
+ * works on top of it, and every turn goes out in whole mouse counts like a real mouse.
+ * Aim mode picks how it moves:
+ * - Simple: speeds up, then slows down as it gets close, so it settles instead of stopping
+ *   dead. Each target gets its own top speed from the Speed range.
+ * - Wind: copies the aim measured from a Doomsday recording: about once a game tick it
+ *   nudges a couple of degrees toward them, then flicks nearly the whole way in one go (Snap,
+ *   a little short or past), then lets go for a moment before the next flick. Fast and
+ *   sharp: big flicks in one step are what anticheats look for, so it's the riskiest mode.
+ * - Human: reacts like a person: aims where they were a moment ago (Reaction), flicks a
+ *   little past on big turns and comes back (Overshoot), then follows.
+ * The rest:
+ * - Range: players within this many blocks of your eyes (to their hitbox, so reach).
  * - FOV: only players inside this cone around your crosshair (360 = all around you).
- * - Aim at: Auto aims at the spot on their hitbox nearest your crosshair, so once you are on
- *   them it stops moving and never fights you; or Head, Center, Feet.
- * - Speed: how fast it turns, in degrees per second, at a steady rate.
+ * - It sticks to one player until another is clearly nearer your crosshair.
+ * - Aim at: Center by default; Auto is the spot on their hitbox nearest your crosshair.
+ * - Prediction: how far ahead of a moving player it aims (0% = where they are, smoothest).
+ *   Their speed is smoothed over a few ticks first, so it doesn't jump.
+ * - Vertical aim: off turns you only left and right.
  * - Ignore mouse: holds back that share of your own mouse while it aims.
  * - Line of sight: no aiming through walls. Ignore invisible / Ignore creative players.
- * - Their hitbox is moved ahead by their speed for one tick plus your ping, so it aims where
- *   they will be when your hit arrives.
- * - Runs every frame, so it glides.
  * - It holds off while you eat, drink or block with a shield, unless Aim while blocking.
  * - Air only unless Ground too is on.
  * - Key: Hold (only while held), Toggle (press on, press off) or Always (no key needed).
@@ -36,22 +45,48 @@ import org.lwjgl.glfw.GLFW;
 final class AimHelper {
     private static final double MIN_RANGE = 1;
     private static final int MIN_FOV = 30;
-    private static final double MAX_LEAD_TICKS = 6;
+    private static final double MAX_LEAD_TICKS = 4;
     /** How far into their hitbox the aim spot sits, so you end up on it, not on its edge. */
     private static final double INSET = 0.1;
     private static final long LOG_GAP_MS = 1000;
     private static final String[] KEY_MODES = {"Hold", "Toggle", "Always"};
     private static final String[] AIM_AT = {"Auto", "Head", "Center", "Feet"};
+    private static final String[] MODES = {"Simple", "Wind", "Human"};
+    /** Another player has to be this much nearer your crosshair to take over. */
+    private static final double SWITCH_SHARE = 0.6;
+    /** Wind moves in steps this long, whatever your frame rate. */
+    private static final double WIND_STEP_S = 1 / 120.0;
+    private static final long HISTORY_MS = 400;
+    /** A locked player out of sight this briefly is still the same move. */
+    private static final long LOCK_GRACE_MS = 400;
+    /** A locked player may drift this much past Range before it lets go. */
+    private static final double LOCK_EXTRA_RANGE = 1.0;
+    /** How far a Human aim may drift from them before it flicks again, in degrees. */
+    private static final double FLICK_FROM = 9;
     /** How far away a player may be, to their hitbox (your reach). */
     static final Num RANGE = Num.tenths(4.5, 6, " blocks");
-    /** How fast it turns your view. */
-    static final Num SPEED = Num.value(600, 3600, 10, "\u00B0/s");
+    /** Simple: its top turn speed, a new one from this range for each target. */
+    static final Num SPEED = Num.range(600, 800, 3600, 10, "°/s");
     private static final MouseSteps MOUSE = new MouseSteps();
     /** How wide around your crosshair it looks for players. */
-    static final Num FOV = Num.value(120, 360, 10, "\u00B0");
+    static final Num FOV = Num.value(120, 360, 10, "°");
     /** How much of your own mouse movement it holds back while aiming. */
     static final Num IGNORE_MOUSE = Num.percent(0);
-    private static volatile int aimAt;
+    /** How far ahead of a moving player it aims: 0% is where they are now. */
+    static final Num PREDICTION = Num.percent(0);
+    /** Wind: how much of the gap one flick closes (Doomsday measured: 98%). */
+    static final Num WIND_SNAP = Num.value(98, 120, 1, "%");
+    /** Wind: time between its steps (Doomsday measured: about 57 ms, a game tick). */
+    static final Num WIND_GAP = Num.value(55, 300, 5, " ms");
+    /** Human: how fast its flicks and follow are, 1.0x being a normal hand. */
+    static final Num HUMAN_SPEED = Num.tenths(1.5, 2.0, "x");
+    /** Human: how long it takes to react to them moving. */
+    static final Num REACTION = Num.value(80, 300, 5, " ms");
+    /** Human: how far past it goes on a big flick, as a share of the flick. */
+    static final Num OVERSHOOT = Num.value(10, 30, 1, "%");
+    private static volatile int mode;
+    private static volatile boolean vertical = true;
+    private static volatile int aimAt = 2;
     private static volatile boolean lineOfSight = true;
     private static volatile boolean whileBlocking;
     private static volatile boolean ignoreInvisible = true;
@@ -66,11 +101,33 @@ final class AimHelper {
     // Render thread only.
     private static long lastStepMs;
     private static String lastTarget = "";
+    private static Player target;
     private static boolean haveLast;
     private static float lastYaw;
     private static float lastPitch;
     private static String lastNoteKind = "";
     private static long lastNoteMs;
+    // The current move.
+    private static double topSpeed;
+    private static double speedNow;
+    private static double velYaw;
+    private static double velPitch;
+    private static double windYaw;
+    private static double windPitch;
+    private static double windClock;
+    private static long windNextMs;
+    private static boolean windNudged;
+    private static Vec3 smoothSpeed = Vec3.ZERO;
+    private static final ArrayDeque<long[]> HISTORY_TIMES = new ArrayDeque<>();
+    private static final ArrayDeque<Vec3> HISTORY_SPOTS = new ArrayDeque<>();
+    private static boolean flicking;
+    // When the locked player was last lost (0: still locked). Back within LOCK_GRACE_MS, it
+    // carries on where it was instead of starting over.
+    private static long lostMs;
+    private static double flickMs;
+    private static double flickLength;
+    private static double pastYaw;
+    private static double pastPitch;
 
     private AimHelper() {}
 
@@ -85,79 +142,256 @@ final class AimHelper {
         LocalPlayer player = minecraft.player;
         if (!enabled || player == null || minecraft.level == null || Mc.screen(minecraft) != null
                 || !SpearSettings.combatAllowed(minecraft) || !keyActive(minecraft)) {
-            lastTarget = "";
-            haveLast = false;
+            drop();
             return;
         }
         if (player.onGround() && !ground) {
-            haveLast = false;
+            drop();
             note("waiting: on the ground (turn on Ground too to help here)", now);
             return;
         }
         if (!whileBlocking && busyHands(player)) {
-            haveLast = false;
+            drop();
             note("waiting: you are eating, drinking or blocking", now);
             return;
         }
         float partial = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(true);
         Vec3 eye = player.getEyePosition(partial);
         Vec3 look = player.getViewVector(partial);
-        double lead = Math.min(MAX_LEAD_TICKS, 1 + ShieldBreak.pingMs(minecraft) / 50.0);
         double range = Math.max(MIN_RANGE, RANGE.tenths());
         double fovHalf = Math.max(MIN_FOV, FOV.low()) / 2.0;
         Player best = null;
-        Vec3 bestSpot = null;
         double bestOff = fovHalf >= 180 ? Double.MAX_VALUE : fovHalf;
+        double currentOff = Double.MAX_VALUE;
         for (Player other : minecraft.level.players()) {
             if (other == player || !other.isAlive() || other.isSpectator() || VelocityHud.isFriend(other)
                     || ignoreInvisible && other.isInvisible() || ignoreCreative && other.isCreative()) {
                 continue;
             }
-            AABB box = ahead(other, partial, lead);
-            if (reach(eye, box) > range) {
+            // Once locked on, FOV no longer matters and it holds on a bit past Range, so
+            // diving over them (they slide far off your crosshair) doesn't lose them.
+            boolean locked = other == target && (lostMs == 0 || now - lostMs < LOCK_GRACE_MS);
+            AABB box = drawnBox(other, partial);
+            if (reach(eye, box) > range + (locked ? LOCK_EXTRA_RANGE : 0)) {
                 continue;
             }
             Vec3 spot = spot(eye, look, box, other);
             double off = angleOff(player, eye, spot);
-            if (off < bestOff && (!lineOfSight || canSee(minecraft, player, eye, spot))) {
+            if (!locked && off >= (fovHalf >= 180 ? Double.MAX_VALUE : fovHalf)
+                    || lineOfSight && !canSee(minecraft, player, eye, spot)) {
+                continue;
+            }
+            if (locked) {
+                currentOff = off;
+                continue; // weighed after the loop
+            }
+            if (off < bestOff) {
                 bestOff = off;
                 best = other;
-                bestSpot = spot;
             }
         }
+        // Sticks to who it is on until someone is clearly nearer your crosshair.
+        if (target != null && currentOff != Double.MAX_VALUE
+                && (best == null || bestOff > currentOff * SWITCH_SHARE)) {
+            best = target;
+        }
         if (best == null) {
-            lastTarget = "";
-            haveLast = false;
+            drop(now);
             note("waiting: no player you can see within " + range + " blocks and " + (int) fovHalf
                     + " degrees of your crosshair", now);
             return;
         }
+        if (best != target || lostMs != 0 && now - lostMs >= LOCK_GRACE_MS) {
+            startMove(best);
+        }
+        lostMs = 0;
         holdBackMouse(player);
         String name = best.getName().getString();
         if (!name.equals(lastTarget)) {
             lastTarget = name;
-            note("aiming at " + name, now);
-        }
-        float[] want = angles(eye, bestSpot);
-        double yawOff = Mth.wrapDegrees(want[0] - player.getYRot());
-        double pitchOff = want[1] - player.getXRot();
-        double off = Math.hypot(yawOff, pitchOff);
-        if (off < 0.05) {
-            remember(player);
-            return; // already on them
+            note("aiming at " + name + " (" + MODES[mode] + ")", now);
         }
         double seconds = Math.min(0.1, elapsed / 1000.0);
-        double step = PlayStyle.speed(SPEED.low()) * seconds;
-        // One straight turn: yaw and pitch arrive together, never past the spot.
-        double share = Math.min(1, step / off);
-        double stepYaw = yawOff * share;
-        float pitch = Mth.clamp(player.getXRot() + (float) (pitchOff * share), -90F, 90F);
+        Vec3 spot = leadSpot(minecraft, eye, look, best, partial, seconds);
+        if (mode == 2) {
+            spot = reacted(now, spot);
+        }
+        float[] want = angles(eye, spot);
+        double yawOff = Mth.wrapDegrees(want[0] - player.getYRot());
+        double pitchOff = vertical ? want[1] - player.getXRot() : 0;
+        double[] turn = switch (mode) {
+            case 1 -> wind(yawOff, pitchOff, seconds);
+            case 2 -> human(yawOff, pitchOff, seconds);
+            default -> simple(yawOff, pitchOff, seconds);
+        };
+        float pitch = Mth.clamp(player.getXRot() + (float) turn[1], -90F, 90F);
         float turnedPitch = pitch - player.getXRot();
         // Moved like a mouse turn (Entity.turn), in whole mouse counts like a real mouse.
-        MOUSE.turn(player, stepYaw, turnedPitch, false);
+        // Wind's flicks go out at once (one report), the rest as a mouse reports them.
+        MOUSE.turn(player, turn[0], turnedPitch, mode == 1);
         remember(player);
         note(String.format(java.util.Locale.ROOT, "helping onto %s: %.0f degrees off, turned %.1f",
-                name, off, Math.hypot(stepYaw, turnedPitch)), now);
+                name, Math.hypot(yawOff, pitchOff), Math.hypot(turn[0], turnedPitch)), now);
+    }
+
+    /** Nobody to aim at: the next one starts fresh. */
+    /** Nobody to aim at right now: the lock is kept a moment in case they're back. */
+    private static void drop(long now) {
+        if (target != null && lostMs == 0) {
+            lostMs = now;
+        }
+        haveLast = false;
+    }
+
+    private static void drop() {
+        lastTarget = "";
+        target = null;
+        lostMs = 0;
+        haveLast = false;
+    }
+
+    /** A new player: a fresh move, with its own top speed. */
+    private static void startMove(Player next) {
+        target = next;
+        topSpeed = SPEED.pick();
+        speedNow = 0;
+        velYaw = 0;
+        velPitch = 0;
+        windYaw = 0;
+        windPitch = 0;
+        windClock = 0;
+        windNextMs = 0;
+        windNudged = false;
+        smoothSpeed = Vec3.ZERO;
+        HISTORY_TIMES.clear();
+        HISTORY_SPOTS.clear();
+        flicking = false;
+        MOUSE.reset();
+    }
+
+    /**
+     * Simple: speeds up over about a tenth of a second, and as it gets close wants less and
+     * less speed (9 times the degrees left, per second), so it eases onto them.
+     */
+    private static double[] simple(double yawOff, double pitchOff, double seconds) {
+        double off = Math.hypot(yawOff, pitchOff);
+        if (off < 0.05 || seconds <= 0) {
+            speedNow = 0;
+            return new double[] {0, 0};
+        }
+        double top = PlayStyle.speed(topSpeed);
+        double wanted = Math.min(top, off * 9);
+        speedNow = Math.min(wanted, speedNow + top / 0.09 * seconds);
+        double share = Math.min(1, speedNow * seconds / off);
+        return new double[] {yawOff * share, pitchOff * share};
+    }
+
+    /**
+     * Wind, the Doomsday copy. Measured from a recording: it steps about once a game tick;
+     * a step first nudges about 2 degrees toward them, the next closes nearly all of the gap
+     * at once (98% in the middle, from a little short to a little past), and after a flick it
+     * lets go for about three steps (it was turning only a quarter of the time). Under 2
+     * degrees off it leaves you alone.
+     */
+    private static double[] wind(double yawOff, double pitchOff, double seconds) {
+        long now = System.nanoTime() / 1_000_000;
+        if (now < windNextMs) {
+            return new double[] {0, 0};
+        }
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        long gap = Math.max(10, WIND_GAP.low());
+        windNextMs = now + Math.round(gap * (0.85 + random.nextDouble() * 0.3));
+        double off = Math.hypot(yawOff, pitchOff);
+        if (off < 2) {
+            windNudged = false;
+            return new double[] {0, 0};
+        }
+        if (!windNudged) {
+            windNudged = true;
+            // The flick follows the nudge right away (a frame or two, as measured).
+            windNextMs = now + 25 + random.nextInt(20);
+            double nudge = Math.min(off, 1.7 + random.nextDouble() * 1.0) / off;
+            return new double[] {yawOff * nudge, pitchOff * nudge};
+        }
+        windNudged = false;
+        windNextMs = now + Math.round(gap * (1.5 + random.nextDouble() * 0.5));
+        double share = WIND_SNAP.low() / 100.0 * (0.9 + random.nextDouble() * 0.2);
+        return new double[] {yawOff * share, pitchOff * share};
+    }
+
+    /**
+     * Human: a big gap starts a flick that goes a little past them (Overshoot) and eases in
+     * and out like a hand; after it, it follows them smoothly. It aims where they were
+     * Reaction ms ago, so it trails them a little like a person does.
+     */
+    private static double[] human(double yawOff, double pitchOff, double seconds) {
+        double off = Math.hypot(yawOff, pitchOff);
+        double speed = Math.max(0.1, HUMAN_SPEED.tenths());
+        if (!flicking && off > FLICK_FROM) {
+            flicking = true;
+            flickMs = 0;
+            flickLength = (110 + 45 * Math.log(1 + off / 3) / Math.log(2)) / PlayStyle.speed(speed);
+            double past = OVERSHOOT.low() / 100.0 * (0.6 + ThreadLocalRandom.current().nextDouble() * 0.8);
+            pastYaw = yawOff * past;
+            pastPitch = pitchOff * past;
+        }
+        if (flicking) {
+            double before = minimumJerk(flickMs / flickLength);
+            flickMs += seconds * 1000;
+            double after = minimumJerk(flickMs / flickLength);
+            if (flickMs >= flickLength) {
+                flicking = false;
+            }
+            double share = before >= 1 ? 1 : (after - before) / (1 - before);
+            return new double[] {(yawOff + pastYaw) * share, (pitchOff + pastPitch) * share};
+        }
+        if (off < 0.05) {
+            return new double[] {0, 0};
+        }
+        double share = 1 - Math.exp(-seconds * 12 * PlayStyle.speed(speed));
+        return new double[] {yawOff * share, pitchOff * share};
+    }
+
+    /** How far along a hand's flick is at this share of its time: slow, fast, slow. */
+    private static double minimumJerk(double t) {
+        double x = Mth.clamp(t, 0, 1);
+        return x * x * x * (10 - 15 * x + 6 * x * x);
+    }
+
+    /** Human: where they were Reaction ms ago (the newest spot at least that old). */
+    private static Vec3 reacted(long now, Vec3 spot) {
+        HISTORY_TIMES.addLast(new long[] {now});
+        HISTORY_SPOTS.addLast(spot);
+        while (HISTORY_TIMES.size() > 1 && now - HISTORY_TIMES.peekFirst()[0] > HISTORY_MS) {
+            HISTORY_TIMES.removeFirst();
+            HISTORY_SPOTS.removeFirst();
+        }
+        long wanted = now - REACTION.low();
+        Vec3 found = HISTORY_SPOTS.peekFirst();
+        var times = HISTORY_TIMES.iterator();
+        var spots = HISTORY_SPOTS.iterator();
+        while (times.hasNext()) {
+            long time = times.next()[0];
+            Vec3 at = spots.next();
+            if (time > wanted) {
+                break;
+            }
+            found = at;
+        }
+        return found;
+    }
+
+    /**
+     * The aim spot on them, moved ahead by Prediction. Their speed is smoothed over about a
+     * fifth of a second first, so the spot glides instead of jumping every tick.
+     */
+    private static Vec3 leadSpot(Minecraft minecraft, Vec3 eye, Vec3 look, Player other, float partial,
+            double seconds) {
+        Vec3 tickSpeed = new Vec3(other.getX() - other.xo, other.getY() - other.yo, other.getZ() - other.zo);
+        smoothSpeed = smoothSpeed.add(tickSpeed.subtract(smoothSpeed).scale(Math.min(1, seconds / 0.2)));
+        double lead = PREDICTION.low() / 100.0 * Math.min(MAX_LEAD_TICKS, 1 + ShieldBreak.pingMs(minecraft) / 50.0);
+        AABB box = drawnBox(other, partial).move(smoothSpeed.scale(lead));
+        return spot(eye, look, box, other);
     }
 
     /**
@@ -196,11 +430,9 @@ final class AimHelper {
         return using.has(DataComponents.FOOD) || using.has(DataComponents.CONSUMABLE);
     }
 
-    /** Their hitbox, drawn smoothly between ticks and moved ahead by their speed for the lead. */
-    private static AABB ahead(Player target, float partial, double lead) {
-        Vec3 drawn = target.getPosition(partial).subtract(target.position());
-        Vec3 speed = new Vec3(target.getX() - target.xo, target.getY() - target.yo, target.getZ() - target.zo);
-        return target.getBoundingBox().move(drawn.add(speed.scale(lead)));
+    /** Their hitbox where it is drawn this frame (smooth between ticks). */
+    private static AABB drawnBox(Player target, float partial) {
+        return target.getBoundingBox().move(target.getPosition(partial).subtract(target.position()));
     }
 
     /** Distance from your eyes to the nearest point of the box: your reach to it. */
@@ -244,6 +476,66 @@ final class AimHelper {
                 player)).getType() == HitResult.Type.MISS;
     }
 
+    /** Whether it would aim right now (on, and its key held, toggled on, or Always). */
+    static boolean isActive(Minecraft minecraft) {
+        return enabled && Mc.screen(minecraft) == null && keyActive(minecraft);
+    }
+
+    /**
+     * While Aim Assist is on (key held, toggled on, or Always), a gold glow over the spear's
+     * hotbar slot, so you can see it's working at a glance. Drawn by the HUD.
+     */
+    static void drawSpearGlow(net.minecraft.client.gui.GuiGraphicsExtractor graphics, Minecraft minecraft) {
+        LocalPlayer player = minecraft.player;
+        if (player == null || Mc.hudHidden(minecraft) || !isActive(minecraft)) {
+            return;
+        }
+        int left = graphics.guiWidth() / 2 - 90;
+        int top = graphics.guiHeight() - 19;
+        // a slow breathe, so it reads as "on" without being loud
+        int alpha = 0x50 + (int) (0x30 * (0.5 + 0.5 * Math.sin(System.nanoTime() / 2.5E8)));
+        for (int slot = 0; slot < 9; slot++) {
+            if (!MinecraftSpearDash.isSpear(player.getInventory().getItem(slot))) {
+                continue;
+            }
+            int x = left + slot * 20 + 2;
+            graphics.fill(x - 1, top - 1, x + 17, top + 17, (alpha << 24) | 0xFFC21A);
+            graphics.fill(x - 1, top - 1, x + 17, top, 0xFFFFD54F);
+            graphics.fill(x - 1, top + 16, x + 17, top + 17, 0xFFFFD54F);
+            graphics.fill(x - 1, top, x, top + 16, 0xFFFFD54F);
+            graphics.fill(x + 16, top, x + 17, top + 16, 0xFFFFD54F);
+        }
+    }
+
+    static String modeLabel() {
+        return MODES[mode];
+    }
+
+    static int mode() {
+        return mode;
+    }
+
+    static void setMode(int value) {
+        mode = Math.floorMod(value, MODES.length);
+        target = null;
+    }
+
+    static void cycleMode() {
+        setMode(mode + 1);
+    }
+
+    static boolean isVertical() {
+        return vertical;
+    }
+
+    static void setVertical(boolean on) {
+        vertical = on;
+    }
+
+    static void toggleVertical() {
+        vertical = !vertical;
+    }
+
     /** Whether the key lets the helper work right now. */
     private static boolean keyActive(Minecraft minecraft) {
         return switch (keyMode) {
@@ -261,7 +553,7 @@ final class AimHelper {
             return;
         }
         toggledOn = !toggledOn;
-        MinecraftSpearDash.setStatus(toggledOn ? "Aim Helper on" : "Aim Helper off");
+        MinecraftSpearDash.setStatus(toggledOn ? "Aim Assist on" : "Aim Assist off");
     }
 
     /** Logs what the helper is doing, when that changes or once a second while it keeps on. */
@@ -364,8 +656,7 @@ final class AimHelper {
         enabled = false;
         toggledOn = false;
         awaitingBinding = false;
-        lastTarget = "";
-        haveLast = false;
+        drop();
     }
 
     static String aimAtLabel() {
