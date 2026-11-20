@@ -86,7 +86,7 @@ final class WebEscape {
         String what = forFire ? (done ? "fire out" : "still burning") : (done ? "web gone" : "webs still touching");
         SpearLog.log((forFire ? "fire" : "web escape") + ": " + what + " " + (now - placedMs) + " ms after the water"
                 + (pickUp ? ", scooped " + scooped + " of " + WATER.size() : "") + ", try " + tries);
-        MinecraftSpearDash.setStatus(forFire ? (done ? "Fire out" : "Still burning")
+        SpearDash.setStatus(forFire ? (done ? "Fire out" : "Still burning")
                 : (done ? "Web cleared" : "Webs left, again"));
         WATER.clear();
         View.release(VIEW_HOLD_MS);
@@ -135,8 +135,8 @@ final class WebEscape {
         }
         forFire = false;
         placedMs = now;
-        deadlineMs = now + (long) spreads * SPREAD_MS + 2L * ShieldBreak.pingMs(minecraft) + MARGIN_MS;
-        MinecraftSpearDash.setStatus("Clearing web...");
+        deadlineMs = now + (long) spreads * SPREAD_MS + 2L * AutoStun.pingMs(minecraft) + MARGIN_MS;
+        SpearDash.setStatus("Clearing web...");
     }
 
     private static void putOutFire(Minecraft minecraft, LocalPlayer player, long now) {
@@ -160,11 +160,11 @@ final class WebEscape {
         forFire = true;
         placedMs = now;
         deadlineMs = now + FIRE_TIMEOUT_MS;
-        MinecraftSpearDash.setStatus("Putting fire out...");
+        SpearDash.setStatus("Putting fire out...");
     }
 
     private static void giveUp(long now, String reason) {
-        MinecraftSpearDash.setStatus(reason);
+        SpearDash.setStatus(reason);
         readyAtMs = now + RETRY_MS;
         tries = 0;
     }

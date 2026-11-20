@@ -32,7 +32,7 @@ final class SelfBlast {
 
     private SelfBlast() {}
 
-    // Self guard: 0 Off; 1 Block (High Tier puts a block between you and the cart, jumps and
+    // Self guard: 0 Off; 1 Block (Crossbow Cart puts a block between you and the cart, jumps and
     // shoots over it); 2 Block + refuse (also no cart where the blast would still kill you).
     private static final String[] MODES = {"Off", "Block", "Block + refuse"};
     private static volatile int mode = 1;

@@ -51,7 +51,7 @@ if (missingMinecraftFiles.isEmpty()) {
     dependencies.add("compileOnly", files(minecraftLibraryFiles))
     dependencies.add("compileOnly", zipTree(fabricApiJar).matching {
         include("META-INF/jars/fabric-rendering-v1-*.jar")
-        // Event, which the world drawing hook (Wheels) registers through.
+        // Event, which the world drawing hook (Hit Wheels) registers through.
         include("META-INF/jars/fabric-api-base-*.jar")
     })
 }

@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Placing and scooping water from the hotbar for Web Escape and MLG Water, and lava for
- * Web Trap's drain.
+ * Auto Web's drain.
  *
  * Where a bucket puts water is decided by the server's item-use ray from your eyes along
  * your look direction (Item.getPlayerPOVHitResult): the block in front of the face it hits,
@@ -190,7 +190,7 @@ final class BucketUse {
             minecraft.gameMode.useItem(player, InteractionHand.MAIN_HAND);
         } finally {
             player.getInventory().setSelectedSlot(previousSlot);
-            MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+            SpearDash.sendSelectedSlot(minecraft, false);
         }
         MinecraftInputController.stopGuard();
     }

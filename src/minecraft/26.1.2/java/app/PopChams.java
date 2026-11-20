@@ -25,7 +25,7 @@ import org.joml.Quaternionf;
  * them, green for you. The middle of your screen says the same, so you always know who
  * popped. Counts go back to 0 when that player dies.
  *
- * A pop is seen the same way Punish Alerts sees it: their absorption jumps to the totem's
+ * A pop is seen the same way Combat Alerts sees it: their absorption jumps to the totem's
  * (or more) while their health is at about 1 heart. The server shares every player's health
  * and absorption, so this needs nothing from it.
  */
@@ -47,7 +47,7 @@ final class PopChams {
     private static final List<Ghost> GHOSTS = new ArrayList<>();
     private static final Map<Integer, Float> LAST_ABSORPTION = new HashMap<>();
     private static final Map<UUID, Integer> POPS = new HashMap<>();
-    // Pops from that player's earlier lives (for 2AM's grey dots).
+    // Pops from that player's earlier lives (for Minimal HUD's grey dots).
     private static final Map<UUID, Integer> OLDER = new HashMap<>();
 
     private PopChams() {}
@@ -68,8 +68,8 @@ final class PopChams {
             }
         }
         LocalPlayer player = minecraft.player;
-        // 2AM's pop dots need the counts even with the ghosts off.
-        if (!enabled && !NightShift.isEnabled() || player == null || minecraft.level == null) {
+        // Minimal HUD's pop dots need the counts even with the ghosts off.
+        if (!enabled && !MinimalHud.isEnabled() || player == null || minecraft.level == null) {
             LAST_ABSORPTION.clear();
             GHOSTS.clear();
             return;
@@ -104,8 +104,8 @@ final class PopChams {
 
     /** Called by the HUD: who popped, under the crosshair, while their ghost is up. */
     static void drawHud(GuiGraphicsExtractor graphics, Minecraft minecraft) {
-        if (!enabled || GHOSTS.isEmpty() || NightShift.isEnabled()) {
-            return; // with 2AM on, the pop dots say it instead (one alert at a time)
+        if (!enabled || GHOSTS.isEmpty() || MinimalHud.isEnabled()) {
+            return; // with Minimal HUD on, the pop dots say it instead (one alert at a time)
         }
         long now = now();
         int y = graphics.guiHeight() / 2 - 34;

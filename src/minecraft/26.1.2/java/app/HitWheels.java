@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 
 /**
- * Wheels: a wheel floating above players' heads, drawn on your screen only (other players
+ * HitWheels: a wheel floating above players' heads, drawn on your screen only (other players
  * never see it). Spin: Notch per hit turns a player's wheel one notch each time they take
  * a hit, so you can see who has been hit how many times; Always spins it nonstop. Who:
  * everyone, only who you're fighting (whoever last hit you or you last hit), or just you
@@ -28,7 +28,7 @@ import org.joml.Quaternionf;
  * is never hidden, so your armor slot stays as it is. Drawn through Fabric API's level
  * rendering, after the world's see-through parts.
  */
-final class Wheels {
+final class HitWheels {
     private static final String[] SPINS = {"Notch per hit", "Always"};
     private static final String[] WHO = {"Everyone", "Who you fight", "Just you"};
     private static final String[] HELMETS = {"Replace", "Above"};
@@ -65,17 +65,17 @@ final class Wheels {
     private static Player fighting;
     private static long fightingAtMs;
 
-    private Wheels() {}
+    private HitWheels() {}
 
     /** Called from the input loop: counts hits, keeps helmets hidden, hooks the drawing once. */
     static void update(Minecraft minecraft) {
         if (!registered) {
             registered = true;
             try {
-                LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(Wheels::render);
+                LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(HitWheels::render);
                 active = true;
             } catch (RuntimeException | LinkageError exception) {
-                SpearLog.log("wheels: could not hook world drawing (" + exception + ")");
+                SpearLog.log("hit wheels: could not hook world drawing (" + exception + ")");
             }
         }
         LocalPlayer player = minecraft.player;
@@ -151,12 +151,12 @@ final class Wheels {
             // Skips this frame instead of crashing the game; logged once.
             if (!drawFailed) {
                 drawFailed = true;
-                SpearLog.log("wheels: drawing failed, skipped this frame: " + error);
+                SpearLog.log("hit wheels: drawing failed, skipped this frame: " + error);
             }
         } catch (LinkageError error) {
             broken = true;
-            MinecraftSpearDash.setStatus("Wheels don't work on this version");
-            SpearLog.log("wheels: switched off, this game version draws differently (" + error + ")");
+            SpearDash.setStatus("Hit Wheels doesn't work on this version");
+            SpearLog.log("hit wheels: switched off, this game version draws differently (" + error + ")");
         }
     }
 

@@ -17,11 +17,11 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 2AM: a quiet HUD for late sessions.
+ * Minimal HUD: a quiet HUD for late sessions.
  *
  * The rules: quiet by default (out of a fight it fades almost to nothing over 3 s and comes
  * back in 0.2 s when one starts), one alert at a time (Pop Chams' screen line gives way to
- * the pop dots, Punish Alerts fades in instead of popping), one palette (brushed steel,
+ * the pop dots, Combat Alerts fades in instead of popping), one palette (brushed steel,
  * cream and a warm amber, low saturation), and after midnight on your clock it dims itself.
  *
  * The pieces: a thin record ring around the crosshair that fills with your crossbow's
@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
  * and then fades; and pop dots over players, amber for each totem they popped this life,
  * grey for the ones before.
  */
-final class NightShift {
+final class MinimalHud {
     static final int STEEL = 0x9AA0A6;
     static final int CREAM = 0xEFE6D2;
     static final int AMBER = 0xE0A84E;
@@ -56,7 +56,7 @@ final class NightShift {
     private static long tickerChangedMs = -TICKER_SHOW_MS - TICKER_FADE_MS;
     private static long ringFullMs = -1;
 
-    private NightShift() {}
+    private MinimalHud() {}
 
     private static long now() {
         return System.nanoTime() / 1_000_000;
@@ -67,10 +67,10 @@ final class NightShift {
         if (!registered) {
             registered = true;
             try {
-                LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(NightShift::render);
+                LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(MinimalHud::render);
             } catch (RuntimeException | LinkageError error) {
                 broken = true;
-                SpearLog.log("2am: could not hook world drawing (" + error + ")");
+                SpearLog.log("minimal hud: could not hook world drawing (" + error + ")");
             }
         }
         LocalPlayer player = minecraft.player;
@@ -217,11 +217,11 @@ final class NightShift {
         } catch (RuntimeException error) {
             if (!drawFailed) {
                 drawFailed = true;
-                SpearLog.log("2am: drawing failed, skipped this frame: " + error);
+                SpearLog.log("minimal hud: drawing failed, skipped this frame: " + error);
             }
         } catch (LinkageError error) {
             broken = true;
-            SpearLog.log("2am: dots switched off, this game version draws differently (" + error + ")");
+            SpearLog.log("minimal hud: dots switched off, this game version draws differently (" + error + ")");
         }
     }
 

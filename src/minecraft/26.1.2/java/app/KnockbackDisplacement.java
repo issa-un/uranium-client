@@ -37,7 +37,7 @@ import net.minecraft.world.phys.Vec3;
  * does hazards first and this when there is none. Nothing to push them into, no sprint,
  * cooldown not full, or they left your crosshair: your click goes out as it is.
  */
-final class KnockbackSteer {
+final class KnockbackDisplacement {
     static final Num MAX_TURN = Num.value(25, 60, 1, "°");
     private static final String[] MODES = {"Both", "Hazards", "Toward you"};
     // Toward you: steer only if they land at least this much closer to where you'll be.
@@ -55,7 +55,7 @@ final class KnockbackSteer {
     // Where the last flown knockback landed them.
     private static Vec3 landing = Vec3.ZERO;
 
-    private KnockbackSteer() {}
+    private KnockbackDisplacement() {}
 
     private static long now() {
         return System.nanoTime() / 1_000_000;
@@ -134,7 +134,7 @@ final class KnockbackSteer {
         turnedTick = -1;
         AIM.stop();
         AIM.glide(turn, 0, PlayStyle.turnMs(40 + java.util.concurrent.ThreadLocalRandom.current().nextLong(0, 20)));
-        SpearLog.log(String.format(java.util.Locale.ROOT, "knockback steer: turning %.1f° to push %s %s %s",
+        SpearLog.log(String.format(java.util.Locale.ROOT, "knockback displacement: turning %.1f° to push %s %s %s",
                 turn, target.getName().getString(), goal.startsWith("your path") ? "into" : "into", goal));
         return true;
     }
@@ -178,17 +178,17 @@ final class KnockbackSteer {
         int id = targetId;
         targetId = -1;
         if (!(minecraft.hitResult instanceof EntityHitResult hit) || hit.getEntity().getId() != id) {
-            SpearLog.log("knockback steer: dropped, they left your crosshair during the turn");
+            SpearLog.log("knockback displacement: dropped, they left your crosshair during the turn");
             return;
         }
-        Hit.strike(minecraft, player, target, false, now());
-        SpearLog.log("knockback steer: hit " + (now() - heldAtMs) + " ms after your click, " + how);
+        TriggerBot.strike(minecraft, player, target, false, now());
+        SpearLog.log("knockback displacement: hit " + (now() - heldAtMs) + " ms after your click, " + how);
     }
 
     private static void drop(String why) {
         targetId = -1;
         AIM.stop();
-        SpearLog.log("knockback steer: dropped, " + why);
+        SpearLog.log("knockback displacement: dropped, " + why);
     }
 
     /**

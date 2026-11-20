@@ -67,7 +67,7 @@ final class Cart {
         if (key.isUnbound()) {
             // no key for that slot: the plain switch
             player.getInventory().setSelectedSlot(slot);
-            MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+            SpearDash.sendSelectedSlot(minecraft, false);
             SpearLog.log("cart macro: hotbar " + (slot + 1) + " has no key bound, switched without one");
             return;
         }
@@ -220,7 +220,7 @@ final class Cart {
         player.getInventory().setSelectedSlot(slot);
         // A normal send: only when the slot really changed. Forcing it every time sends the
         // same slot twice, which anticheats flag.
-        MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+        SpearDash.sendSelectedSlot(minecraft, false);
         MinecraftInputController.stopGuard();
         InteractionResult result = minecraft.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, click);
         if (Mc.swingsOnClient(result)) {
@@ -303,7 +303,7 @@ final class Cart {
 
     /** How long to wait for the server's cart before calling it blocked: your ping plus a margin. */
     static long cartWaitMs(Minecraft minecraft) {
-        return ShieldBreak.pingMs(minecraft) + 200L;
+        return AutoStun.pingMs(minecraft) + 200L;
     }
 
     /**
@@ -314,7 +314,7 @@ final class Cart {
      * Returns the slot hopped to.
      */
     static int hop(Minecraft minecraft, LocalPlayer player, int cartSlot) {
-        int sent = MinecraftSpearDash.sentSlot(minecraft);
+        int sent = SpearDash.sentSlot(minecraft);
         int showing = player.getInventory().getSelectedSlot();
         for (int slot = 0; slot < 9; slot++) {
             if (slot != cartSlot && slot != sent && slot != showing) {
@@ -357,7 +357,7 @@ final class Cart {
             return;
         }
         player.getInventory().setSelectedSlot(slot);
-        MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+        SpearDash.sendSelectedSlot(minecraft, false);
         MinecraftInputController.stopGuard();
     }
 }

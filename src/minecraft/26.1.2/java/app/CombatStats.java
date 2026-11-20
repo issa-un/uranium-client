@@ -15,7 +15,7 @@ import net.minecraft.world.phys.EntityHitResult;
  * ms and ticks, your fall and whether the next mace hit is a slam, the mace and axe it would
  * use, your attack charge; the target under your crosshair (else the last one broken) with
  * its health, distance and shield (up, or still going up with its block-delay ticks); and
- * Shield Break's landed count, last press and its result. Drawn by VelocityHud, movable in
+ * Auto Stun's landed count, last press and its result. Drawn by VelocityHud, movable in
  * the HUD editor.
  */
 final class CombatStats {
@@ -38,7 +38,7 @@ final class CombatStats {
 
     static void draw(GuiGraphicsExtractor graphics, Minecraft minecraft, LocalPlayer player, int x, int y) {
         List<Line> lines = new ArrayList<>();
-        int ping = ShieldBreak.pingMs(minecraft);
+        int ping = AutoStun.pingMs(minecraft);
         lines.add(new Line("Ping", ping + " ms (" + (ping + 49) / 50 + " ticks)", ping <= 80 ? GOOD : ping <= 150 ? WARN : BAD));
         boolean slam = MaceSwap.isSlam(player);
         lines.add(new Line("Fall", String.format(Locale.ROOT, "%.1f b", player.fallDistance)
@@ -46,41 +46,41 @@ final class CombatStats {
         int mace = MaceSwap.bestMace(player);
         lines.add(new Line("Mace", mace < 0 ? "none" : MaceSwap.describe(player.getInventory().getItem(mace))
                 + " (slot " + (mace + 1) + ")", mace < 0 ? BAD : TEXT));
-        lines.add(new Line("Axe", ShieldBreak.hasAxe(minecraft) ? "ready" : "none in hotbar",
-                ShieldBreak.hasAxe(minecraft) ? TEXT : BAD));
+        lines.add(new Line("Axe", AutoStun.hasAxe(minecraft) ? "ready" : "none in hotbar",
+                AutoStun.hasAxe(minecraft) ? TEXT : BAD));
         float charge = player.getAttackStrengthScale(0);
         lines.add(new Line("Charge", Math.round(charge * 100) + "%", charge >= 0.9F ? GOOD : WARN));
 
         LivingEntity target = minecraft.hitResult instanceof EntityHitResult hit
                 && hit.getEntity() instanceof LivingEntity living ? living : null;
-        if (target == null && ShieldBreak.lastPressAgoMs() >= 0 && ShieldBreak.lastPressAgoMs() < RECENT_TARGET_MS) {
-            target = ShieldBreak.recentTarget();
+        if (target == null && AutoStun.lastPressAgoMs() >= 0 && AutoStun.lastPressAgoMs() < RECENT_TARGET_MS) {
+            target = AutoStun.recentTarget();
         }
         if (target != null && target.isAlive()) {
             lines.add(new Line("Target", target.getName().getString(), HEADER));
             lines.add(new Line("  HP", String.format(Locale.ROOT, "%.1f / %.0f  %.1fm",
                     target.getHealth() + target.getAbsorptionAmount(), target.getMaxHealth(),
                     player.distanceTo(target)), TEXT));
-            String shield = ShieldBreak.shieldLabel(minecraft, target);
+            String shield = AutoStun.shieldLabel(minecraft, target);
             lines.add(new Line("  Shield", shield, shield.equals("UP") ? WARN : shield.startsWith("raising") ? LABEL : TEXT));
             lines.add(new Line("  Hurt", target.hurtTime > 0 ? target.hurtTime + "t immune" : "no", target.hurtTime > 0 ? WARN : TEXT));
         } else {
             lines.add(new Line("Target", "none", LABEL));
         }
 
-        int tried = ShieldBreak.breaksTried();
-        int landed = ShieldBreak.breaksLanded();
+        int tried = AutoStun.breaksTried();
+        int landed = AutoStun.breaksLanded();
         lines.add(new Line("Breaks", landed + " / " + tried + (tried > 0 ? "  (" + Math.round(100.0 * landed / tried) + "%)" : ""),
                 tried == 0 ? TEXT : landed * 10 >= tried * 9 ? GOOD : landed * 10 >= tried * 7 ? WARN : BAD));
-        long ago = ShieldBreak.lastPressAgoMs();
-        lines.add(new Line("Last", ShieldBreak.lastPress() + (ago >= 0 ? ", " + ago / 1000 + "s ago" : ""), TEXT));
-        lines.add(new Line("Result", ShieldBreak.lastResult(), ShieldBreak.lastResultGood() ? GOOD
-                : ShieldBreak.lastResult().startsWith("waiting") || ShieldBreak.lastResult().equals("-") ? TEXT : BAD));
+        long ago = AutoStun.lastPressAgoMs();
+        lines.add(new Line("Last", AutoStun.lastPress() + (ago >= 0 ? ", " + ago / 1000 + "s ago" : ""), TEXT));
+        lines.add(new Line("Result", AutoStun.lastResult(), AutoStun.lastResultGood() ? GOOD
+                : AutoStun.lastResult().startsWith("waiting") || AutoStun.lastResult().equals("-") ? TEXT : BAD));
 
         Font font = minecraft.font;
         int height = height(lines.size());
         graphics.fill(x, y, x + WIDTH, y + height, BACKGROUND);
-        graphics.text(font, "Combat stats", x + PAD, y + PAD, HEADER);
+        graphics.text(font, "Combat Stats", x + PAD, y + PAD, HEADER);
         int rowY = y + PAD + LINE + 2;
         int valueX = x + PAD + 44;
         for (Line line : lines) {

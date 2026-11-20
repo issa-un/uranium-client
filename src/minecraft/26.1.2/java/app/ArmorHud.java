@@ -10,7 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 /**
- * Armor Slots: your four armor pieces in the game's own hotbar slots on the left of your
+ * Armor HUD: your four armor pieces in the game's own hotbar slots on the left of your
  * hotbar (past the offhand slot), each with its durability bar, so you see them without
  * opening your inventory.
  *
@@ -22,7 +22,7 @@ import net.minecraft.world.item.Items;
  *   your whole inventory),
  * - an empty offhand while you carry a totem.
  */
-final class ArmorSlots {
+final class ArmorHud {
     private static final EquipmentSlot[] ARMOR = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS,
         EquipmentSlot.FEET};
     private static final int RED = 0xFFFF3030;
@@ -33,7 +33,7 @@ final class ArmorSlots {
     private static volatile boolean enabled;
     private static volatile boolean alerts = true;
 
-    private ArmorSlots() {}
+    private ArmorHud() {}
 
     /** Called by the HUD every frame. */
     static void draw(GuiGraphicsExtractor graphics, Minecraft minecraft) {

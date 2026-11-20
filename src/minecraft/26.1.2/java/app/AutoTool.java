@@ -44,7 +44,7 @@ final class AutoTool {
                 }
                 toolSlot = best;
                 player.getInventory().setSelectedSlot(best);
-                MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+                SpearDash.sendSelectedSlot(minecraft, false);
                 MinecraftInputController.stopGuard();
             }
             return;
@@ -53,7 +53,7 @@ final class AutoTool {
             // Only if you are still on the tool; a slot you picked yourself is kept.
             if (swapBack && player.getInventory().getSelectedSlot() == toolSlot) {
                 player.getInventory().setSelectedSlot(originalSlot);
-                MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+                SpearDash.sendSelectedSlot(minecraft, false);
             }
             originalSlot = -1;
         }

@@ -14,13 +14,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Punish Alerts: tells you, above your crosshair, the moments a nearby player is open for a
+ * Combat Alerts: tells you, above your crosshair, the moments a nearby player is open for a
  * slam: they are EATING (standing still for the rest of the bite, with the time left), just
- * POPPED a totem (1 hp plus absorption), or their SHIELD is DOWN after your Shield Break
+ * POPPED a totem (1 hp plus absorption), or their SHIELD is DOWN after your Auto Stun
  * (with the seconds until they can block again). Optional ping sound when one starts. It
  * only reads what your game already shows.
  */
-final class PunishAlerts {
+final class CombatAlerts {
     private static final double RANGE = 16;
     private static final long POP_MS = 2000;
     private static final long SHIELD_DOWN_MS = 5000;
@@ -36,7 +36,7 @@ final class PunishAlerts {
     private static final Map<Integer, Long> POPPED_AT = new HashMap<>();
     private static String lastShown = "";
 
-    private PunishAlerts() {}
+    private CombatAlerts() {}
 
     /** Called from the input loop: notices totem pops. */
     static void update(Minecraft minecraft) {
@@ -56,7 +56,7 @@ final class PunishAlerts {
             if (before != null && absorption >= TOTEM_ABSORPTION && absorption > before + 1
                     && other.getHealth() <= TOTEM_HEALTH) {
                 POPPED_AT.put(other.getId(), now);
-                SpearLog.log("punish alerts: " + other.getName().getString() + " popped a totem");
+                SpearLog.log("combat alerts: " + other.getName().getString() + " popped a totem");
             }
         }
         POPPED_AT.values().removeIf(at -> now - at > POP_MS);
@@ -84,15 +84,15 @@ final class PunishAlerts {
         int width = minecraft.font.width(alert);
         int x = graphics.guiWidth() / 2 - width / 2;
         int y = graphics.guiHeight() / 2 - 26;
-        if (NightShift.isEnabled()) {
-            // 2AM: lowercase, its palette, and it fades in instead of popping up
+        if (MinimalHud.isEnabled()) {
+            // Minimal HUD: lowercase, its palette, and it fades in instead of popping up
             String quiet = alert.toLowerCase(java.util.Locale.ROOT);
             double in = Math.min(1, (System.nanoTime() / 1_000_000 - shownAtMs) / 200.0);
             width = minecraft.font.width(quiet);
             x = graphics.guiWidth() / 2 - width / 2;
-            graphics.fill(x - 3, y - 2, x + width + 3, y + 9, NightShift.color(0x000000, 0.35 * in));
+            graphics.fill(x - 3, y - 2, x + width + 3, y + 9, MinimalHud.color(0x000000, 0.35 * in));
             graphics.text(minecraft.font, quiet, x, y,
-                    NightShift.color(quiet.contains("popped") ? NightShift.AMBER : NightShift.CREAM, in));
+                    MinimalHud.color(quiet.contains("popped") ? MinimalHud.AMBER : MinimalHud.CREAM, in));
             return;
         }
         graphics.fill(x - 3, y - 2, x + width + 3, y + 9, 0x88000000);
@@ -107,8 +107,8 @@ final class PunishAlerts {
                 return name(popped) + " POPPED  hit now";
             }
         }
-        LivingEntity broken = ShieldBreak.lastBroken();
-        long sinceBreak = now - ShieldBreak.lastBrokenMs();
+        LivingEntity broken = AutoStun.lastBroken();
+        long sinceBreak = now - AutoStun.lastBrokenMs();
         if (broken != null && broken.isAlive() && sinceBreak < SHIELD_DOWN_MS && !broken.isBlocking()
                 && player.distanceTo(broken) <= RANGE) {
             return String.format(Locale.ROOT, "%s SHIELD DOWN %.1fs", name(broken),

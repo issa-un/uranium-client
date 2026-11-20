@@ -33,10 +33,10 @@ import net.minecraft.world.phys.Vec3;
  *
  * Each block goes down like you'd do it: the block comes out (your hotbar shows it), your
  * view flicks onto the face it goes against, and the game's own click places it where the
- * crosshair really is. Then your hotbar goes back. Your own carts (High Tier, Low Tier)
+ * crosshair really is. Then your hotbar goes back. Your own carts (Crossbow Cart, Bow Cart)
  * are left alone.
  */
-final class CartBlock {
+final class AntiCart {
     private enum Step { AIM, PLACE, LOOK_BACK, BACK }
 
     static final Num RANGE = Num.tenths(4.0, 8.0, " blocks");
@@ -65,7 +65,7 @@ final class CartBlock {
     // Where you looked before a jump block: the view glides back there after.
     private static float[] lookBack;
 
-    private CartBlock() {}
+    private AntiCart() {}
 
     private static long now() {
         return System.nanoTime() / 1_000_000;
@@ -92,7 +92,7 @@ final class CartBlock {
             return;
         }
         if (Mc.screen(minecraft) != null || player.isSpectator() || !SpearSettings.combatAllowed(minecraft)
-                || CartHighTier.isBusy() || CartLowTier.isBusy() || CartRefill.isBusy() || player.isUsingItem()) {
+                || CrossbowCart.isBusy() || BowCart.isBusy() || CartRefill.isBusy() || player.isUsingItem()) {
             return;
         }
         if (player.onGround()) {
@@ -122,20 +122,20 @@ final class CartBlock {
         }
         blockSlot = blockSlot(player);
         if (blockSlot < 0) {
-            SpearLog.log("cart block: a TNT cart is " + String.format(java.util.Locale.ROOT, "%.1f", closest)
+            SpearLog.log("anti cart: a TNT cart is " + String.format(java.util.Locale.ROOT, "%.1f", closest)
                     + " blocks away, but there is no block in your hotbar");
-            MinecraftSpearDash.setStatus("No block to put down");
+            SpearDash.setStatus("No block to put down");
             return;
         }
         plan(minecraft, player, threat);
         if (PLANS.isEmpty()) {
-            SpearLog.log("cart block: a TNT cart is close, but no free spot between you and it takes a block");
+            SpearLog.log("anti cart: a TNT cart is close, but no free spot between you and it takes a block");
             return;
         }
         backSlot = Cart.heldSlot(player);
         Cart.select(minecraft, player, blockSlot);
         startMs = now();
-        SpearLog.log(String.format(java.util.Locale.ROOT, "cart block: TNT cart %.1f blocks away, %d block%s going down",
+        SpearLog.log(String.format(java.util.Locale.ROOT, "anti cart: TNT cart %.1f blocks away, %d block%s going down",
                 closest, PLANS.size(), PLANS.size() == 1 ? "" : "s"));
         aimNext(minecraft, player);
     }
@@ -255,7 +255,7 @@ final class CartBlock {
         backSlot = Cart.heldSlot(player);
         Cart.select(minecraft, player, blockSlot);
         startMs = now();
-        SpearLog.log("cart block: you jumped with a TNT cart close, a block under you at " + cell.toShortString());
+        SpearLog.log("anti cart: you jumped with a TNT cart close, a block under you at " + cell.toShortString());
         aimNext(minecraft, player);
         return true;
     }
@@ -276,7 +276,7 @@ final class CartBlock {
         }
         int x = graphics.guiWidth() - Math.max(24, graphics.guiWidth() / 10);
         int y = graphics.guiHeight() / 2 - 12;
-        ArmorSlots.bang(graphics, minecraft, x, y, 0);
+        ArmorHud.bang(graphics, minecraft, x, y, 0);
         double toCart = Math.toDegrees(Math.atan2(-(cart.getX() - player.getX()), cart.getZ() - player.getZ()));
         float turn = (float) Math.toRadians(Mth.wrapDegrees(toCart - player.getYRot()));
         var pose = graphics.pose();
@@ -322,22 +322,22 @@ final class CartBlock {
         Plan plan = PLANS.remove(0);
         if (!(minecraft.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
                 || !hit.getBlockPos().equals(plan.against()) || hit.getDirection() != plan.face()) {
-            SpearLog.log("cart block: the crosshair didn't land on the spot for " + plan.cell().toShortString() + ", skipped");
+            SpearLog.log("anti cart: the crosshair didn't land on the spot for " + plan.cell().toShortString() + ", skipped");
         } else if (!minecraft.level.getBlockState(plan.cell()).canBeReplaced()) {
-            SpearLog.log("cart block: " + plan.cell().toShortString() + " is already filled");
+            SpearLog.log("anti cart: " + plan.cell().toShortString() + " is already filled");
         } else {
             Debug.click("block placed in front of the cart");
             if (Cart.isMacro()) {
                 Cart.pressUse(minecraft, player);
-                SpearLog.log("cart block: macro right-click for the block at " + plan.cell().toShortString());
+                SpearLog.log("anti cart: macro right-click for the block at " + plan.cell().toShortString());
             } else {
                 InteractionResult result = minecraft.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit);
                 if (Mc.swingsOnClient(result)) {
                     Mc.swing(player, InteractionHand.MAIN_HAND);
                 }
-                SpearLog.log("cart block: block at " + plan.cell().toShortString() + (result.consumesAction() ? "" : " refused"));
+                SpearLog.log("anti cart: block at " + plan.cell().toShortString() + (result.consumesAction() ? "" : " refused"));
             }
-            MinecraftSpearDash.setStatus("Blocked the cart");
+            SpearDash.setStatus("Blocked the cart");
         }
         nextMs = now() + 50; // the next one on its own tick
         if (Cart.isMacro()) {
@@ -358,7 +358,7 @@ final class CartBlock {
         lookBack = null;
         step = null;
         if (why != null) {
-            SpearLog.log("cart block: stopped, " + why);
+            SpearLog.log("anti cart: stopped, " + why);
         }
     }
 
@@ -439,7 +439,7 @@ final class CartBlock {
             BlockPos against = cell.relative(side);
             Direction face = side.getOpposite();
             if (!minecraft.level.getBlockState(against).isFaceSturdy(minecraft.level, against, face)
-                    || WebTrap.reactsToUse(minecraft.level.getBlockState(against).getBlock())
+                    || AutoWeb.reactsToUse(minecraft.level.getBlockState(against).getBlock())
                     || !player.isWithinBlockInteractionRange(against, 0.0)) {
                 continue;
             }

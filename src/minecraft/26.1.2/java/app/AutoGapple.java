@@ -40,7 +40,7 @@ final class AutoGapple {
             return;
         }
         // Never in the middle of another module's swap: it would cancel it.
-        if (ShieldBreak.isRunning() || PearlCatch.isRunning() || MinecraftSpearDash.isDashing()) {
+        if (AutoStun.isRunning() || PearlCatch.isRunning() || SpearDash.isDashing()) {
             return;
         }
         if (!enabled || Mc.screen(minecraft) != null || now < readyAtMs || player.isUsingItem()
@@ -60,10 +60,10 @@ final class AutoGapple {
         countBefore = player.getInventory().getItem(slot).getCount();
         startedMs = now;
         player.getInventory().setSelectedSlot(slot);
-        MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+        SpearDash.sendSelectedSlot(minecraft, false);
         MinecraftInputController.stopGuard();
         minecraft.options.keyUse.setDown(true);
-        MinecraftSpearDash.setStatus("Eating gapple");
+        SpearDash.setStatus("Eating gapple");
     }
 
     private static void continueEating(Minecraft minecraft, LocalPlayer player, long now) {
@@ -76,11 +76,11 @@ final class AutoGapple {
         minecraft.options.keyUse.setDown(WTap.physicallyDown(minecraft, minecraft.options.keyUse));
         if (!interrupted) {
             player.getInventory().setSelectedSlot(previousSlot);
-            MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+            SpearDash.sendSelectedSlot(minecraft, false);
         }
         SpearLog.log("auto gapple: " + (eaten ? "eaten" : interrupted ? "stopped" : "timed out")
                 + " at " + player.getHealth() + " health");
-        MinecraftSpearDash.setStatus(eaten ? "Gapple eaten" : "Gapple stopped");
+        SpearDash.setStatus(eaten ? "Gapple eaten" : "Gapple stopped");
         eatingSlot = -1;
         readyAtMs = now + COOLDOWN_MS;
     }

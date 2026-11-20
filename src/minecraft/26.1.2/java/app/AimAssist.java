@@ -35,7 +35,7 @@ import net.minecraft.world.phys.Vec3;
  *   is full: all of your mouse ignored and three times the speed. It fades over about a
  *   third of a second once they're back on a normal path.
  */
-final class AimHelper {
+final class AimAssist {
     private static final double PICK_RANGE = 6;
     private static final double KEEP_RANGE = 8;
     private static final double PICK_CONE = 181; // all the way around: behind you too
@@ -68,7 +68,7 @@ final class AimHelper {
     private static Vec3 move;
     private static double drift;
 
-    private AimHelper() {}
+    private AimAssist() {}
 
     /** Called every frame by the HUD, and from the input loop for when the HUD is hidden. */
     static void update(Minecraft minecraft) {
@@ -292,7 +292,7 @@ final class AimHelper {
         int top = graphics.guiHeight() - 19;
         int alpha = 0x50 + (int) (0x30 * (0.5 + 0.5 * Math.sin(System.nanoTime() / 2.5E8)));
         for (int slot = 0; slot < 9; slot++) {
-            if (!MinecraftSpearDash.isSpear(player.getInventory().getItem(slot))) {
+            if (!SpearDash.isSpear(player.getInventory().getItem(slot))) {
                 continue;
             }
             int x = left + slot * 20 + 2;

@@ -71,13 +71,16 @@ final class Debug {
     private static final Deque<double[]> TURNS = new ArrayDeque<>();
 
     private static final Map<String, String> NAMES = Map.ofEntries(
-            Map.entry("CartHighTier", "High Tier"), Map.entry("CartLowTier", "Low Tier"),
-            Map.entry("CartBlock", "Block"), Map.entry("CartRefill", "Replenish"),
-            Map.entry("CrossbowReload", "Auto reload"), Map.entry("KnockbackSteer", "Knockback Displacement"),
-            Map.entry("AimHelper", "Aim Assist"), Map.entry("MaceSwap", "Mace Swap"),
-            Map.entry("ShieldBreak", "Auto Stun"), Map.entry("SlamSteer", "Target Strafe"),
+            Map.entry("CrossbowCart", "Crossbow Cart"), Map.entry("BowCart", "Bow Cart"),
+            Map.entry("AntiCart", "Anti Cart"), Map.entry("CartRefill", "Replenish"),
+            Map.entry("TriggerBot", "Trigger Bot"), Map.entry("KillAura", "Kill Aura"),
+            Map.entry("HitSelect", "Hit Select"), Map.entry("SlamCombo", "Slam Combo"),
+            Map.entry("AutoWeb", "Auto Web"), Map.entry("ElytraSwap", "Elytra Swap"),
+            Map.entry("CrossbowReload", "Auto reload"), Map.entry("KnockbackDisplacement", "Knockback Displacement"),
+            Map.entry("AimAssist", "Aim Assist"), Map.entry("MaceSwap", "Mace Swap"),
+            Map.entry("AutoStun", "Auto Stun"), Map.entry("TargetStrafe", "Target Strafe"),
             Map.entry("PearlCatch", "Pearl Catch"), Map.entry("DebugScreen", "Debug test"),
-            Map.entry("MinecraftSpearDash", "Spear Dash"));
+            Map.entry("SpearDash", "Spear Dash"));
 
     private Debug() {}
 

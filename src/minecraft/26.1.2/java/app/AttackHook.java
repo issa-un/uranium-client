@@ -19,12 +19,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * Lets Shield Break, Mace Swap, Auto Weapon and W-Tap react to every attack your client
+ * Lets Auto Stun, Mace Swap, Auto Weapon and W-Tap react to every attack your client
  * sends (their Trigger on Any attack), not only to your own clicks: hits that a server's
  * hit system, another mod or a macro sends as a normal attack packet are caught on their
  * way out. It sits in the connection's Netty pipeline, so it sees each attack just before
  * it is encoded, on the network thread, whoever sent it.
- * - Shield Break: the attack is held back and the shield break runs instead on the next
+ * - Auto Stun: the attack is held back and the shield break runs instead on the next
  *   frame, as a click would; if the break cannot start after all, the attack goes out.
  * - Mace Swap: the mace is selected for that one packet, the attack goes out and the slot
  *   goes back, in one write, so nothing is delayed or reordered.
@@ -175,14 +175,14 @@ final class AttackHook {
             boolean sprinting = WTap.wasSprinting();
             minecraft.execute(() -> WTap.onAnyAttack(minecraft, sprinting));
         }
-        if (ShieldBreak.takesAnyAttack(minecraft, target)) {
+        if (AutoStun.takesAnyAttack(minecraft, target)) {
             HELD.incrementAndGet();
             promise.trySuccess();
-            minecraft.execute(() -> ShieldBreak.runFromAttack(minecraft, target, attack));
+            minecraft.execute(() -> AutoStun.runFromAttack(minecraft, target, attack));
             return true;
         }
-        ShieldBreak.explainSkip(minecraft, target, ShieldBreak.isAnyAttack() ? "any attack" : "attack packet");
-        int held = MinecraftSpearDash.sentSlot(minecraft);
+        AutoStun.explainSkip(minecraft, target, AutoStun.isAnyAttack() ? "any attack" : "attack packet");
+        int held = SpearDash.sentSlot(minecraft);
         int mace = MaceSwap.maceForAnyAttack(minecraft, target, held);
         if (mace >= 0) {
             MACE_SWAPS.incrementAndGet();

@@ -84,7 +84,7 @@ final class AutoTotem {
             lastSwapMs = System.nanoTime() / 1_000_000;
             reactAtMs = -1;
             if (acted) {
-                MinecraftSpearDash.setStatus("Totem to offhand");
+                SpearDash.setStatus("Totem to offhand");
                 SpearLog.log("auto totem: hotbar " + (slot + 1) + " to offhand");
             }
         });
@@ -101,7 +101,7 @@ final class AutoTotem {
                         ContainerInput.SWAP, player);
                 lastSwapMs = now;
                 reactAtMs = -1;
-                MinecraftSpearDash.setStatus("Totem to offhand");
+                SpearDash.setStatus("Totem to offhand");
                 SpearLog.log("auto totem: inventory slot " + slot.index + " to offhand");
                 return;
             }

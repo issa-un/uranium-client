@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 
 /**
- * Play Style: how the aim and timing of Cart, Aim Helper, World Slash and Hit feel.
+ * Play Style: how the aim and timing of Cart, Aim Assist, Kill Aura and Trigger Bot feel.
  *
  * Calm (off) is the quiet way: slow even glides and steady timing.
  * Cracked (on) plays like someone sweating a fight: turns are quick and hard and go a hair

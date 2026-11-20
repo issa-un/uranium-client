@@ -5,7 +5,7 @@ import net.minecraft.client.player.LocalPlayer;
 
 /**
  * Switch to a hotbar item, use it, switch back, each step after its own delay: the shared
- * timing behind Spear Dash, Mace Swap, Auto Weapon, Auto Totem, Quick Throw and Chest Swap.
+ * timing behind Spear Dash, Mace Swap, Auto Weapon, Auto Totem, Quick Throw and Elytra Swap.
  * With every delay at 0 the whole thing runs at once, in one step, as before. Each module
  * keeps one and calls update from the input loop; render thread only.
  */
@@ -69,14 +69,14 @@ final class SwapAction {
             }
             if (Mc.screen(minecraft) != null) {
                 cancel(minecraft);
-                MinecraftSpearDash.setStatus("Cancelled");
+                SpearDash.setStatus("Cancelled");
                 return;
             }
             int selected = player.getInventory().getSelectedSlot();
             if (selected != (phase == SWAP ? fromSlot : itemSlot)) {
                 // You picked a slot yourself meanwhile; that choice is kept.
                 phase = IDLE;
-                MinecraftSpearDash.setStatus("Stopped: you picked a slot");
+                SpearDash.setStatus("Stopped: you picked a slot");
                 finish(minecraft);
                 return;
             }
@@ -87,7 +87,7 @@ final class SwapAction {
             switch (phase) {
                 case SWAP -> {
                     player.getInventory().setSelectedSlot(itemSlot);
-                    MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+                    SpearDash.sendSelectedSlot(minecraft, false);
                     phase = ACT;
                     dueMs = now + actDelay.pick();
                 }
@@ -128,7 +128,7 @@ final class SwapAction {
     private void selectFrom(Minecraft minecraft) {
         if (minecraft.player.getInventory().getSelectedSlot() == itemSlot) {
             minecraft.player.getInventory().setSelectedSlot(fromSlot);
-            MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+            SpearDash.sendSelectedSlot(minecraft, false);
         }
     }
 

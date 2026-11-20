@@ -73,7 +73,7 @@ final class MlgWater {
         waterAt = target;
         placedMs = now;
         landedAtTick = -1;
-        MinecraftSpearDash.setStatus("MLG water");
+        SpearDash.setStatus("MLG water");
         SpearLog.log("mlg: water at " + String.format(java.util.Locale.ROOT, "%.1f", landing.drop())
                 + " blocks up, saving about " + landing.damage() / 2.0 + " hearts");
     }
@@ -95,7 +95,7 @@ final class MlgWater {
         boolean scooped = pickUp && BucketUse.scoop(minecraft, player, waterAt);
         SpearLog.log("mlg: " + (settled ? "landed" : "no landing seen") + (pickUp
                 ? (scooped ? ", water scooped" : ", could not scoop the water") : ""));
-        MinecraftSpearDash.setStatus(settled ? "MLG landed" : "MLG: no landing");
+        SpearDash.setStatus(settled ? "MLG landed" : "MLG: no landing");
         waterAt = null;
         View.release(VIEW_HOLD_MS);
     }
