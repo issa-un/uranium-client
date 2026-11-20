@@ -53,7 +53,8 @@ final class SpearDash {
     private static volatile int dashCount = 1;
     private static volatile int flatMode = 1;
     private static volatile boolean readySound;
-    private static volatile boolean onlyFromWindCharge;
+    /** Lunges only while this hotbar slot (0-8) is held; -1: from any slot. */
+    private static volatile int fromSlot = -1;
     private static boolean wasCharged;
     private static Method startAttack;
     private static Method ensureHasSentCarriedItem;
@@ -88,7 +89,8 @@ final class SpearDash {
         if (dashesLeft > 0 || SWAP.busy()) {
             return true;
         }
-        if (onlyFromWindCharge && !minecraft.player.getMainHandItem().is(Items.WIND_CHARGE)) {
+        SlamCombo.cancel(minecraft); // a lunge beats the slam's sword follow-up
+        if (fromSlot >= 0 && minecraft.player.getInventory().getSelectedSlot() != fromSlot) {
             return false;
         }
         if (!SpearSettings.combatAllowed(minecraft)) {
@@ -525,16 +527,20 @@ final class SpearDash {
         readySound = !readySound;
     }
 
-    static boolean isOnlyFromWindCharge() {
-        return onlyFromWindCharge;
+    static String fromSlotLabel() {
+        return fromSlot < 0 ? "Any slot" : "Slot " + (fromSlot + 1);
     }
 
-    static void setOnlyFromWindCharge(boolean on) {
-        onlyFromWindCharge = on;
+    static int fromSlot() {
+        return fromSlot;
     }
 
-    static void toggleOnlyFromWindCharge() {
-        onlyFromWindCharge = !onlyFromWindCharge;
+    static void setFromSlot(int slot) {
+        fromSlot = slot < 0 || slot > 8 ? -1 : slot;
+    }
+
+    static void cycleFromSlot() {
+        setFromSlot(fromSlot >= 8 ? -1 : fromSlot + 1);
     }
 
     static boolean isFlatLungeOn() {

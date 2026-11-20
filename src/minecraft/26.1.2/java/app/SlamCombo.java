@@ -58,7 +58,8 @@ final class SlamCombo {
             slamTargetId = -1;
             return;
         }
-        if (now - slamMs < READY_MS || MaceSwap.isSlam(player) || AutoStun.isRunning()) {
+        if (now - slamMs < READY_MS || MaceSwap.isSlam(player) || AutoStun.isRunning()
+                || SpearDash.isDashing()) {
             return;
         }
         Entity entity = minecraft.level.getEntity(id);
@@ -85,6 +86,18 @@ final class SlamCombo {
         }
         SpearLog.log("slam combo: sword hit on " + target.getName().getString() + " " + (now - slamMs)
                 + " ms after the slam");
+    }
+
+    /**
+     * A lunge is starting: no sword now, and if the sword is still out from a follow-up, your
+     * own slot comes back first, so the dash swaps from (and back to) what you really held.
+     */
+    static void cancel(Minecraft minecraft) {
+        slamTargetId = -1;
+        if (backToSlot >= 0 && minecraft.player != null) {
+            select(minecraft, backToSlot);
+        }
+        backToSlot = -1;
     }
 
     private static int swordSlot(LocalPlayer player) {

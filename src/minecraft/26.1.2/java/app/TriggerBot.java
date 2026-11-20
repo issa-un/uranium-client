@@ -33,6 +33,13 @@ final class TriggerBot {
     private static volatile boolean randomDelay;
     // Auto: Trigger Bot only acts while you look like you're fighting (see fighting()).
     private static volatile boolean auto;
+    // Auto's behavior (right-click Auto in the menu): items that turn it off while held, and
+    // which signs of a fight count.
+    static final int WIND = 1, PEARL = 2, FOOD = 4, BLOCKS = 8, BOW = 16, POTION = 32;
+    static final int S_JUMP = 1, S_SWITCH = 2, S_SWING = 4, S_HURT = 8, S_CHASE = 16;
+    private static volatile int offHolding = WIND | PEARL | FOOD;
+    private static volatile int signsOn = S_JUMP | S_SWITCH | S_SWING | S_HURT | S_CHASE;
+    private static volatile boolean autoOpen;
     // How long a sign of a fight keeps Auto on after it, so it doesn't flicker.
     private static final long SIGN_MS = 2500;
     // A player this close and this near your crosshair counts as "looking at someone".
@@ -177,18 +184,19 @@ final class TriggerBot {
                 chasedMs = now;
             }
         }
-        boolean windCharge = player.getMainHandItem().is(Items.WIND_CHARGE);
+        String holding = heldOff(player.getMainHandItem());
+        boolean windCharge = holding != null;
         java.util.List<String> signs = new java.util.ArrayList<>();
-        if (now - jumpedMs < SIGN_MS) signs.add("jumping");
-        if (now - switchedMs < SIGN_MS) signs.add("switching slots");
-        if (now - swungMs < SIGN_MS) signs.add("swinging");
-        if (now - hurtMs < SIGN_MS) signs.add("got hit");
-        if (now - chasedMs < SIGN_MS) signs.add("sprinting at them");
+        if (sign(S_JUMP) && now - jumpedMs < SIGN_MS) signs.add("jumping");
+        if (sign(S_SWITCH) && now - switchedMs < SIGN_MS) signs.add("switching slots");
+        if (sign(S_SWING) && now - swungMs < SIGN_MS) signs.add("swinging");
+        if (sign(S_HURT) && now - hurtMs < SIGN_MS) signs.add("got hit");
+        if (sign(S_CHASE) && now - chasedMs < SIGN_MS) signs.add("sprinting at them");
         boolean fighting = !windCharge && now - lookedMs < SIGN_MS && !signs.isEmpty();
         if (fighting != wasFighting) {
             wasFighting = fighting;
             SpearLog.log("trigger bot auto: " + (fighting ? "on (" + String.join(", ", signs) + ")"
-                    : "off (" + (windCharge ? "wind charge in hand" : now - lookedMs >= SIGN_MS
+                    : "off (" + (windCharge ? holding + " in hand" : now - lookedMs >= SIGN_MS
                     ? "nobody in front of you" : "no signs of a fight") + ")"));
             SpearDash.setStatus(fighting ? "Trigger Bot on" : "Trigger Bot off");
         }
@@ -217,6 +225,58 @@ final class TriggerBot {
             }
         }
         return best;
+    }
+
+    /** What in your hand turns Auto off, by the Off holding settings; null if nothing. */
+    private static String heldOff(net.minecraft.world.item.ItemStack stack) {
+        if (offHolding(WIND) && stack.is(Items.WIND_CHARGE)) return "wind charge";
+        if (offHolding(PEARL) && stack.is(Items.ENDER_PEARL)) return "ender pearl";
+        if (offHolding(FOOD) && stack.has(net.minecraft.core.component.DataComponents.FOOD)) return "food";
+        if (offHolding(BLOCKS) && stack.getItem() instanceof net.minecraft.world.item.BlockItem) return "a block";
+        if (offHolding(BOW) && (stack.is(Items.BOW) || stack.is(Items.CROSSBOW))) return "a bow";
+        if (offHolding(POTION) && (stack.is(Items.POTION) || stack.is(Items.SPLASH_POTION)
+                || stack.is(Items.LINGERING_POTION))) return "a potion";
+        return null;
+    }
+
+    static boolean offHolding(int item) {
+        return (offHolding & item) != 0;
+    }
+
+    static void flipOffHolding(int item) {
+        offHolding ^= item;
+    }
+
+    static int offHoldingMask() {
+        return offHolding;
+    }
+
+    static void setOffHoldingMask(int mask) {
+        offHolding = mask;
+    }
+
+    static boolean sign(int s) {
+        return (signsOn & s) != 0;
+    }
+
+    static void flipSign(int s) {
+        signsOn ^= s;
+    }
+
+    static int signsMask() {
+        return signsOn;
+    }
+
+    static void setSignsMask(int mask) {
+        signsOn = mask;
+    }
+
+    static boolean isAutoOpen() {
+        return autoOpen;
+    }
+
+    static void toggleAutoOpen() {
+        autoOpen = !autoOpen;
     }
 
     static boolean isAuto() {

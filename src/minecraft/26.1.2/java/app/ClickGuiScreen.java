@@ -639,9 +639,19 @@ public final class ClickGuiScreen extends Screen {
             case Modules.Toggle toggle -> {
                 graphics.text(font, font.plainSubstrByWidth(toggle.label(), right - 22 - labelX - 8), labelX, textY,
                         TEXT_SOFT, false);
+                if (toggle.more() != null) {
+                    // Right-click shows more: a small chevron, down while open.
+                    boolean open = toggle.open() != null && toggle.open().getAsBoolean();
+                    int labelEnd = labelX + Math.min(font.width(toggle.label()), right - 22 - labelX - 8);
+                    chevron(graphics, labelEnd + 7, y + 10, open, over ? TEXT_SOFT : TERTIARY);
+                    if (over && !open) {
+                        graphics.text(font, "right-click", right - 30 - font.width("right-click"), textY, TERTIARY,
+                                false);
+                    }
+                }
                 drawSwitch(graphics, module.name() + "/" + toggle.label(), right - 22, y + 5, 22, 12,
                         toggle.on().getAsBoolean(), accent, frameSeconds);
-                hit(x1, top, x2, bottom, toggle.flip(), null);
+                hit(x1, top, x2, bottom, toggle.flip(), toggle.more());
             }
             case Modules.Choice choice -> {
                 // A macOS popup button: the value in a pill with the up-down arrows.

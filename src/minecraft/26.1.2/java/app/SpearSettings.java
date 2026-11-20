@@ -134,8 +134,7 @@ final class SpearSettings {
         p.num("dash.chainGap", SpearDash.CHAIN_GAP);
         SpearDash.setFlatMode(p.integer("dash.flatMode", SpearDash.flatMode()));
         SpearDash.setReadySound(p.bool("dash.readySound", SpearDash.isReadySound()));
-        SpearDash.setOnlyFromWindCharge(p.bool("dash.onlyFromWindCharge",
-                SpearDash.isOnlyFromWindCharge()));
+        SpearDash.setFromSlot(p.integer("dash.fromSlot", SpearDash.fromSlot()));
         AutoStun.setEnabled(p.bool("shield.enabled", AutoStun.isEnabled()));
         AutoStun.setBinding(p.integer("shield.key", AutoStun.keyCode()),
                 p.integer("shield.mouse", AutoStun.mouseButton()));
@@ -207,6 +206,8 @@ final class SpearSettings {
         TriggerBot.setEnabled(p.bool("hit.enabled", TriggerBot.isEnabled()));
         p.num("hit.chance", TriggerBot.CHANCE);
         TriggerBot.setAuto(p.bool("hit.auto", TriggerBot.isAuto()));
+        TriggerBot.setOffHoldingMask(p.integer("hit.offHolding", TriggerBot.offHoldingMask()));
+        TriggerBot.setSignsMask(p.integer("hit.signs", TriggerBot.signsMask()));
         TriggerBot.setRandomDelay(p.bool("hit.randomDelay", TriggerBot.isRandomDelay()));
         p.num("hit.delay", TriggerBot.DELAY);
         HitSelect.setEnabled(p.bool("slamSaver.enabled", HitSelect.isEnabled()));
@@ -332,7 +333,7 @@ final class SpearSettings {
         putNum(file, prefix, "dash.chainGap", SpearDash.CHAIN_GAP);
         put(file, prefix, "dash.flatMode", SpearDash.flatMode());
         put(file, prefix, "dash.readySound", SpearDash.isReadySound());
-        put(file, prefix, "dash.onlyFromWindCharge", SpearDash.isOnlyFromWindCharge());
+        put(file, prefix, "dash.fromSlot", SpearDash.fromSlot());
         put(file, prefix, "shield.enabled", AutoStun.isEnabled());
         put(file, prefix, "shield.key", AutoStun.keyCode());
         put(file, prefix, "shield.mouse", AutoStun.mouseButton());
@@ -403,6 +404,8 @@ final class SpearSettings {
         put(file, prefix, "hit.enabled", TriggerBot.isEnabled());
         putNum(file, prefix, "hit.chance", TriggerBot.CHANCE);
         put(file, prefix, "hit.auto", TriggerBot.isAuto());
+        put(file, prefix, "hit.offHolding", TriggerBot.offHoldingMask());
+        put(file, prefix, "hit.signs", TriggerBot.signsMask());
         put(file, prefix, "hit.randomDelay", TriggerBot.isRandomDelay());
         putNum(file, prefix, "hit.delay", TriggerBot.DELAY);
         put(file, prefix, "slamSaver.enabled", HitSelect.isEnabled());

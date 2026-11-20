@@ -16,7 +16,12 @@ final class Modules {
     sealed interface Row permits Toggle, Choice, Bind, Action, Slider, Shown {}
 
     /** On or off, shown as a switch. */
-    record Toggle(String label, BooleanSupplier on, Runnable flip) implements Row {}
+    record Toggle(String label, BooleanSupplier on, Runnable flip, Runnable more, BooleanSupplier open)
+            implements Row {
+        Toggle(String label, BooleanSupplier on, Runnable flip) {
+            this(label, on, flip, null, null);
+        }
+    }
 
     /** One of a few values; clicking opens a dropdown of them (found by stepping through). */
     record Choice(String label, Supplier<String> value, Runnable next) implements Row {}
@@ -70,7 +75,18 @@ final class Modules {
                                         }))),
                         new Module("Trigger Bot", "Hits what you look at whenever the hit will count",
                                 TriggerBot::isEnabled, TriggerBot::toggleEnabled, List.of(
-                                new Toggle("Auto", TriggerBot::isAuto, TriggerBot::toggleAuto),
+                                new Toggle("Auto", TriggerBot::isAuto, TriggerBot::toggleAuto, TriggerBot::toggleAutoOpen, TriggerBot::isAutoOpen),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Off holding: Wind charge", () -> TriggerBot.offHolding(TriggerBot.WIND), () -> TriggerBot.flipOffHolding(TriggerBot.WIND))),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Off holding: Ender pearl", () -> TriggerBot.offHolding(TriggerBot.PEARL), () -> TriggerBot.flipOffHolding(TriggerBot.PEARL))),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Off holding: Food", () -> TriggerBot.offHolding(TriggerBot.FOOD), () -> TriggerBot.flipOffHolding(TriggerBot.FOOD))),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Off holding: Blocks", () -> TriggerBot.offHolding(TriggerBot.BLOCKS), () -> TriggerBot.flipOffHolding(TriggerBot.BLOCKS))),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Off holding: Bow or crossbow", () -> TriggerBot.offHolding(TriggerBot.BOW), () -> TriggerBot.flipOffHolding(TriggerBot.BOW))),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Off holding: Potions", () -> TriggerBot.offHolding(TriggerBot.POTION), () -> TriggerBot.flipOffHolding(TriggerBot.POTION))),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Counts: Jumping", () -> TriggerBot.sign(TriggerBot.S_JUMP), () -> TriggerBot.flipSign(TriggerBot.S_JUMP))),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Counts: Switching slots", () -> TriggerBot.sign(TriggerBot.S_SWITCH), () -> TriggerBot.flipSign(TriggerBot.S_SWITCH))),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Counts: Swinging", () -> TriggerBot.sign(TriggerBot.S_SWING), () -> TriggerBot.flipSign(TriggerBot.S_SWING))),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Counts: Getting hit", () -> TriggerBot.sign(TriggerBot.S_HURT), () -> TriggerBot.flipSign(TriggerBot.S_HURT))),
+                                new Shown(TriggerBot::isAutoOpen, new Toggle("  Counts: Sprinting at them", () -> TriggerBot.sign(TriggerBot.S_CHASE), () -> TriggerBot.flipSign(TriggerBot.S_CHASE))),
                                 new Slider("Chance", TriggerBot.CHANCE),
                                 new Toggle("Random delay", TriggerBot::isRandomDelay, TriggerBot::toggleRandomDelay),
                                 new Slider("Delay", TriggerBot.DELAY))),
@@ -155,8 +171,8 @@ final class Modules {
                                 SpearDash::isEnabled, SpearDash::toggleEnabled, List.of(
                                 new Bind("Key", () -> bindLabel(SpearDash.keyCode(), SpearDash.mouseButton()),
                                         SpearDash::isAwaitingBinding, SpearDash::awaitBinding),
-                                new Toggle("Only from wind charge", SpearDash::isOnlyFromWindCharge,
-                                        SpearDash::toggleOnlyFromWindCharge),
+                                new Choice("Lunge from", SpearDash::fromSlotLabel,
+                                        SpearDash::cycleFromSlot),
                                 new Choice("Dashes", SpearDash::dashCountLabel, SpearDash::cycleDashCount),
                                 new Choice("Flat lunge", SpearDash::flatModeLabel, SpearDash::cycleFlatMode),
                                 new Toggle("Ready sound", SpearDash::isReadySound, SpearDash::toggleReadySound),
