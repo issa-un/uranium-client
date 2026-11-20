@@ -297,6 +297,9 @@ final class MinecraftInputController {
                     && QuickThrow.activate(minecraft)) {
                 consumed = true;
             }
+            if (AimAssist.mouseButton() < 0 && key >= 0 && key == AimAssist.keyCode()) {
+                AimAssist.onKey(minecraft);
+            }
             if (!consumed && PearlCatch.mouseButton() < 0 && key >= 0 && key == PearlCatch.keyCode()
                     && PearlCatch.activate(minecraft)) {
                 consumed = true;
@@ -348,6 +351,9 @@ final class MinecraftInputController {
             }
             if (!consumed && button == QuickThrow.mouseButton() && QuickThrow.activate(minecraft)) {
                 consumed = true;
+            }
+            if (button == AimAssist.mouseButton()) {
+                AimAssist.onKey(minecraft);
             }
             if (!consumed && button == PearlCatch.mouseButton() && PearlCatch.activate(minecraft)) {
                 consumed = true;
