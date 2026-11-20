@@ -314,7 +314,13 @@ UTILITY
   Fullbright      Lights up caves and nights.
   Zoom            Hold a key to zoom in. Zoom in: Smooth (glides in and
                   out, the default) or Snap.
-  Clear Weather   No rain or thunder on your screen.
+  Weather         Mode: Clear takes rain and thunder off your screen (the
+                  server's weather doesn't change). Cinematic gives the
+                  world a film look: a little warmer, richer color, a bit
+                  more contrast and softly darker corners. Your hotbar,
+                  hearts and crosshair stay as they are. Film bars adds
+                  thin black bars at the top and bottom. It costs about as
+                  much as the game's own creeper view, so FPS barely moves.
   Auto Respawn    Skips the death screen.
   Hit Sound       A ding when your hit lands.
   Middle Click Friend   Middle-click a player to add them as a friend.

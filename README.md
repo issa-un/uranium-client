@@ -18,7 +18,7 @@ A combat and utility client for Minecraft 26.1.2 – 26.3 (Fabric). It loads int
 
 **UHC**: Web Escape, Web Trap, Wind Clutch, MLG Water, W-Tap, Jump Reset, Auto Gapple
 
-**Utility**: Auto Tool, Auto Sprint, Auto Walk, Auto Eat, Auto Fish, Fullbright, Zoom, Clear Weather, Auto Respawn, Hit Sound, Middle Click Friend
+**Utility**: Auto Tool, Auto Sprint, Auto Walk, Auto Eat, Auto Fish, Fullbright, Zoom, Weather, Auto Respawn, Hit Sound, Middle Click Friend
 
 **HUD**: Speed HUD, Radar, Landing, Combat stats, Slam Meter, Punish Alerts, 2AM, Pop Chams, Damage Particles, Wheels, Hide other clients
 
