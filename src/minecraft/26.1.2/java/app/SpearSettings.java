@@ -187,7 +187,10 @@ final class SpearSettings {
         Utilities.setAutoRespawn(p.bool("util.autoRespawn", Utilities.isAutoRespawn()));
         Utilities.setDeathCoords(p.bool("util.deathCoords", Utilities.isDeathCoords()));
         Utilities.setAutoWalk(p.bool("util.autoWalk", Utilities.isAutoWalk()));
-        Utilities.setClearWeather(p.bool("util.clearWeather", Utilities.isClearWeather()));
+        // On/off keeps its old Clear Weather key, so it carries over.
+        Weather.setEnabled(p.bool("util.clearWeather", Weather.isEnabled()));
+        Weather.setMode(p.string("util.weatherMode", Weather.modeLabel()));
+        Weather.setBars(p.bool("util.weatherBars", Weather.isBars()));
         Utilities.setHitSound(p.bool("util.hitSound", Utilities.isHitSound()));
         HudFilter.setHiddenSetting(p.string("util.hideOtherClients.sources", HudFilter.hiddenSetting()));
         HudFilter.setEnabled(p.bool("util.hideOtherClients", HudFilter.isEnabled()));
@@ -363,7 +366,9 @@ final class SpearSettings {
         put(file, prefix, "util.autoRespawn", Utilities.isAutoRespawn());
         put(file, prefix, "util.deathCoords", Utilities.isDeathCoords());
         put(file, prefix, "util.autoWalk", Utilities.isAutoWalk());
-        put(file, prefix, "util.clearWeather", Utilities.isClearWeather());
+        put(file, prefix, "util.clearWeather", Weather.isEnabled());
+        put(file, prefix, "util.weatherMode", Weather.modeLabel());
+        put(file, prefix, "util.weatherBars", Weather.isBars());
         put(file, prefix, "util.hitSound", Utilities.isHitSound());
         put(file, prefix, "util.hideOtherClients", HudFilter.isEnabled());
         put(file, prefix, "util.hideOtherClients.sources", HudFilter.hiddenSetting());

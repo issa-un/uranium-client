@@ -247,8 +247,10 @@ final class Modules {
                                         Utilities::isAwaitingZoomBinding, Utilities::awaitZoomBinding),
                                 new Choice("Zoom", () -> Utilities.zoomFactor() + "x", Utilities::cycleZoomFactor),
                                 new Choice("Zoom in", Utilities::zoomStyleLabel, Utilities::cycleZoomStyle))),
-                        new Module("Clear Weather", "No rain or thunder on your screen",
-                                Utilities::isClearWeather, Utilities::toggleClearWeather, List.of()),
+                        new Module("Weather", "No rain on your screen, or a cinematic film look",
+                                Weather::isEnabled, Weather::toggleEnabled, List.of(
+                                new Choice("Mode", Weather::modeLabel, Weather::cycleMode),
+                                new Toggle("Film bars", Weather::isBars, Weather::toggleBars))),
                         new Module("Auto Respawn", "Skips the death screen",
                                 Utilities::isAutoRespawn, Utilities::toggleAutoRespawn, List.of(
                                 new Toggle("Death coords", Utilities::isDeathCoords, Utilities::toggleDeathCoords))),

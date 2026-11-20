@@ -25,8 +25,7 @@ import com.mojang.blaze3d.platform.InputConstants;
  * - Auto Respawn: on the death screen, respawns at once, and with Death coords puts where you
  *   died in your chat (only you see it) and in the log.
  * - Auto Walk: holds forward for you until you turn it off (or open a screen).
- * - Clear Weather: shows no rain or thunder on your screen; the server's weather is unchanged
- *   and comes back with its next weather change after you turn it off.
+ * - Weather: Clear (no rain or thunder on your screen) or Cinematic (a film look); see Weather.
  * - Hit Sound: a short ding when a hit you click lands (the target flinches).
  * - Middle Click Friend: middle-click a player to add or remove them as a Radar friend
  *   (friends never set off the Radar or get webbed by Web Trap).
@@ -48,7 +47,6 @@ final class Utilities {
     private static volatile boolean autoRespawn;
     private static volatile boolean deathCoords = true;
     private static volatile boolean autoWalk;
-    private static volatile boolean clearWeather;
     private static volatile boolean hitSound;
     private static volatile boolean middleClickFriend;
     // How long after your click a flinch still counts as your hit.
@@ -73,7 +71,7 @@ final class Utilities {
         updateZoom(minecraft);
         updateRespawn(minecraft);
         updateWalk(minecraft);
-        updateWeather(minecraft);
+        Weather.update(minecraft);
         updateHitSound(minecraft);
     }
 
@@ -87,13 +85,6 @@ final class Utilities {
         } else if (walking) {
             minecraft.options.keyUp.setDown(WTap.physicallyDown(minecraft, minecraft.options.keyUp));
             walking = false;
-        }
-    }
-
-    private static void updateWeather(Minecraft minecraft) {
-        if (clearWeather && minecraft.level != null) {
-            minecraft.level.setRainLevel(0);
-            minecraft.level.setThunderLevel(0);
         }
     }
 
@@ -373,18 +364,6 @@ final class Utilities {
         autoWalk = !autoWalk;
     }
 
-    static boolean isClearWeather() {
-        return clearWeather;
-    }
-
-    static void setClearWeather(boolean on) {
-        clearWeather = on;
-    }
-
-    static void toggleClearWeather() {
-        clearWeather = !clearWeather;
-    }
-
     static boolean isHitSound() {
         return hitSound;
     }
@@ -416,7 +395,7 @@ final class Utilities {
             walking = false;
         }
         autoWalk = false;
-        clearWeather = false;
+        Weather.reset(minecraft);
         hitSound = false;
         middleClickFriend = false;
         hitTarget = null;
