@@ -10,17 +10,17 @@ import java.time.temporal.ChronoUnit;
 import net.minecraft.client.Minecraft;
 
 /**
- * Appends dash and hotbar events to .minecraft/logs/spear-injector.log, so a dash that
+ * Appends dash and hotbar events to .minecraft/logs/uranium.log, so a dash that
  * did not switch back can be traced afterwards. Starts over when it passes 512 KB.
  */
-final class SpearLog {
+final class UraniumLog {
     private static final long MAX_BYTES = 512 * 1024;
 
-    private SpearLog() {}
+    private UraniumLog() {}
 
     static void log(String message) {
         Path file = Minecraft.getInstance().gameDirectory.toPath()
-                .resolve("logs").resolve("spear-injector.log");
+                .resolve("logs").resolve("uranium.log");
         String line = LocalTime.now().truncatedTo(ChronoUnit.MILLIS) + "  " + message + System.lineSeparator();
         try {
             Files.createDirectories(file.getParent());

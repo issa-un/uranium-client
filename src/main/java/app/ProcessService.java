@@ -11,12 +11,12 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 
-public final class MinecraftProcessService {
-    private MinecraftProcessService() {}
+public final class ProcessService {
+    private ProcessService() {}
 
     public static List<JavaProcess> listProcesses() {
         return VirtualMachine.list().stream()
-                .map(MinecraftProcessService::toProcess)
+                .map(ProcessService::toProcess)
                 .sorted(Comparator.comparing(JavaProcess::executable).thenComparing(JavaProcess::pid))
                 .toList();
     }

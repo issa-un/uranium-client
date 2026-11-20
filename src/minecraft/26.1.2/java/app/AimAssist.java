@@ -135,7 +135,7 @@ final class AimAssist {
         lastStepMs = now;
         LocalPlayer player = minecraft.player;
         if (!enabled || player == null || minecraft.level == null || Mc.screen(minecraft) != null
-                || !SpearSettings.combatAllowed(minecraft) || !keyActive(minecraft)) {
+                || !Settings.combatAllowed(minecraft) || !keyActive(minecraft)) {
             drop();
             WindLock.stop();
             return;
@@ -170,7 +170,7 @@ final class AimAssist {
         double bestOff = fovHalf >= 180 ? Double.MAX_VALUE : fovHalf;
         double currentOff = Double.MAX_VALUE;
         for (Player other : minecraft.level.players()) {
-            if (other == player || !other.isAlive() || other.isSpectator() || VelocityHud.isFriend(other)
+            if (other == player || !other.isAlive() || other.isSpectator() || UraniumHud.isFriend(other)
                     || ignoreInvisible && other.isInvisible() || ignoreCreative && other.isCreative()) {
                 continue;
             }
@@ -547,7 +547,7 @@ final class AimAssist {
     private static void note(String what, long now) {
         String kind = what.contains(":") ? what.substring(0, what.indexOf(':')) : what;
         if (!kind.equals(lastNoteKind) || now - lastNoteMs >= LOG_GAP_MS) {
-            SpearLog.log("aim assist: " + what);
+            UraniumLog.log("aim assist: " + what);
             lastNoteKind = kind;
             lastNoteMs = now;
         }

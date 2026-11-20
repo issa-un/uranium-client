@@ -68,7 +68,7 @@ final class Cart {
             // no key for that slot: the plain switch
             player.getInventory().setSelectedSlot(slot);
             SpearDash.sendSelectedSlot(minecraft, false);
-            SpearLog.log("cart macro: hotbar " + (slot + 1) + " has no key bound, switched without one");
+            UraniumLog.log("cart macro: hotbar " + (slot + 1) + " has no key bound, switched without one");
             return;
         }
         net.minecraft.client.KeyMapping.click(com.mojang.blaze3d.platform.InputConstants.getKey(key.saveString()));
@@ -91,7 +91,7 @@ final class Cart {
             minecraft.options.keyUse.setDown(false);
             useWaiting = true;
             pressTick = player.tickCount;
-            SpearLog.log("cart macro: still using " + player.getUseItem().getHoverName().getString()
+            UraniumLog.log("cart macro: still using " + player.getUseItem().getHoverName().getString()
                     + ", let go first, the click goes next tick");
             return;
         }
@@ -204,7 +204,7 @@ final class Cart {
         BlockHitResult real = realClick(minecraft, player, click.getBlockPos(), anyFace ? null : click.getDirection());
         offTarget = real == null;
         if (real == null) {
-            SpearLog.log("cart: crosshair not on " + click.getBlockPos().toShortString() + ", no click sent");
+            UraniumLog.log("cart: crosshair not on " + click.getBlockPos().toShortString() + ", no click sent");
             Debug.info("click held back, crosshair not on the block");
             return false;
         }
@@ -214,14 +214,14 @@ final class Cart {
         if (macro) {
             pressSlot(minecraft, player, slot);
             pressUse(minecraft, player);
-            MinecraftInputController.stopGuard();
+            InputLoop.stopGuard();
             return true; // the game does the click on its next tick
         }
         player.getInventory().setSelectedSlot(slot);
         // A normal send: only when the slot really changed. Forcing it every time sends the
         // same slot twice, which anticheats flag.
         SpearDash.sendSelectedSlot(minecraft, false);
-        MinecraftInputController.stopGuard();
+        InputLoop.stopGuard();
         InteractionResult result = minecraft.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, click);
         if (Mc.swingsOnClient(result)) {
             Mc.swing(player, InteractionHand.MAIN_HAND);
@@ -269,7 +269,7 @@ final class Cart {
         BlockHitResult real = realClick(minecraft, player, click.getBlockPos(), null);
         offTarget = real == null;
         if (real == null) {
-            SpearLog.log("cart: crosshair not on the rail at " + click.getBlockPos().toShortString() + ", no click sent");
+            UraniumLog.log("cart: crosshair not on the rail at " + click.getBlockPos().toShortString() + ", no click sent");
             placed[0] = false;
             return player.getInventory().getSelectedSlot();
         }
@@ -279,7 +279,7 @@ final class Cart {
             // Your right-click bind: the game tries your main hand, then the offhand cart.
             pressUse(minecraft, player);
             placed[0] = true;
-            SpearLog.log("cart: macro right-click for the offhand cart on " + click.getBlockPos().toShortString());
+            UraniumLog.log("cart: macro right-click for the offhand cart on " + click.getBlockPos().toShortString());
             return heldSlot(player);
         }
         InteractionResult result = minecraft.gameMode.useItemOn(player, InteractionHand.OFF_HAND, click);
@@ -287,7 +287,7 @@ final class Cart {
             Mc.swing(player, InteractionHand.OFF_HAND);
         }
         placed[0] = result.consumesAction();
-        SpearLog.log("cart: TNT cart from your offhand on " + click.getBlockPos().toShortString() + ", the game said "
+        UraniumLog.log("cart: TNT cart from your offhand on " + click.getBlockPos().toShortString() + ", the game said "
                 + result.getClass().getSimpleName() + (placed[0] ? "" : " (not placed)"));
         return player.getInventory().getSelectedSlot();
     }
@@ -353,11 +353,11 @@ final class Cart {
     static void select(Minecraft minecraft, LocalPlayer player, int slot) {
         if (macro) {
             pressSlot(minecraft, player, slot);
-            MinecraftInputController.stopGuard();
+            InputLoop.stopGuard();
             return;
         }
         player.getInventory().setSelectedSlot(slot);
         SpearDash.sendSelectedSlot(minecraft, false);
-        MinecraftInputController.stopGuard();
+        InputLoop.stopGuard();
     }
 }

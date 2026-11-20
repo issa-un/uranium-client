@@ -65,11 +65,11 @@ final class KnockbackDisplacement {
     static boolean onAttackClick(Minecraft minecraft) {
         LocalPlayer player = minecraft.player;
         if (!enabled || player == null || minecraft.level == null || Mc.screen(minecraft) != null
-                || targetId >= 0 || !SpearSettings.combatAllowed(minecraft)) {
+                || targetId >= 0 || !Settings.combatAllowed(minecraft)) {
             return false;
         }
         if (!(minecraft.hitResult instanceof EntityHitResult hit) || !(hit.getEntity() instanceof Player target)
-                || !target.isAlive() || VelocityHud.isFriend(target)) {
+                || !target.isAlive() || UraniumHud.isFriend(target)) {
             return false;
         }
         boolean knockbackWeapon = MaceSwap.enchantmentLevel(player.getMainHandItem(), Enchantments.KNOCKBACK) > 0;
@@ -134,7 +134,7 @@ final class KnockbackDisplacement {
         turnedTick = -1;
         AIM.stop();
         AIM.glide(turn, 0, PlayStyle.turnMs(40 + java.util.concurrent.ThreadLocalRandom.current().nextLong(0, 20)));
-        SpearLog.log(String.format(java.util.Locale.ROOT, "knockback displacement: turning %.1f° to push %s %s %s",
+        UraniumLog.log(String.format(java.util.Locale.ROOT, "knockback displacement: turning %.1f° to push %s %s %s",
                 turn, target.getName().getString(), goal.startsWith("your path") ? "into" : "into", goal));
         return true;
     }
@@ -178,17 +178,17 @@ final class KnockbackDisplacement {
         int id = targetId;
         targetId = -1;
         if (!(minecraft.hitResult instanceof EntityHitResult hit) || hit.getEntity().getId() != id) {
-            SpearLog.log("knockback displacement: dropped, they left your crosshair during the turn");
+            UraniumLog.log("knockback displacement: dropped, they left your crosshair during the turn");
             return;
         }
         TriggerBot.strike(minecraft, player, target, false, now());
-        SpearLog.log("knockback displacement: hit " + (now() - heldAtMs) + " ms after your click, " + how);
+        UraniumLog.log("knockback displacement: hit " + (now() - heldAtMs) + " ms after your click, " + how);
     }
 
     private static void drop(String why) {
         targetId = -1;
         AIM.stop();
-        SpearLog.log("knockback displacement: dropped, " + why);
+        UraniumLog.log("knockback displacement: dropped, " + why);
     }
 
     /**

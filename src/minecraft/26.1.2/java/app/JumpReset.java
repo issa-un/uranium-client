@@ -39,7 +39,7 @@ final class JumpReset {
                 && player.getLastDamageSource().getEntity() != null;
         lastHurtTime = player.hurtTime;
         if (!enabled || !newHit || !player.onGround() || player.isInWater() || Mc.screen(minecraft) != null
-                || (onlyWhileSprinting && !player.isSprinting()) || !SpearSettings.combatAllowed(minecraft)) {
+                || (onlyWhileSprinting && !player.isSprinting()) || !Settings.combatAllowed(minecraft)) {
             return;
         }
         minecraft.options.keyJump.setDown(true);

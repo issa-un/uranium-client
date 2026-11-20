@@ -45,7 +45,7 @@ final class AutoTool {
                 toolSlot = best;
                 player.getInventory().setSelectedSlot(best);
                 SpearDash.sendSelectedSlot(minecraft, false);
-                MinecraftInputController.stopGuard();
+                InputLoop.stopGuard();
             }
             return;
         }

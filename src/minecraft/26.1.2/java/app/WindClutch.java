@@ -38,12 +38,12 @@ final class WindClutch {
             thrown = false;
             return;
         }
-        if (!enabled || thrown || Mc.screen(minecraft) != null || !SpearSettings.combatAllowed(minecraft)
+        if (!enabled || thrown || Mc.screen(minecraft) != null || !Settings.combatAllowed(minecraft)
                 || MlgWater.isActive()) { // MLG Water already has this landing
             return;
         }
-        VelocityHud.Landing landing = VelocityHud.predictLanding(minecraft, player);
-        if (landing.kind() != VelocityHud.LandingKind.DAMAGE) {
+        UraniumHud.Landing landing = UraniumHud.predictLanding(minecraft, player);
+        if (landing.kind() != UraniumHud.LandingKind.DAMAGE) {
             return;
         }
         float health = player.getHealth() + player.getAbsorptionAmount();
@@ -67,7 +67,7 @@ final class WindClutch {
         throwDown(minecraft, player);
         select(minecraft, previous);
         SpearDash.setStatus("Wind clutch");
-        SpearLog.log(String.format(Locale.ROOT, "wind clutch: thrown %.1f blocks up, the fall would have done %d of your %.0f hp",
+        UraniumLog.log(String.format(Locale.ROOT, "wind clutch: thrown %.1f blocks up, the fall would have done %d of your %.0f hp",
                 landing.drop(), landing.damage(), health));
     }
 

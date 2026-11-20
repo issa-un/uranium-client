@@ -58,7 +58,7 @@ final class DamageParticles {
                 LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(DamageParticles::render);
             } catch (RuntimeException | LinkageError error) {
                 broken = true;
-                SpearLog.log("damage particles: could not hook world drawing (" + error + ")");
+                UraniumLog.log("damage particles: could not hook world drawing (" + error + ")");
             }
         }
         LocalPlayer player = minecraft.player;
@@ -167,11 +167,11 @@ final class DamageParticles {
         } catch (RuntimeException error) {
             if (!drawFailed) {
                 drawFailed = true;
-                SpearLog.log("damage particles: drawing failed, skipped this frame: " + error);
+                UraniumLog.log("damage particles: drawing failed, skipped this frame: " + error);
             }
         } catch (LinkageError error) {
             broken = true;
-            SpearLog.log("damage particles: switched off, this game version draws differently (" + error + ")");
+            UraniumLog.log("damage particles: switched off, this game version draws differently (" + error + ")");
         }
     }
 

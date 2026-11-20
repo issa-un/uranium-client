@@ -192,6 +192,6 @@ final class BucketUse {
             player.getInventory().setSelectedSlot(previousSlot);
             SpearDash.sendSelectedSlot(minecraft, false);
         }
-        MinecraftInputController.stopGuard();
+        InputLoop.stopGuard();
     }
 }

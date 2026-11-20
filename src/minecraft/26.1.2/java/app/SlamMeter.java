@@ -92,7 +92,7 @@ final class SlamMeter {
         LivingEntity best = null;
         double bestDistance = LOOK_RANGE;
         for (Player other : minecraft.level.players()) {
-            if (other == player || !other.isAlive() || other.isSpectator() || VelocityHud.isFriend(other)
+            if (other == player || !other.isAlive() || other.isSpectator() || UraniumHud.isFriend(other)
                     || other.getY() > player.getY()) {
                 continue;
             }

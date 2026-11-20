@@ -64,7 +64,7 @@ final class WebEscape {
             finishIfDone(minecraft, player, now);
             return;
         }
-        if (!enabled || Mc.screen(minecraft) != null || now < readyAtMs || !SpearSettings.combatAllowed(minecraft)) {
+        if (!enabled || Mc.screen(minecraft) != null || now < readyAtMs || !Settings.combatAllowed(minecraft)) {
             return;
         }
         List<BlockPos> webs = websAround(minecraft, player);
@@ -84,7 +84,7 @@ final class WebEscape {
         }
         int scooped = pickUp ? BucketUse.scoopAll(minecraft, player, WATER) : 0;
         String what = forFire ? (done ? "fire out" : "still burning") : (done ? "web gone" : "webs still touching");
-        SpearLog.log((forFire ? "fire" : "web escape") + ": " + what + " " + (now - placedMs) + " ms after the water"
+        UraniumLog.log((forFire ? "fire" : "web escape") + ": " + what + " " + (now - placedMs) + " ms after the water"
                 + (pickUp ? ", scooped " + scooped + " of " + WATER.size() : "") + ", try " + tries);
         SpearDash.setStatus(forFire ? (done ? "Fire out" : "Still burning")
                 : (done ? "Web cleared" : "Webs left, again"));

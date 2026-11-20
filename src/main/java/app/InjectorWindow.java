@@ -57,7 +57,7 @@ import javax.swing.Timer;
  * Minecraft marked. Manage has Update, Unload and Status as tiles, and shows the hand your
  * aim moves like (from humans.txt). Near-black green with a radioactive glow.
  */
-final class ProcessPickerWindow {
+final class InjectorWindow {
     static final Color TOP = new Color(0x0C130E);
     static final Color BOTTOM = new Color(0x060A07);
     static final Color BAR = new Color(0x0A100B);
@@ -106,7 +106,7 @@ final class ProcessPickerWindow {
     private boolean busy;
     private boolean refreshing;
 
-    ProcessPickerWindow() {
+    InjectorWindow() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setMinimumSize(new Dimension(700, 500));
         frame.setSize(820, 580);
@@ -535,7 +535,7 @@ final class ProcessPickerWindow {
         new SwingWorker<List<JavaProcess>, Void>() {
             @Override
             protected List<JavaProcess> doInBackground() {
-                return MinecraftProcessService.listProcesses();
+                return ProcessService.listProcesses();
             }
 
             @Override
@@ -603,7 +603,7 @@ final class ProcessPickerWindow {
         new SwingWorker<String, Void>() {
             @Override
             protected String doInBackground() throws Exception {
-                return MinecraftProcessService.attach(process, agentJar, command);
+                return ProcessService.attach(process, agentJar, command);
             }
 
             @Override
@@ -662,7 +662,7 @@ final class ProcessPickerWindow {
 
     static Path locateAgentJar() {
         try {
-            Path location = Path.of(ProcessPickerWindow.class
+            Path location = Path.of(InjectorWindow.class
                     .getProtectionDomain().getCodeSource().getLocation().toURI());
             if (Files.isRegularFile(location)) {
                 return location;

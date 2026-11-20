@@ -8,7 +8,7 @@ public class Main {
         if ((args.length == 3 || args.length == 4) && "attach".equals(args[0])) {
             String command = args.length == 4 ? args[3] : "open";
             try {
-                System.out.println(MinecraftProcessService.attach(
+                System.out.println(ProcessService.attach(
                         new JavaProcess(args[1], "java", true), Path.of(args[2]), command));
             } catch (Exception exception) {
                 throw new IllegalStateException("Could not run \"" + command + "\" in the game.", exception);
@@ -27,7 +27,7 @@ public class Main {
             return;
         }
 
-        SwingUtilities.invokeLater(() -> new ProcessPickerWindow().show());
+        SwingUtilities.invokeLater(() -> new InjectorWindow().show());
     }
 
     static String greeting() {

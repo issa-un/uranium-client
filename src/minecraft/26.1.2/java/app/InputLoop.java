@@ -18,7 +18,7 @@ import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
 import org.lwjgl.system.Callback;
 
-final class MinecraftInputController {
+final class InputLoop {
     private static final int NUMPAD_8_KEY = InputConstants.KEY_NUMPAD8;
     // Long enough for the server's correction to arrive on a high ping.
     private static final long GUARD_MS = 1500;
@@ -56,18 +56,18 @@ final class MinecraftInputController {
     private static long guardStartedMs;
     private static int guardFixes;
 
-    private MinecraftInputController() {}
+    private InputLoop() {}
 
     static void install(Minecraft minecraft) {
         if (!INSTALLED.compareAndSet(false, true)) {
             return;
         }
-        SpearSettings.load(minecraft);
+        Settings.load(minecraft);
         unloadRequested = false;
         active = true;
         scheduler = Executors.newSingleThreadScheduledExecutor(task -> {
             Thread thread = new Thread(task,
-                    "minecraft-input-controller-" + MinecraftInputController.class.getPackageName());
+                    "uranium-input-" + InputLoop.class.getPackageName());
             thread.setDaemon(true);
             return thread;
         });
@@ -212,7 +212,7 @@ final class MinecraftInputController {
         AutoFish.reset();
         WTap.reset(minecraft);
         JumpReset.reset(minecraft);
-        VelocityHud.uninstall();
+        UraniumHud.uninstall();
         if (Mc.screen(minecraft) instanceof ClickGuiScreen) {
             Mc.setScreen(minecraft, null);
         }
@@ -250,7 +250,7 @@ final class MinecraftInputController {
                 toggleGui(minecraft);
                 return false;
             }
-            if (toggleHudModule(minecraft, VelocityHud.toggleFor(key, -1))) {
+            if (toggleHudModule(minecraft, UraniumHud.toggleFor(key, -1))) {
                 return true;
             }
             // Replenish has your inventory open with the mouse over a stack: a hotbar key
@@ -326,7 +326,7 @@ final class MinecraftInputController {
     private static boolean onMousePressed(Minecraft minecraft, int button, int mods) {
         try {
             MouseButtonEvent event = new MouseButtonEvent(0, 0, new MouseButtonInfo(button, mods));
-            if (toggleHudModule(minecraft, VelocityHud.toggleFor(-1, button))) {
+            if (toggleHudModule(minecraft, UraniumHud.toggleFor(-1, button))) {
                 return true;
             }
             if (CartRefill.isBusy()) {
@@ -382,8 +382,8 @@ final class MinecraftInputController {
         if (module < 0 || Mc.screen(minecraft) != null) {
             return false;
         }
-        VelocityHud.toggleModule(module);
-        SpearSettings.save(minecraft);
+        UraniumHud.toggleModule(module);
+        Settings.save(minecraft);
         return true;
     }
 
@@ -496,7 +496,7 @@ final class MinecraftInputController {
 
     private static void tick(Minecraft minecraft) {
         lastTickMs = System.nanoTime() / 1_000_000;
-        SpearSettings.followServer(minecraft);
+        Settings.followServer(minecraft);
         guard("AttackHook", () -> AttackHook.update(minecraft));
         guard("Spear Dash ready sound", () -> SpearDash.updateReadySound(minecraft));
         guard("switch-back watch", () -> enforceSwitchBack(minecraft));
@@ -593,7 +593,7 @@ final class MinecraftInputController {
             update.run();
         } catch (RuntimeException error) {
             if (FAILED.add(module)) {
-                SpearLog.log("error in " + module + ", the other modules keep running: " + error);
+                UraniumLog.log("error in " + module + ", the other modules keep running: " + error);
             }
         }
     }
@@ -635,7 +635,7 @@ final class MinecraftInputController {
         }
         long afterMs = System.nanoTime() / 1_000_000 - guardStartedMs;
         if (selected != guardSpearSlot) {
-            SpearLog.log("guard: hotbar moved to " + (selected + 1) + " " + afterMs
+            UraniumLog.log("guard: hotbar moved to " + (selected + 1) + " " + afterMs
                     + " ms after the dash, not the spear; left alone");
             guardSpearSlot = -1;
             return;
@@ -646,7 +646,7 @@ final class MinecraftInputController {
             return;
         }
         guardFixes++;
-        SpearLog.log("guard: server put the spear back " + afterMs + " ms after the dash"
+        UraniumLog.log("guard: server put the spear back " + afterMs + " ms after the dash"
                 + " (fix " + guardFixes + " of " + MAX_GUARD_FIXES + ")");
         minecraft.player.getInventory().setSelectedSlot(guardPreviousSlot);
         SpearDash.sendSelectedSlot(minecraft, true);

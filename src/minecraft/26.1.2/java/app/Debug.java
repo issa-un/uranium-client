@@ -305,7 +305,7 @@ final class Debug {
             NOTES.removeLast();
         }
         if (weight > 0) {
-            SpearLog.log("debug: " + who + ": " + text);
+            UraniumLog.log("debug: " + who + ": " + text);
         }
     }
 

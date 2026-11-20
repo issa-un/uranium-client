@@ -112,7 +112,7 @@ final class Weather {
             }
         } catch (RuntimeException | LinkageError | ReflectiveOperationException error) {
             shaderFailed = true;
-            SpearLog.log("weather: cinematic color grade failed, switched off (" + error + ")");
+            UraniumLog.log("weather: cinematic color grade failed, switched off (" + error + ")");
             try {
                 removeGrade(minecraft);
             } catch (RuntimeException | LinkageError | ReflectiveOperationException ignored) {
@@ -244,7 +244,7 @@ final class Weather {
             HudElementRegistry.attachElementBefore(VanillaHudElements.CROSSHAIR, HUD_ID, Weather::drawHud);
         } catch (RuntimeException | LinkageError error) {
             hudFailed = true; // Fabric API's HUD module is missing or changed
-            SpearLog.log("weather: could not add the cinematic vignette (" + error + ")");
+            UraniumLog.log("weather: could not add the cinematic vignette (" + error + ")");
         }
     }
 
@@ -268,7 +268,7 @@ final class Weather {
         } catch (RuntimeException error) {
             // A drawing bug must never take the frame down; logged once, then left off.
             hudFailed = true;
-            SpearLog.log("weather: cinematic vignette failed, switched off (" + error + ")");
+            UraniumLog.log("weather: cinematic vignette failed, switched off (" + error + ")");
         }
     }
 
@@ -319,7 +319,7 @@ final class Weather {
         try {
             removeGrade(minecraft);
         } catch (RuntimeException | LinkageError | ReflectiveOperationException error) {
-            SpearLog.log("weather: could not remove the cinematic grade on unload (" + error + ")");
+            UraniumLog.log("weather: could not remove the cinematic grade on unload (" + error + ")");
         }
     }
 }

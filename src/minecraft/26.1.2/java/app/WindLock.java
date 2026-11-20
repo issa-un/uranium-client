@@ -87,7 +87,7 @@ final class WindLock {
             }
             seenMs = now;
             MOUSE.reset();
-            SpearLog.log("aim assist (wind): locked onto " + target.getName().getString());
+            UraniumLog.log("aim assist (wind): locked onto " + target.getName().getString());
         }
 
         double strength = AimAssist.isDriftLock() ? drift(target, seconds) : 0;
@@ -147,7 +147,7 @@ final class WindLock {
                 double strength = Mth.clamp((gap - DRIFT_FROM) / (DRIFT_FULL - DRIFT_FROM), 0, 1);
                 if (strength > drift) {
                     if (drift < 0.05 && strength > 0.3) {
-                        SpearLog.log(String.format(java.util.Locale.ROOT,
+                        UraniumLog.log(String.format(java.util.Locale.ROOT,
                                 "aim assist: drift lock, %s thrown %.2f blocks a tick off their path",
                                 who.getName().getString(), gap));
                     }
@@ -161,7 +161,7 @@ final class WindLock {
 
     private static void letGo(String why) {
         if (target != null) {
-            SpearLog.log("aim assist (wind): let go of " + target.getName().getString()
+            UraniumLog.log("aim assist (wind): let go of " + target.getName().getString()
                     + (why.isEmpty() ? "" : " (" + why + ")"));
         }
         target = null;
@@ -191,7 +191,7 @@ final class WindLock {
         Player best = null;
         double bestOff = Double.MAX_VALUE;
         for (Player other : minecraft.level.players()) {
-            if (other == player || !other.isAlive() || other.isSpectator() || VelocityHud.isFriend(other)
+            if (other == player || !other.isAlive() || other.isSpectator() || UraniumHud.isFriend(other)
                     || AimAssist.isIgnoreInvisible() && other.isInvisible()
                     || AimAssist.isIgnoreCreative() && other.isCreative()) {
                 continue;

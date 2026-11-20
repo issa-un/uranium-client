@@ -44,7 +44,7 @@ final class AutoTotem {
         ACTION.update(minecraft);
         LocalPlayer player = minecraft.player;
         if (!enabled || player == null || minecraft.gameMode == null || minecraft.getConnection() == null
-                || player.isSpectator() || !SpearSettings.combatAllowed(minecraft) || ACTION.busy()) {
+                || player.isSpectator() || !Settings.combatAllowed(minecraft) || ACTION.busy()) {
             return;
         }
         if (player.getOffhandItem().is(Items.TOTEM_OF_UNDYING)
@@ -80,12 +80,12 @@ final class AutoTotem {
                     ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO, Direction.DOWN));
             return true;
         }, (game, acted, from, slot) -> {
-            MinecraftInputController.stopGuard();
+            InputLoop.stopGuard();
             lastSwapMs = System.nanoTime() / 1_000_000;
             reactAtMs = -1;
             if (acted) {
                 SpearDash.setStatus("Totem to offhand");
-                SpearLog.log("auto totem: hotbar " + (slot + 1) + " to offhand");
+                UraniumLog.log("auto totem: hotbar " + (slot + 1) + " to offhand");
             }
         });
     }
@@ -102,7 +102,7 @@ final class AutoTotem {
                 lastSwapMs = now;
                 reactAtMs = -1;
                 SpearDash.setStatus("Totem to offhand");
-                SpearLog.log("auto totem: inventory slot " + slot.index + " to offhand");
+                UraniumLog.log("auto totem: inventory slot " + slot.index + " to offhand");
                 return;
             }
         }

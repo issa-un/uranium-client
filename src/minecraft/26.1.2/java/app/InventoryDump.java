@@ -18,15 +18,15 @@ final class InventoryDump {
         }
         done = true;
         int size = player.getInventory().getContainerSize();
-        SpearLog.log("inventory: " + size + " slots, selected hotbar " + (player.getInventory().getSelectedSlot() + 1));
+        UraniumLog.log("inventory: " + size + " slots, selected hotbar " + (player.getInventory().getSelectedSlot() + 1));
         for (int slot = 0; slot < size; slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
             if (stack.isEmpty()) {
                 continue;
             }
-            SpearLog.log("inventory: " + where(slot) + ": " + describe(stack));
+            UraniumLog.log("inventory: " + where(slot) + ": " + describe(stack));
         }
-        SpearLog.log("inventory: offhand: " + (player.getOffhandItem().isEmpty() ? "empty" : describe(player.getOffhandItem())));
+        UraniumLog.log("inventory: offhand: " + (player.getOffhandItem().isEmpty() ? "empty" : describe(player.getOffhandItem())));
     }
 
     private static String where(int slot) {

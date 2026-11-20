@@ -91,7 +91,7 @@ final class AntiCart {
             }
             return;
         }
-        if (Mc.screen(minecraft) != null || player.isSpectator() || !SpearSettings.combatAllowed(minecraft)
+        if (Mc.screen(minecraft) != null || player.isSpectator() || !Settings.combatAllowed(minecraft)
                 || CrossbowCart.isBusy() || BowCart.isBusy() || CartRefill.isBusy() || player.isUsingItem()) {
             return;
         }
@@ -122,20 +122,20 @@ final class AntiCart {
         }
         blockSlot = blockSlot(player);
         if (blockSlot < 0) {
-            SpearLog.log("anti cart: a TNT cart is " + String.format(java.util.Locale.ROOT, "%.1f", closest)
+            UraniumLog.log("anti cart: a TNT cart is " + String.format(java.util.Locale.ROOT, "%.1f", closest)
                     + " blocks away, but there is no block in your hotbar");
             SpearDash.setStatus("No block to put down");
             return;
         }
         plan(minecraft, player, threat);
         if (PLANS.isEmpty()) {
-            SpearLog.log("anti cart: a TNT cart is close, but no free spot between you and it takes a block");
+            UraniumLog.log("anti cart: a TNT cart is close, but no free spot between you and it takes a block");
             return;
         }
         backSlot = Cart.heldSlot(player);
         Cart.select(minecraft, player, blockSlot);
         startMs = now();
-        SpearLog.log(String.format(java.util.Locale.ROOT, "anti cart: TNT cart %.1f blocks away, %d block%s going down",
+        UraniumLog.log(String.format(java.util.Locale.ROOT, "anti cart: TNT cart %.1f blocks away, %d block%s going down",
                 closest, PLANS.size(), PLANS.size() == 1 ? "" : "s"));
         aimNext(minecraft, player);
     }
@@ -255,7 +255,7 @@ final class AntiCart {
         backSlot = Cart.heldSlot(player);
         Cart.select(minecraft, player, blockSlot);
         startMs = now();
-        SpearLog.log("anti cart: you jumped with a TNT cart close, a block under you at " + cell.toShortString());
+        UraniumLog.log("anti cart: you jumped with a TNT cart close, a block under you at " + cell.toShortString());
         aimNext(minecraft, player);
         return true;
     }
@@ -322,20 +322,20 @@ final class AntiCart {
         Plan plan = PLANS.remove(0);
         if (!(minecraft.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
                 || !hit.getBlockPos().equals(plan.against()) || hit.getDirection() != plan.face()) {
-            SpearLog.log("anti cart: the crosshair didn't land on the spot for " + plan.cell().toShortString() + ", skipped");
+            UraniumLog.log("anti cart: the crosshair didn't land on the spot for " + plan.cell().toShortString() + ", skipped");
         } else if (!minecraft.level.getBlockState(plan.cell()).canBeReplaced()) {
-            SpearLog.log("anti cart: " + plan.cell().toShortString() + " is already filled");
+            UraniumLog.log("anti cart: " + plan.cell().toShortString() + " is already filled");
         } else {
             Debug.click("block placed in front of the cart");
             if (Cart.isMacro()) {
                 Cart.pressUse(minecraft, player);
-                SpearLog.log("anti cart: macro right-click for the block at " + plan.cell().toShortString());
+                UraniumLog.log("anti cart: macro right-click for the block at " + plan.cell().toShortString());
             } else {
                 InteractionResult result = minecraft.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit);
                 if (Mc.swingsOnClient(result)) {
                     Mc.swing(player, InteractionHand.MAIN_HAND);
                 }
-                SpearLog.log("anti cart: block at " + plan.cell().toShortString() + (result.consumesAction() ? "" : " refused"));
+                UraniumLog.log("anti cart: block at " + plan.cell().toShortString() + (result.consumesAction() ? "" : " refused"));
             }
             SpearDash.setStatus("Blocked the cart");
         }
@@ -358,7 +358,7 @@ final class AntiCart {
         lookBack = null;
         step = null;
         if (why != null) {
-            SpearLog.log("anti cart: stopped, " + why);
+            UraniumLog.log("anti cart: stopped, " + why);
         }
     }
 

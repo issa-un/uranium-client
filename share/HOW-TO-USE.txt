@@ -38,7 +38,7 @@ Builder.exe, next to Uranium.exe, looks after Uranium for you:
   missing.
 - Clean old builds: deletes downloaded versions you don't use any more.
 - Reset settings: every module back to default (close Minecraft first;
-  your old settings are kept as spear-injector.properties.old).
+  your old settings are kept as uranium.properties.old).
 - Reset my hand: deletes humans.txt, back to an average hand.
 - Open logs, Open config, Open Uranium folder.
 
@@ -389,5 +389,5 @@ GOOD TO KNOW
 - On 26.2 and 26.3: install Fabric Loader and Fabric API for that version.
   Reach Swap and Hit Wheels only work on 26.1.2 (they switch themselves off).
 - Something didn't work? Every mace hit, dash, shield break and pearl catch
-  writes a line in .minecraft\logs\spear-injector.log explaining what
+  writes a line in .minecraft\logs\uranium.log explaining what
   happened.

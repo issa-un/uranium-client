@@ -77,7 +77,7 @@ final class AimRecorder {
             frames = 0;
             lastCursorX = Double.NaN;
             SpearDash.setStatus("Recording your aim: " + file.getFileName());
-            SpearLog.log("aim recorder: started " + file);
+            UraniumLog.log("aim recorder: started " + file);
         } catch (IOException exception) {
             out = null;
             SpearDash.setStatus("Couldn't start the recording: " + exception.getMessage());
@@ -95,7 +95,7 @@ final class AimRecorder {
         }
         out = null;
         SpearDash.setStatus("Saved " + frames + " frames to recordings/" + file.getFileName());
-        SpearLog.log("aim recorder: saved " + frames + " frames to " + file);
+        UraniumLog.log("aim recorder: saved " + frames + " frames to " + file);
     }
 
     private static double ms() {

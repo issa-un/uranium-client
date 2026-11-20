@@ -35,7 +35,7 @@ final class AutoFish {
             minecraft.gameMode.useItem(player, InteractionHand.MAIN_HAND);
             Mc.swing(player, InteractionHand.MAIN_HAND);
             recastAtMs = now + RECAST_MS;
-            SpearLog.log("auto fish: reeled in");
+            UraniumLog.log("auto fish: reeled in");
         } else if (hook == null && recastAtMs >= 0 && now >= recastAtMs) {
             minecraft.gameMode.useItem(player, InteractionHand.MAIN_HAND);
             Mc.swing(player, InteractionHand.MAIN_HAND);

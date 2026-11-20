@@ -64,7 +64,7 @@ final class PopChams {
                 LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(PopChams::render);
             } catch (RuntimeException | LinkageError error) {
                 broken = true;
-                SpearLog.log("pop chams: could not hook world drawing (" + error + ")");
+                UraniumLog.log("pop chams: could not hook world drawing (" + error + ")");
             }
         }
         LocalPlayer player = minecraft.player;
@@ -95,7 +95,7 @@ final class PopChams {
                 if (enabled) {
                     GHOSTS.add(new Ghost(label, you, other.position(), other.yBodyRot, other.getBbHeight(), now));
                 }
-                SpearLog.log("pop chams: " + label);
+                UraniumLog.log("pop chams: " + label);
             }
         }
         GHOSTS.removeIf(ghost -> now - ghost.atMs() > LIFE_MS);
@@ -128,11 +128,11 @@ final class PopChams {
         } catch (RuntimeException error) {
             if (!drawFailed) {
                 drawFailed = true;
-                SpearLog.log("pop chams: drawing failed, skipped this frame: " + error);
+                UraniumLog.log("pop chams: drawing failed, skipped this frame: " + error);
             }
         } catch (LinkageError error) {
             broken = true;
-            SpearLog.log("pop chams: switched off, this game version draws differently (" + error + ")");
+            UraniumLog.log("pop chams: switched off, this game version draws differently (" + error + ")");
         }
     }
 

@@ -41,7 +41,7 @@ final class AutoWeapon {
      */
     static boolean onAttackClick(Minecraft minecraft) {
         LocalPlayer player = minecraft.player;
-        if (!enabled || anyAttack || player == null || Mc.screen(minecraft) != null || !SpearSettings.combatAllowed(minecraft)
+        if (!enabled || anyAttack || player == null || Mc.screen(minecraft) != null || !Settings.combatAllowed(minecraft)
                 || !(minecraft.hitResult instanceof EntityHitResult hit) || !(hit.getEntity() instanceof LivingEntity target)) {
             return false;
         }
@@ -55,8 +55,8 @@ final class AutoWeapon {
         if (!isDelayed()) {
             player.getInventory().setSelectedSlot(best);
             SpearDash.sendSelectedSlot(minecraft, false);
-            MinecraftInputController.stopGuard();
-            SpearLog.log("auto weapon: hotbar " + (best + 1) + " (" + damage(player.getInventory().getItem(best)) + " damage)");
+            InputLoop.stopGuard();
+            UraniumLog.log("auto weapon: hotbar " + (best + 1) + " (" + damage(player.getInventory().getItem(best)) + " damage)");
             return false;
         }
         ACTION.start(minecraft, best, false, SWAP_DELAY, HIT_DELAY, null, game -> {
@@ -99,8 +99,8 @@ final class AutoWeapon {
 
     private static void finished(Minecraft minecraft, boolean acted, int fromSlot, int weapon) {
         if (minecraft.player != null && minecraft.player.getInventory().getSelectedSlot() == weapon) {
-            MinecraftInputController.stopGuard();
-            SpearLog.log("auto weapon (delayed): hotbar " + (weapon + 1)
+            InputLoop.stopGuard();
+            UraniumLog.log("auto weapon (delayed): hotbar " + (weapon + 1)
                     + (acted ? ", hit" : ", no hit"));
         }
     }
@@ -112,7 +112,7 @@ final class AutoWeapon {
     static int weaponForAnyAttack(Minecraft minecraft) {
         LocalPlayer player = minecraft.player;
         if (!enabled || !anyAttack || player == null || Mc.screen(minecraft) != null || ACTION.busy()
-                || !SpearSettings.combatAllowed(minecraft)) {
+                || !Settings.combatAllowed(minecraft)) {
             return -1;
         }
         int best = bestWeapon(player);
@@ -130,8 +130,8 @@ final class AutoWeapon {
         }
         player.getInventory().setSelectedSlot(weapon);
         SpearDash.markSlotSent(minecraft, weapon);
-        MinecraftInputController.stopGuard();
-        SpearLog.log("auto weapon (any attack): hotbar " + (weapon + 1)
+        InputLoop.stopGuard();
+        UraniumLog.log("auto weapon (any attack): hotbar " + (weapon + 1)
                 + " (" + damage(player.getInventory().getItem(weapon)) + " damage)");
     }
 

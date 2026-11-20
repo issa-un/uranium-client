@@ -46,12 +46,12 @@ final class MlgWater {
             scoopAfterLanding(minecraft, player, now);
             return;
         }
-        if (!enabled || Mc.screen(minecraft) != null || !SpearSettings.combatAllowed(minecraft)
+        if (!enabled || Mc.screen(minecraft) != null || !Settings.combatAllowed(minecraft)
                 || !BucketUse.waterWorks(minecraft)) {
             return;
         }
-        VelocityHud.Landing landing = VelocityHud.predictLanding(minecraft, player);
-        if (landing.kind() != VelocityHud.LandingKind.DAMAGE || !worthIt(player, landing)) {
+        UraniumHud.Landing landing = UraniumHud.predictLanding(minecraft, player);
+        if (landing.kind() != UraniumHud.LandingKind.DAMAGE || !worthIt(player, landing)) {
             return;
         }
         int bucket = BucketUse.findSlot(player, Items.WATER_BUCKET);
@@ -74,11 +74,11 @@ final class MlgWater {
         placedMs = now;
         landedAtTick = -1;
         SpearDash.setStatus("MLG water");
-        SpearLog.log("mlg: water at " + String.format(java.util.Locale.ROOT, "%.1f", landing.drop())
+        UraniumLog.log("mlg: water at " + String.format(java.util.Locale.ROOT, "%.1f", landing.drop())
                 + " blocks up, saving about " + landing.damage() / 2.0 + " hearts");
     }
 
-    private static boolean worthIt(LocalPlayer player, VelocityHud.Landing landing) {
+    private static boolean worthIt(LocalPlayer player, UraniumHud.Landing landing) {
         int minDamage = MIN_DAMAGE[minDamageIndex];
         return minDamage == 0 ? landing.fatal(player) : landing.damage() >= minDamage;
     }
@@ -93,7 +93,7 @@ final class MlgWater {
             return;
         }
         boolean scooped = pickUp && BucketUse.scoop(minecraft, player, waterAt);
-        SpearLog.log("mlg: " + (settled ? "landed" : "no landing seen") + (pickUp
+        UraniumLog.log("mlg: " + (settled ? "landed" : "no landing seen") + (pickUp
                 ? (scooped ? ", water scooped" : ", could not scoop the water") : ""));
         SpearDash.setStatus(settled ? "MLG landed" : "MLG: no landing");
         waterAt = null;

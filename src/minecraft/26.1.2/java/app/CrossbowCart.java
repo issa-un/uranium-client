@@ -166,11 +166,11 @@ final class CrossbowCart {
             boolean elsewhere = railInHand >= 0 && minecraft.hitResult instanceof BlockHitResult other
                     && other.getType() == HitResult.Type.BLOCK && !nearSpot(other.getBlockPos());
             if (!elsewhere) {
-                SpearLog.log("crossbow cart: extra click while the cart goes down (at "
+                UraniumLog.log("crossbow cart: extra click while the cart goes down (at "
                         + step.name().toLowerCase() + "), ignored");
                 return true;
             }
-            SpearLog.log("crossbow cart: new rail click somewhere else, the last one (at "
+            UraniumLog.log("crossbow cart: new rail click somewhere else, the last one (at "
                     + step.name().toLowerCase() + ") is dropped");
             step = null;
             AIM.stop();
@@ -186,7 +186,7 @@ final class CrossbowCart {
                         && Cart.isRail(player.getInventory().getItem(PRESS_SLOTS[i]));
             }
             if (railLately) {
-                SpearLog.log("crossbow cart: click left to the game, no rail counted as in hand; " + keys(player));
+                UraniumLog.log("crossbow cart: click left to the game, no rail counted as in hand; " + keys(player));
             }
             return false;
         }
@@ -198,23 +198,23 @@ final class CrossbowCart {
                 && Cart.hasRail(minecraft, minecart.blockPosition())) {
             // Your crosshair is on a cart sitting on a rail: the next cart goes on that rail.
             hit = Cart.onRail(minecart.blockPosition());
-            SpearLog.log("crossbow cart: clicked a cart on its rail, the next cart goes on that rail");
+            UraniumLog.log("crossbow cart: clicked a cart on its rail, the next cart goes on that rail");
         } else {
-            SpearLog.log("crossbow cart: click left to the game, the crosshair isn't on a block; " + keys(player));
+            UraniumLog.log("crossbow cart: click left to the game, the crosshair isn't on a block; " + keys(player));
             return false;
         }
-        if (!SpearSettings.combatAllowed(minecraft)) {
+        if (!Settings.combatAllowed(minecraft)) {
             SpearDash.setStatus("Off on this server");
-            SpearLog.log("crossbow cart: click left to the game, combat modules are off on this server");
+            UraniumLog.log("crossbow cart: click left to the game, combat modules are off on this server");
             return false;
         }
         if (!CHANCE.roll()) {
-            SpearLog.log("crossbow cart: click left to the game (Chance)");
+            UraniumLog.log("crossbow cart: click left to the game (Chance)");
             return false;
         }
         if (!Cart.hasCart(player)) {
             SpearDash.setStatus("No TNT minecart");
-            SpearLog.log("crossbow cart: click left to the game, no TNT minecart");
+            UraniumLog.log("crossbow cart: click left to the game, no TNT minecart");
             CartRefill.requestNow();
             return false;
         }
@@ -231,7 +231,7 @@ final class CrossbowCart {
             // A fast click right next to the rail you just put down (the crosshair slid past
             // it onto the ground): counted as that rail, not a second rail behind it.
             target = lastSpot;
-            SpearLog.log("crossbow cart: fast click next to your last rail, counted as that rail");
+            UraniumLog.log("crossbow cart: fast click next to your last rail, counted as that rail");
         } else {
             target = minecraft.level.getBlockState(clicked).canBeReplaced() ? clicked : clicked.relative(hit.getDirection());
             if (Cart.hasRail(minecraft, target)) {
@@ -257,22 +257,22 @@ final class CrossbowCart {
         if (railInHand != Cart.heldSlot(player)) {
             // Finish the switch you started, so the rail really is in your hand.
             Cart.select(minecraft, player, railInHand);
-            SpearLog.log("crossbow cart: quick switch to hotbar " + (railInHand + 1) + " counted"
+            UraniumLog.log("crossbow cart: quick switch to hotbar " + (railInHand + 1) + " counted"
                     + (dropped > 1 ? " (" + dropped + " fast key presses)" : ""));
         } else if (dropped > 0) {
-            SpearLog.log("crossbow cart: " + dropped + " hotbar key presses still queued were used up, the rail stays");
+            UraniumLog.log("crossbow cart: " + dropped + " hotbar key presses still queued were used up, the rail stays");
         }
         String risk = SelfBlast.danger(minecraft, player, SelfBlast.cartCenter(target), SelfBlast.CROSSBOW_SPEED);
         if (risk != null) {
             // your own blast would kill you (or pop your totem): the rail is yours, no cart
             SpearDash.setStatus("Too close for your health");
-            SpearLog.log("crossbow cart: no cart at " + target.toShortString() + ", " + risk);
+            UraniumLog.log("crossbow cart: no cart at " + target.toShortString() + ", " + risk);
             return false;
         }
         if (minecraft.level.isRainingAt(target.above())) {
-            SpearLog.log("crossbow cart: it's raining on the cart, rain puts a burning arrow out (cover helps)");
+            UraniumLog.log("crossbow cart: it's raining on the cart, rain puts a burning arrow out (cover helps)");
         }
-        SpearLog.log("crossbow cart: click taken at " + target.toShortString() + "; " + keys(player));
+        UraniumLog.log("crossbow cart: click taken at " + target.toShortString() + "; " + keys(player));
         pressedSlot = -1;
         click = target.equals(clicked) || !Cart.hasRail(minecraft, target) ? hit : Cart.onRail(target);
         spot = target;
@@ -314,7 +314,7 @@ final class CrossbowCart {
             }
             expectedSlot = railInHand;
             next(Step.CART, stepDelay(player));
-            SpearLog.log("crossbow cart: macro, " + (fresh ? "your click puts the rail down"
+            UraniumLog.log("crossbow cart: macro, " + (fresh ? "your click puts the rail down"
                     : onTop ? "your click on the rail goes to the game" : "click kept from the game (it would double the rail)")
                     + ", the cart follows");
             return !toGame;
@@ -336,7 +336,7 @@ final class CrossbowCart {
         ItemStack held = player.getMainHandItem();
         boolean cartItem = held.is(Items.TNT_MINECART);
         boolean lighter = held.is(Items.FLINT_AND_STEEL) || held.is(Items.LAVA_BUCKET);
-        if (!cartItem && !lighter || !SpearSettings.combatAllowed(minecraft)) {
+        if (!cartItem && !lighter || !Settings.combatAllowed(minecraft)) {
             return false;
         }
         BlockPos rail = pingRail(minecraft);
@@ -347,7 +347,7 @@ final class CrossbowCart {
         String risk = SelfBlast.danger(minecraft, player, SelfBlast.cartCenter(rail), SelfBlast.CROSSBOW_SPEED);
         if (risk != null) {
             SpearDash.setStatus("Too close for your health");
-            SpearLog.log("crossbow cart: go-ping skipped at " + rail.toShortString() + ", " + risk);
+            UraniumLog.log("crossbow cart: go-ping skipped at " + rail.toShortString() + ", " + risk);
             return false;
         }
         if (lighter && !cartThere) {
@@ -383,7 +383,7 @@ final class CrossbowCart {
         pressedSlot = -1;
         expectedSlot = Cart.heldSlot(player);
         boolean fromCart = cartItem && !cartThere;
-        SpearLog.log("crossbow cart: go-ping, picked up at the " + (fromCart ? "cart" : "fire") + " on the rail at "
+        UraniumLog.log("crossbow cart: go-ping, picked up at the " + (fromCart ? "cart" : "fire") + " on the rail at "
                 + rail.toShortString());
         SpearDash.setStatus(fromCart ? "Picked up at the cart" : "Picked up at the fire");
         next(fromCart ? Step.CART : Step.FLINT, 0);
@@ -482,13 +482,13 @@ final class CrossbowCart {
             // module already used it: that's not taking over, so it goes on with its own slot.
             int pressed = Cart.heldSlot(player);
             Cart.select(minecraft, player, expectedSlot);
-            SpearLog.log("crossbow cart: hotbar " + (pressed + 1) + " pressed at " + step.name().toLowerCase()
+            UraniumLog.log("crossbow cart: hotbar " + (pressed + 1) + " pressed at " + step.name().toLowerCase()
                     + " (already used), kept going on hotbar " + (expectedSlot + 1) + "; " + keys(player));
             return;
         }
         if (Mc.screen(minecraft) != null || Cart.heldSlot(player) != expectedSlot
                 || now() - startMs > GIVE_UP_MS) {
-            SpearLog.log("crossbow cart: stopped at " + step.name().toLowerCase() + ", "
+            UraniumLog.log("crossbow cart: stopped at " + step.name().toLowerCase() + ", "
                     + (Mc.screen(minecraft) != null ? "a screen opened"
                     : Cart.heldSlot(player) != expectedSlot
                     ? "hotbar " + (Cart.heldSlot(player) + 1) + " was picked (wanted "
@@ -566,7 +566,7 @@ final class CrossbowCart {
      */
     private static boolean lookAgain(LocalPlayer player, Vec3 point, String what) {
         if (aimTries >= (player.onGround() ? 2 : 3)) {
-            SpearLog.log("crossbow cart: crosshair still off the " + what + " after two looks, skipped");
+            UraniumLog.log("crossbow cart: crosshair still off the " + what + " after two looks, skipped");
             return false;
         }
         aimTries++;
@@ -574,7 +574,7 @@ final class CrossbowCart {
         AIM.stop();
         turnTo(Mth.wrapDegrees(want[0] - player.getYRot()), want[1] - player.getXRot(),
                 PlayStyle.turnMs(60 + java.util.concurrent.ThreadLocalRandom.current().nextLong(0, 30)));
-        SpearLog.log("crossbow cart: crosshair was off the " + what + ", looking back at it first");
+        UraniumLog.log("crossbow cart: crosshair was off the " + what + ", looking back at it first");
         nextMs = now() + 1;
         return true;
     }
@@ -703,7 +703,7 @@ final class CrossbowCart {
         if (player.getProjectile(player.getMainHandItem()).isEmpty()) {
             step = null;
             SpearDash.setStatus("No arrows for the bow");
-            SpearLog.log("crossbow cart: no bow shot, no arrows");
+            UraniumLog.log("crossbow cart: no bow shot, no arrows");
             return;
         }
         minecraft.options.keyUse.setDown(true);
@@ -724,7 +724,7 @@ final class CrossbowCart {
         if (!player.isUsingItem()) {
             minecraft.options.keyUse.setDown(WTap.physicallyDown(minecraft, minecraft.options.keyUse));
             step = null;
-            SpearLog.log("crossbow cart: the bow stopped drawing");
+            UraniumLog.log("crossbow cart: the bow stopped drawing");
             return;
         }
         if (player.getTicksUsingItem() < DRAW_TICKS || AIM.active()) {
@@ -740,7 +740,7 @@ final class CrossbowCart {
             AIM.stop();
             minecraft.options.keyUse.setDown(WTap.physicallyDown(minecraft, minecraft.options.keyUse));
             SpearDash.setStatus("Too close to shoot");
-            SpearLog.log("crossbow cart: bow held, you're too close now, " + risk);
+            UraniumLog.log("crossbow cart: bow held, you're too close now, " + risk);
             return;
         }
         minecraft.options.keyUse.setDown(WTap.physicallyDown(minecraft, minecraft.options.keyUse));
@@ -750,7 +750,7 @@ final class CrossbowCart {
         reshootAtMs = now() + AutoStun.pingMs(minecraft) + 700; // a bow arrow is slower
         SpearDash.setStatus("Cart shot (bow)");
         PlayStyle.bump(0.3);
-        SpearLog.log("crossbow cart: shot the bow " + (now() - startMs) + " ms after the click, drawn " + drawn + " ticks");
+        UraniumLog.log("crossbow cart: shot the bow " + (now() - startMs) + " ms after the click, drawn " + drawn + " ticks");
     }
 
     /**
@@ -816,7 +816,7 @@ final class CrossbowCart {
             return true; // not back from the server yet
         }
         if (cartRetries >= 1 || !Cart.hasCart(player) || !Cart.hasRail(minecraft, spot)) {
-            SpearLog.log("crossbow cart: the server blocked the cart" + (cartRetries >= 1 ? " twice" : "")
+            UraniumLog.log("crossbow cart: the server blocked the cart" + (cartRetries >= 1 ? " twice" : "")
                     + (Cart.hasRail(minecraft, spot) ? "" : ", and the rail is gone") + ", stopped");
             SpearDash.setStatus("Server blocked the cart");
             step = null;
@@ -824,7 +824,7 @@ final class CrossbowCart {
             return true;
         }
         cartRetries++;
-        SpearLog.log("crossbow cart: the server blocked the cart, placing it again ("
+        UraniumLog.log("crossbow cart: the server blocked the cart, placing it again ("
                 + (now() - cartPlacedMs) + " ms and no cart)");
         // One tick on another slot first, so the cart slot after it is a real change for
         // the server (no repeated slot packet), then the cart again.
@@ -835,13 +835,13 @@ final class CrossbowCart {
 
     private static void refuse(String why, BlockPos where) {
         SpearDash.setStatus(why);
-        SpearLog.log("crossbow cart: click left to the game at " + where.toShortString() + ", " + why.toLowerCase());
+        UraniumLog.log("crossbow cart: click left to the game at " + where.toShortString() + ", " + why.toLowerCase());
     }
 
     private static void placeRail(Minecraft minecraft, LocalPlayer player) {
         int rail = Cart.railSlot(player);
         if (Cart.hasRail(minecraft, spot)) {
-            SpearLog.log("crossbow cart: a rail is already at " + spot.toShortString() + ", cart goes on it");
+            UraniumLog.log("crossbow cart: a rail is already at " + spot.toShortString() + ", cart goes on it");
             expectedSlot = Cart.heldSlot(player);
             next(Step.CART, stepDelay(player));
             return;
@@ -849,7 +849,7 @@ final class CrossbowCart {
         if (rail < 0 || !Cart.railFits(minecraft, spot)) {
             step = null;
             SpearDash.setStatus(rail < 0 ? "No rail in hotbar" : "No room for the rail");
-            SpearLog.log("crossbow cart: stopped, " + (rail < 0 ? "no rail in hotbar" : "no room for the rail"));
+            UraniumLog.log("crossbow cart: stopped, " + (rail < 0 ? "no rail in hotbar" : "no room for the rail"));
             return;
         }
         if (!player.isWithinBlockInteractionRange(click.getBlockPos(), 0.0)) {
@@ -858,7 +858,7 @@ final class CrossbowCart {
             }
             step = null;
             SpearDash.setStatus("Out of reach");
-            SpearLog.log("crossbow cart: stopped, you moved out of reach of the rail spot");
+            UraniumLog.log("crossbow cart: stopped, you moved out of reach of the rail spot");
             return;
         }
         if (step == Step.RAIL && aimTries > 0 && AIM.active()
@@ -890,7 +890,7 @@ final class CrossbowCart {
             // crosshair was by then, a block or two off. That new rail is the spot.
             for (BlockPos near : BlockPos.betweenClosed(spot.offset(-2, -1, -2), spot.offset(2, 1, 2))) {
                 if (Cart.hasRail(minecraft, near) && !railsBefore.contains(near)) {
-                    SpearLog.log("crossbow cart: macro, the rail went to " + near.toShortString() + " (you moved), cart goes there");
+                    UraniumLog.log("crossbow cart: macro, the rail went to " + near.toShortString() + " (you moved), cart goes there");
                     spot = near.immutable();
                     lastSpot = spot;
                     break;
@@ -904,7 +904,7 @@ final class CrossbowCart {
             step = null;
             boolean none = !Cart.hasCart(player);
             SpearDash.setStatus(none ? "No TNT minecart" : "The rail didn't go down");
-            SpearLog.log("crossbow cart: no cart, " + (none ? "none left" : "no rail at " + spot.toShortString()));
+            UraniumLog.log("crossbow cart: no cart, " + (none ? "none left" : "no rail at " + spot.toShortString()));
             return;
         }
         if (!player.isWithinBlockInteractionRange(spot, 0.0)) {
@@ -913,7 +913,7 @@ final class CrossbowCart {
             }
             step = null;
             SpearDash.setStatus("Out of reach");
-            SpearLog.log("crossbow cart: stopped, you moved out of reach of the rail before the cart");
+            UraniumLog.log("crossbow cart: stopped, you moved out of reach of the rail before the cart");
             return;
         }
         if (aimTries > 0 && AIM.active() && Cart.realClick(minecraft, player, spot, null) == null) {
@@ -925,7 +925,7 @@ final class CrossbowCart {
             return;
         }
         boolean placed = took[0];
-        SpearLog.log("crossbow cart: cart " + (placed ? "on the rail" : "refused") + " at " + spot.toShortString()
+        UraniumLog.log("crossbow cart: cart " + (placed ? "on the rail" : "refused") + " at " + spot.toShortString()
                 + " after " + (now() - startMs) + " ms");
         expectedSlot = cart;
         cartPlacedMs = now();
@@ -936,9 +936,9 @@ final class CrossbowCart {
         if (placed && overload && cartsPut < 2 && Cart.hasCart(player)) {
             if (Cart.isMacro()) {
                 // the game's own click lands on the first cart, not the rail
-                SpearLog.log("crossbow cart: overload skipped, Macro mode can't click the rail under a cart");
+                UraniumLog.log("crossbow cart: overload skipped, Macro mode can't click the rail under a cart");
             } else {
-                SpearLog.log("crossbow cart: overload, the second cart next tick");
+                UraniumLog.log("crossbow cart: overload, the second cart next tick");
                 next(Step.CART, TICK_MS);
                 return;
             }
@@ -972,7 +972,7 @@ final class CrossbowCart {
             // No loaded crossbow: the fire is only there to light a crossbow arrow, so it is
             // skipped and the bow is used (a Flame one first).
             bowMode = bowSlot(player) >= 0;
-            SpearLog.log("crossbow cart: " + (crossbow < 0 ? "no crossbow" : "crossbow not loaded")
+            UraniumLog.log("crossbow cart: " + (crossbow < 0 ? "no crossbow" : "crossbow not loaded")
                     + ", no fire" + (bowMode ? ", using the bow" : ""));
             return;
         }
@@ -990,7 +990,7 @@ final class CrossbowCart {
                 if (!fireworkLoaded(player)) {
                     // An arrow that never flew through fire or lava doesn't set a TNT cart
                     // off: the shot would only waste the crossbow's load.
-                    SpearLog.log("crossbow cart: nothing to light the arrow (no fire, lava or bow), no shot");
+                    UraniumLog.log("crossbow cart: nothing to light the arrow (no fire, lava or bow), no shot");
                     SpearDash.setStatus("Cart down, nothing to light it");
                     step = null;
                     AIM.stop();
@@ -998,7 +998,7 @@ final class CrossbowCart {
                 }
                 aimShot(minecraft, player, TICK_MS + stepDelay(player)); // a firework blast sets it off
             }
-            SpearLog.log("crossbow cart: no fire" + (flint < 0 ? " (no flint and steel)" : " (no block the shot passes can burn)")
+            UraniumLog.log("crossbow cart: no fire" + (flint < 0 ? " (no flint and steel)" : " (no block the shot passes can burn)")
                     + (bowMode ? ", using the bow" + (hasFlame(player.getInventory().getItem(bow)) ? " (Flame)" : " (no Flame, it won't light)")
                     : ", and no bow"));
             return;
@@ -1029,7 +1029,7 @@ final class CrossbowCart {
         int flint = BucketUse.findSlot(player, Items.FLINT_AND_STEEL);
         if (new AABB(fireSpot).intersects(player.getBoundingBox().inflate(0.1))) {
             // you moved into the fire's block (sprinting at the cart): not lit under your feet
-            SpearLog.log("crossbow cart: you're standing in the fire's block, no fire");
+            UraniumLog.log("crossbow cart: you're standing in the fire's block, no fire");
             fireSpot = null;
             burn = null;
             expectedSlot = Cart.heldSlot(player);
@@ -1041,7 +1041,7 @@ final class CrossbowCart {
         if (!lit && Cart.offTarget && lookAgain(player, clearFloorPoint(minecraft, player, fireSpot, fireSpot.getY()), "fire block")) {
             return;
         }
-        SpearLog.log("crossbow cart: fire at " + fireSpot.toShortString() + " ("
+        UraniumLog.log("crossbow cart: fire at " + fireSpot.toShortString() + " ("
                 + (fireSpot.getX() != spot.getX() && fireSpot.getZ() != spot.getZ() ? "corner" : "side")
                 + ")" + (lit ? "" : " refused"));
         if (lit) {
@@ -1127,7 +1127,7 @@ final class CrossbowCart {
             }
         }
         if (best == null) {
-            SpearLog.log("crossbow cart: no shot both above the line and through the fire, going above the line");
+            UraniumLog.log("crossbow cart: no shot both above the line and through the fire, going above the line");
             return aboveLine(box, line, now);
         }
         return best;
@@ -1148,7 +1148,7 @@ final class CrossbowCart {
         }
         lavaSpot = planLava(minecraft, player);
         if (lavaSpot == null) {
-            SpearLog.log("crossbow cart: no block the shot passes can take lava either");
+            UraniumLog.log("crossbow cart: no block the shot passes can take lava either");
             return false;
         }
         float[] aim = BucketUse.aimLavaAt(minecraft, player, lavaSpot);
@@ -1181,11 +1181,11 @@ final class CrossbowCart {
             }
             poured = true;
             pouredLava = lavaSpot;
-            SpearLog.log("crossbow cart: lava at " + lavaSpot.toShortString()
+            UraniumLog.log("crossbow cart: lava at " + lavaSpot.toShortString()
                     + (lavaSpot.getY() != spot.getY() ? (lavaSpot.getY() > spot.getY() ? " (above)" : " (below)") : " (beside)"));
         } else {
             bowMode = bowSlot(player) >= 0;
-            SpearLog.log("crossbow cart: the lava would land at " + (lands == null ? "nothing" : lands.toShortString())
+            UraniumLog.log("crossbow cart: the lava would land at " + (lands == null ? "nothing" : lands.toShortString())
                     + ", not poured" + (bowMode ? ", using the bow" : ""));
         }
         if (poured) {
@@ -1243,7 +1243,7 @@ final class CrossbowCart {
             case 0 -> {
                 if (!source || now - pickupShotMs > PICKUP_KEEP_MS) {
                     pickupSpot = null;
-                    SpearLog.log("crossbow cart: lava left, " + (!source ? "it's gone" : "you didn't look back at it"));
+                    UraniumLog.log("crossbow cart: lava left, " + (!source ? "it's gone" : "you didn't look back at it"));
                     return;
                 }
                 if (Cart.cartAt(minecraft, spot == null ? lava : spot) && now - pickupShotMs < PICKUP_WAIT_MS) {
@@ -1277,7 +1277,7 @@ final class CrossbowCart {
                 } else {
                     minecraft.gameMode.useItem(player, InteractionHand.MAIN_HAND);
                 }
-                SpearLog.log("crossbow cart: you looked back at the lava, picked it up at " + lava.toShortString());
+                UraniumLog.log("crossbow cart: you looked back at the lava, picked it up at " + lava.toShortString());
                 SpearDash.setStatus("Lava back");
                 pickupStage = 2;
                 pickupNextMs = now + TICK_MS + java.util.concurrent.ThreadLocalRandom.current().nextLong(20, 60);
@@ -1487,7 +1487,7 @@ final class CrossbowCart {
         boolean offhand = loaded < 0 && offhandLoaded(player);
         if (!bowMode && shoot && loaded < 0 && !offhand && bowSlot(player) >= 0) {
             bowMode = true;
-            SpearLog.log("crossbow cart: " + (BucketUse.findSlot(player, Items.CROSSBOW) < 0
+            UraniumLog.log("crossbow cart: " + (BucketUse.findSlot(player, Items.CROSSBOW) < 0
                     && !player.getOffhandItem().is(Items.CROSSBOW) ? "no crossbow" : "crossbow not loaded") + ", using the bow");
         }
         if (bowMode) {
@@ -1590,7 +1590,7 @@ final class CrossbowCart {
                 return; // the game clicks on its next tick; give it that
             } else {
                 fireMacroPending = false;
-                SpearLog.log("crossbow cart: the fire click made no fire at " + fireSpot.toShortString()
+                UraniumLog.log("crossbow cart: the fire click made no fire at " + fireSpot.toShortString()
                         + "; the game's crosshair was on " + describe(minecraft) + "; mine was on "
                         + describeRay(minecraft, player) + (fireRetried ? ", shooting without it" : ", trying once more"));
                 int flint = BucketUse.findSlot(player, Items.FLINT_AND_STEEL);
@@ -1610,7 +1610,7 @@ final class CrossbowCart {
             step = null;
             AIM.stop();
             SpearDash.setStatus("Fire went out");
-            SpearLog.log("crossbow cart: the fire (or lava) is gone before the shot, the arrow wouldn't light, no shot");
+            UraniumLog.log("crossbow cart: the fire (or lava) is gone before the shot, the arrow wouldn't light, no shot");
             return;
         }
         if (hit != null && hit.y >= line || fixed) {
@@ -1620,7 +1620,7 @@ final class CrossbowCart {
                 step = null;
                 AIM.stop();
                 SpearDash.setStatus("Too close to shoot");
-                SpearLog.log("crossbow cart: no shot, you're too close now, " + risk);
+                UraniumLog.log("crossbow cart: no shot, you're too close now, " + risk);
                 return;
             }
             fire(minecraft, player, (hit == null ? "off the cart" : hit.y >= line
@@ -1630,7 +1630,7 @@ final class CrossbowCart {
             return;
         }
         fixed = true;
-        SpearLog.log(String.format(java.util.Locale.ROOT, "crossbow cart: aim ended %s, one quick fix first",
+        UraniumLog.log(String.format(java.util.Locale.ROOT, "crossbow cart: aim ended %s, one quick fix first",
                 hit == null ? "off the cart" : String.format(java.util.Locale.ROOT, "%.0f px under the line", (line - hit.y) * 16)));
         shotAtMs = now() + FIX_MS; // aim from where you'll be when the fix ends
         float[] want = BucketUse.lookAt(shotOrigin(player), shotPoint(minecraft, player));
@@ -1652,7 +1652,7 @@ final class CrossbowCart {
         }
         measureUntilMs = 0;
         double took = measureStartHealth - measureLowest;
-        SpearLog.log(String.format(java.util.Locale.ROOT,
+        UraniumLog.log(String.format(java.util.Locale.ROOT,
                 "self blast: %.1f blocks from the cart, the guard expected about %.1f (%s roll), you took %.1f%s",
                 measureDistance, measureExpect, SelfBlast.modeLabel().toLowerCase(), took,
                 took <= 0.05 ? " (nothing, or a totem/regen covered it)" : ""));
@@ -1687,7 +1687,7 @@ final class CrossbowCart {
         }
         int slot = AntiCart.blockSlot(player);
         if (slot < 0) {
-            SpearLog.log("crossbow cart: no block for the guard, shooting without it");
+            UraniumLog.log("crossbow cart: no block for the guard, shooting without it");
             return null;
         }
         double dx = player.getX() - (spot.getX() + 0.5);
@@ -1712,11 +1712,11 @@ final class CrossbowCart {
                 || AutoWeb.reactsToUse(minecraft.level.getBlockState(ground).getBlock())
                 || !player.isWithinBlockInteractionRange(ground, 0.0)
                 || BucketUse.aimAtFace(minecraft, player, ground, Direction.UP) == null) {
-            SpearLog.log("crossbow cart: no room for the guard's block, shooting without it");
+            UraniumLog.log("crossbow cart: no room for the guard's block, shooting without it");
             return null;
         }
         guardSlot = slot;
-        SpearLog.log(String.format(java.util.Locale.ROOT,
+        UraniumLog.log(String.format(java.util.Locale.ROOT,
                 "crossbow cart: guard (%s), a block at %s keeps about %.1f of your own blast off you",
                 surePop ? "the blast would pop you" : String.format(java.util.Locale.ROOT, "%.1f hearts", health / 2),
                 cell.toShortString(), expect));
@@ -1754,7 +1754,7 @@ final class CrossbowCart {
                 "guard's spot")) {
             return;
         }
-        SpearLog.log("crossbow cart: guard block at " + guardCell.toShortString() + (placed ? "" : " refused"));
+        UraniumLog.log("crossbow cart: guard block at " + guardCell.toShortString() + (placed ? "" : " refused"));
         expectedSlot = Cart.heldSlot(player);
         next(placed ? Step.JUMP : Step.FLINT, TICK_MS);
     }
@@ -1772,7 +1772,7 @@ final class CrossbowCart {
         if (player.onGround()) {
             minecraft.options.keyJump.setDown(true);
             jumpHeldMs = now();
-            SpearLog.log("crossbow cart: jump, the shot goes over the guard");
+            UraniumLog.log("crossbow cart: jump, the shot goes over the guard");
         }
         // a jump peaks about 6 ticks in: the fire and the shot land around there
         next(Step.FLINT, 2 * TICK_MS);
@@ -1835,14 +1835,14 @@ final class CrossbowCart {
         AIM.stop();
         turnTo(Mth.wrapDegrees(want[0] - player.getYRot()), want[1] - player.getXRot(),
                 PlayStyle.turnMs(90 + java.util.concurrent.ThreadLocalRandom.current().nextLong(0, 30)));
-        SpearLog.log("crossbow cart: the shot is too steep from here, a block under you first");
+        UraniumLog.log("crossbow cart: the shot is too steep from here, a block under you first");
         next(Step.PILLAR, TICK_MS);
     }
 
     /** Once your feet are above the block's spot, the block goes in under you. */
     private static void placePillar(Minecraft minecraft, LocalPlayer player) {
         if (now() - pillarMs > 900 || player.onGround() && now() - pillarMs > 200) {
-            SpearLog.log("crossbow cart: the block under you didn't fit in time, shooting from here");
+            UraniumLog.log("crossbow cart: the block under you didn't fit in time, shooting from here");
             next(Step.FLINT, 0);
             return;
         }
@@ -1857,7 +1857,7 @@ final class CrossbowCart {
                 pillarCell.getZ() + 0.5), "block under you")) {
             return;
         }
-        SpearLog.log("crossbow cart: block under you at " + pillarCell.toShortString() + (placed ? "" : " refused"));
+        UraniumLog.log("crossbow cart: block under you at " + pillarCell.toShortString() + (placed ? "" : " refused"));
         expectedSlot = Cart.heldSlot(player);
         next(placed ? Step.PILLAR_LAND : Step.FLINT, TICK_MS);
     }
@@ -1889,7 +1889,7 @@ final class CrossbowCart {
         int bow = bowSlot(player);
         boolean bowReady = bow >= 0 && !player.getProjectile(player.getInventory().getItem(bow)).isEmpty();
         if (!crossbowReady && !bowReady) {
-            SpearLog.log("crossbow cart: the cart didn't blow, nothing loaded to shoot it again");
+            UraniumLog.log("crossbow cart: the cart didn't blow, nothing loaded to shoot it again");
             SpearDash.setStatus("Cart didn't blow");
             return;
         }
@@ -1902,7 +1902,7 @@ final class CrossbowCart {
         fixed = false;
         aimPoint = null;
         bowMode = !crossbowReady;
-        SpearLog.log("crossbow cart: the cart didn't blow, shooting again" + (bowMode ? " with the bow" : ""));
+        UraniumLog.log("crossbow cart: the cart didn't blow, shooting again" + (bowMode ? " with the bow" : ""));
         SpearDash.setStatus("Shooting again");
         if (!bowMode && (burn == null || burnGone(minecraft))) {
             next(Step.FLINT, 0); // the fire first, then the crossbow
@@ -1944,7 +1944,7 @@ final class CrossbowCart {
                     continue;
                 }
                 relocated = true;
-                SpearLog.log("crossbow cart: too far from " + spot.toShortString() + ", the cart goes next to you at "
+                UraniumLog.log("crossbow cart: too far from " + spot.toShortString() + ", the cart goes next to you at "
                         + cell.toShortString() + " instead");
                 spot = cell;
                 lastSpot = cell;
@@ -2023,7 +2023,7 @@ final class CrossbowCart {
                 Cart.select(minecraft, player, quiet);
                 expectedSlot = quiet;
                 correctAt = now() + TICK_MS;
-                SpearLog.log("crossbow cart: macro, hotbar " + (quiet + 1) + " first so the right-click fires the offhand crossbow");
+                UraniumLog.log("crossbow cart: macro, hotbar " + (quiet + 1) + " first so the right-click fires the offhand crossbow");
                 return;
             }
         }
@@ -2041,7 +2041,7 @@ final class CrossbowCart {
         ItemStack crossbow = player.getItemInHand(hand);
         if (!crossbow.is(Items.CROSSBOW) || !CrossbowItem.isCharged(crossbow)) {
             SpearDash.setStatus("Crossbow not loaded");
-            SpearLog.log("crossbow cart: no shot, crossbow not loaded");
+            UraniumLog.log("crossbow cart: no shot, crossbow not loaded");
             return;
         }
         Debug.click("crossbow shot");
@@ -2061,11 +2061,11 @@ final class CrossbowCart {
             pickupHeldSlot = Cart.heldSlot(player); // switching off this while it waits cancels the pickup
         }
         if (offhandShot) {
-            SpearLog.log("crossbow cart: the crossbow fired from your offhand");
+            UraniumLog.log("crossbow cart: the crossbow fired from your offhand");
         }
         SpearDash.setStatus("Cart shot");
         PlayStyle.bump(0.3);
-        SpearLog.log(String.format(java.util.Locale.ROOT,
+        UraniumLog.log(String.format(java.util.Locale.ROOT,
                 "crossbow cart: shot the crossbow %d ms after the click, %s",
                 now() - startMs, where));
     }

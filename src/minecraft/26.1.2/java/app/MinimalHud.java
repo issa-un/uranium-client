@@ -70,7 +70,7 @@ final class MinimalHud {
                 LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(MinimalHud::render);
             } catch (RuntimeException | LinkageError error) {
                 broken = true;
-                SpearLog.log("minimal hud: could not hook world drawing (" + error + ")");
+                UraniumLog.log("minimal hud: could not hook world drawing (" + error + ")");
             }
         }
         LocalPlayer player = minecraft.player;
@@ -217,11 +217,11 @@ final class MinimalHud {
         } catch (RuntimeException error) {
             if (!drawFailed) {
                 drawFailed = true;
-                SpearLog.log("minimal hud: drawing failed, skipped this frame: " + error);
+                UraniumLog.log("minimal hud: drawing failed, skipped this frame: " + error);
             }
         } catch (LinkageError error) {
             broken = true;
-            SpearLog.log("minimal hud: dots switched off, this game version draws differently (" + error + ")");
+            UraniumLog.log("minimal hud: dots switched off, this game version draws differently (" + error + ")");
         }
     }
 

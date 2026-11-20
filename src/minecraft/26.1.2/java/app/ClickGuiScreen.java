@@ -26,7 +26,7 @@ import net.minecraft.network.chat.Component;
  * keys (click, then press a key or mouse button; Esc cancels), buttons and sliders (drag;
  * a delay range has a min and a max knob; right-click puts the default back). Typing shows the
  * modules that match from every category. Drag the window by its top edge. Every change is
- * saved straight away (see SpearSettings).
+ * saved straight away (see Settings).
  */
 public final class ClickGuiScreen extends Screen {
     private static final int WIDTH = 520;
@@ -112,9 +112,9 @@ public final class ClickGuiScreen extends Screen {
                     ElytraSwap::cancelBinding),
             new Binder(Utilities::isAwaitingZoomBinding, Utilities::bindZoomKeyboard, Utilities::bindZoomMouse,
                     Utilities::cancelZoomBinding),
-            // Esc clears a HUD toggle key instead of cancelling (see VelocityHud).
-            new Binder(() -> VelocityHud.awaitingToggle() >= 0, VelocityHud::bindToggleKeyboard,
-                    VelocityHud::bindToggleMouse, null));
+            // Esc clears a HUD toggle key instead of cancelling (see UraniumHud).
+            new Binder(() -> UraniumHud.awaitingToggle() >= 0, UraniumHud::bindToggleKeyboard,
+                    UraniumHud::bindToggleMouse, null));
     private String query = "";
     // A key that just completed a binding also arrives as a typed character; it is not a search.
     private boolean swallowNextChar;
@@ -175,8 +175,8 @@ public final class ClickGuiScreen extends Screen {
     @Override
     protected void init() {
         Minecraft minecraft = Minecraft.getInstance();
-        MinecraftInputController.install(minecraft);
-        VelocityHud.install();
+        InputLoop.install(minecraft);
+        UraniumHud.install();
         openedNs = System.nanoTime();
     }
 
@@ -363,7 +363,7 @@ public final class ClickGuiScreen extends Screen {
         }
 
         // The server you are on, and whether combat modules may act there.
-        boolean combat = SpearSettings.combatAllowed(minecraft);
+        boolean combat = Settings.combatAllowed(minecraft);
         int fy = y + h - 26;
         graphics.fill(x + 12, fy - 4, x + SIDEBAR - 12, fy - 3, SEPARATOR);
         boolean overServer = inside(mouseX, mouseY, x + 8, fy, x + SIDEBAR - 8, fy + 20);
@@ -374,10 +374,10 @@ public final class ClickGuiScreen extends Screen {
         int dot = combat ? GREEN : RED;
         roundRect(graphics, x + 13, fy + 6, x + 21, fy + 14, 4, alpha(dot, 0.25F), true, true);
         roundRect(graphics, x + 15, fy + 8, x + 19, fy + 12, 2, dot, true, true);
-        String server = font.plainSubstrByWidth(SpearSettings.currentServer(minecraft), SIDEBAR - 42);
+        String server = font.plainSubstrByWidth(Settings.currentServer(minecraft), SIDEBAR - 42);
         graphics.text(font, server, x + 26, fy + 6, overServer ? TEXT_SOFT : SECONDARY, false);
-        hit(x + 8, fy, x + SIDEBAR - 8, fy + 20, () -> SpearSettings.toggleCombatHere(minecraft),
-                () -> SpearSettings.toggleOwnSettingsHere(minecraft));
+        hit(x + 8, fy, x + SIDEBAR - 8, fy + 20, () -> Settings.toggleCombatHere(minecraft),
+                () -> Settings.toggleOwnSettingsHere(minecraft));
     }
 
     private void drawContent(GuiGraphicsExtractor graphics, Minecraft minecraft, List<Modules.Category> categories,
@@ -737,7 +737,7 @@ public final class ClickGuiScreen extends Screen {
         graphics.fill(x + 1, y, x + w, y + 1, SEPARATOR);
         int right = x + w - MARGIN;
         right = pill(graphics, "Unload", right, y + 4, RED, mouseX, mouseY, () -> {
-            MinecraftInputController.requestUnload();
+            InputLoop.requestUnload();
             onClose();
         });
         right = pill(graphics, "Edit HUD", right - 6, y + 4, TEXT, mouseX, mouseY,
@@ -1072,7 +1072,7 @@ public final class ClickGuiScreen extends Screen {
         }
         if (dragging) {
             dragging = false;
-            SpearSettings.save(Minecraft.getInstance());
+            Settings.save(Minecraft.getInstance());
             return true;
         }
         return super.mouseReleased(event);
@@ -1148,7 +1148,7 @@ public final class ClickGuiScreen extends Screen {
 
     /** Saves the settings after any change. */
     private void changed() {
-        SpearSettings.save(Minecraft.getInstance());
+        Settings.save(Minecraft.getInstance());
     }
 
     /**

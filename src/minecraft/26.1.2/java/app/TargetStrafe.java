@@ -30,7 +30,7 @@ final class TargetStrafe {
     static void update(Minecraft minecraft) {
         LocalPlayer player = minecraft.player;
         Player target = enabled && player != null && minecraft.level != null && Mc.screen(minecraft) == null
-                && SpearSettings.combatAllowed(minecraft) && falling(player) && maceReady(player)
+                && Settings.combatAllowed(minecraft) && falling(player) && maceReady(player)
                 ? target(minecraft, player) : null;
         if (target == null) {
             release(minecraft);
@@ -79,7 +79,7 @@ final class TargetStrafe {
         Player best = null;
         double bestDistance = RANGE;
         for (Player other : minecraft.level.players()) {
-            if (other == player || !other.isAlive() || other.isSpectator() || VelocityHud.isFriend(other)
+            if (other == player || !other.isAlive() || other.isSpectator() || UraniumHud.isFriend(other)
                     || other.getBoundingBox().maxY > player.getY()) {
                 continue;
             }

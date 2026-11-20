@@ -43,12 +43,12 @@ final class BuilderWindow {
     private final JFrame frame = new JFrame("Uranium Builder");
     private final Path home = home();
     private final Path minecraftDir = Path.of(System.getenv().getOrDefault("APPDATA", ""), ".minecraft");
-    private final JLabel installed = ProcessPickerWindow.label(" ", Font.PLAIN, 13, ProcessPickerWindow.SOFT);
-    private final JLabel latestLine = ProcessPickerWindow.label("Checking GitHub...", Font.BOLD, 16, ProcessPickerWindow.TEXT);
+    private final JLabel installed = InjectorWindow.label(" ", Font.PLAIN, 13, InjectorWindow.SOFT);
+    private final JLabel latestLine = InjectorWindow.label("Checking GitHub...", Font.BOLD, 16, InjectorWindow.TEXT);
     private final JTextArea notes = new JTextArea();
-    private final JLabel status = ProcessPickerWindow.label(" ", Font.PLAIN, 13, ProcessPickerWindow.SOFT);
-    private final ProcessPickerWindow.Pill check = new ProcessPickerWindow.Pill("Check", "", false);
-    private final ProcessPickerWindow.Pill install = new ProcessPickerWindow.Pill("Download & install", "", true);
+    private final JLabel status = InjectorWindow.label(" ", Font.PLAIN, 13, InjectorWindow.SOFT);
+    private final InjectorWindow.Pill check = new InjectorWindow.Pill("Check", "", false);
+    private final InjectorWindow.Pill install = new InjectorWindow.Pill("Download & install", "", true);
     private final JPanel checks = new JPanel();
     private Updater.Release release;
 
@@ -57,9 +57,9 @@ final class BuilderWindow {
         frame.setMinimumSize(new Dimension(760, 560));
         frame.setSize(880, 620);
         frame.setLocationByPlatform(true);
-        frame.setIconImages(List.of(ProcessPickerWindow.mark(16), ProcessPickerWindow.mark(32), ProcessPickerWindow.mark(64)));
+        frame.setIconImages(List.of(InjectorWindow.mark(16), InjectorWindow.mark(32), InjectorWindow.mark(64)));
 
-        JPanel root = new ProcessPickerWindow.Backdrop(new BorderLayout());
+        JPanel root = new InjectorWindow.Backdrop(new BorderLayout());
         root.add(topBar(), BorderLayout.NORTH);
         JPanel columns = new JPanel(new GridLayout(1, 2, 16, 0));
         columns.setOpaque(false);
@@ -93,25 +93,25 @@ final class BuilderWindow {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0)) {
             @Override
             protected void paintComponent(Graphics graphics) {
-                graphics.setColor(ProcessPickerWindow.BAR);
+                graphics.setColor(InjectorWindow.BAR);
                 graphics.fillRect(0, 0, getWidth(), getHeight());
-                graphics.setColor(ProcessPickerWindow.GLOW_DIM);
+                graphics.setColor(InjectorWindow.GLOW_DIM);
                 graphics.fillRect(0, getHeight() - 1, getWidth(), 1);
             }
         };
         bar.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 14));
-        bar.add(new JLabel(new javax.swing.ImageIcon(ProcessPickerWindow.mark(30))));
-        JLabel name = ProcessPickerWindow.label("URANIUM", Font.BOLD, 21, ProcessPickerWindow.TEXT);
+        bar.add(new JLabel(new javax.swing.ImageIcon(InjectorWindow.mark(30))));
+        JLabel name = InjectorWindow.label("URANIUM", Font.BOLD, 21, InjectorWindow.TEXT);
         name.setFont(name.getFont().deriveFont(java.util.Map.of(java.awt.font.TextAttribute.TRACKING, 0.12)));
         bar.add(name);
-        JLabel tagline = ProcessPickerWindow.label("builder", Font.PLAIN, 13, ProcessPickerWindow.FAINT);
+        JLabel tagline = InjectorWindow.label("builder", Font.PLAIN, 13, InjectorWindow.FAINT);
         tagline.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
         bar.add(tagline);
         return bar;
     }
 
     private JComponent updates() {
-        JPanel card = new ProcessPickerWindow.Card(new BorderLayout(0, 10));
+        JPanel card = new InjectorWindow.Card(new BorderLayout(0, 10));
         card.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
         JPanel head = new JPanel(new BorderLayout(0, 4));
         head.setOpaque(false);
@@ -125,12 +125,12 @@ final class BuilderWindow {
         notes.setLineWrap(true);
         notes.setWrapStyleWord(true);
         notes.setOpaque(false);
-        notes.setForeground(ProcessPickerWindow.TEXT);
+        notes.setForeground(InjectorWindow.TEXT);
         notes.setFont(notes.getFont().deriveFont(13F));
         JScrollPane scroll = new JScrollPane(notes);
         scroll.setOpaque(false);
         scroll.getViewport().setOpaque(false);
-        scroll.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, ProcessPickerWindow.CARD_EDGE));
+        scroll.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, InjectorWindow.CARD_EDGE));
         card.add(scroll, BorderLayout.CENTER);
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         buttons.setOpaque(false);
@@ -143,7 +143,7 @@ final class BuilderWindow {
     }
 
     private JComponent repair() {
-        JPanel card = new ProcessPickerWindow.Card(new BorderLayout(0, 10));
+        JPanel card = new InjectorWindow.Card(new BorderLayout(0, 10));
         card.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
         card.add(heading("Repair & clean"), BorderLayout.NORTH);
         JPanel middle = new JPanel(new BorderLayout(0, 12));
@@ -165,15 +165,15 @@ final class BuilderWindow {
     }
 
     private static JLabel heading(String text) {
-        JLabel label = ProcessPickerWindow.label(text, Font.BOLD, 13, ProcessPickerWindow.GLOW);
+        JLabel label = InjectorWindow.label(text, Font.BOLD, 13, InjectorWindow.GLOW);
         label.setHorizontalAlignment(SwingConstants.LEFT);
         label.setFont(label.getFont().deriveFont(java.util.Map.of(java.awt.font.TextAttribute.TRACKING, 0.08)));
         label.setText(text.toUpperCase(java.util.Locale.ROOT));
         return label;
     }
 
-    private static ProcessPickerWindow.Pill tool(String title, String caption, Runnable action) {
-        ProcessPickerWindow.Pill pill = new ProcessPickerWindow.Pill(title, caption, false);
+    private static InjectorWindow.Pill tool(String title, String caption, Runnable action) {
+        InjectorWindow.Pill pill = new InjectorWindow.Pill(title, caption, false);
         pill.setFont(pill.getFont().deriveFont(Font.BOLD, 14F));
         pill.setPreferredSize(new Dimension(170, 74));
         pill.addActionListener(event -> action.run());
@@ -182,11 +182,11 @@ final class BuilderWindow {
 
     /** One line of the setup check: a coloured dot and what it found. */
     private static JComponent checkRow(boolean ok, boolean warn, String text) {
-        Color dot = ok ? ProcessPickerWindow.GLOW : warn ? ProcessPickerWindow.AMBER : RED;
+        Color dot = ok ? InjectorWindow.GLOW : warn ? InjectorWindow.AMBER : RED;
         JLabel label = new JLabel(text) {
             @Override
             protected void paintComponent(Graphics graphics) {
-                Graphics2D g = ProcessPickerWindow.smooth(graphics);
+                Graphics2D g = InjectorWindow.smooth(graphics);
                 g.setColor(dot);
                 g.fill(new Ellipse2D.Double(2, getHeight() / 2.0 - 4, 8, 8));
                 g.dispose();
@@ -194,7 +194,7 @@ final class BuilderWindow {
             }
         };
         label.setFont(label.getFont().deriveFont(Font.PLAIN, 13F));
-        label.setForeground(ok ? ProcessPickerWindow.TEXT : ProcessPickerWindow.SOFT);
+        label.setForeground(ok ? InjectorWindow.TEXT : InjectorWindow.SOFT);
         label.setBorder(BorderFactory.createEmptyBorder(3, 18, 3, 0));
         label.setAlignmentX(0);
         return label;
@@ -208,7 +208,7 @@ final class BuilderWindow {
         if (home != null) {
             return Path.of(home);
         }
-        Path jar = ProcessPickerWindow.locateAgentJar().toAbsolutePath();
+        Path jar = InjectorWindow.locateAgentJar().toAbsolutePath();
         for (Path dir = jar.getParent(); dir != null; dir = dir.getParent()) {
             if (Files.isRegularFile(dir.resolve("Uranium.exe")) || Files.isRegularFile(dir.resolve("Uranium.bat"))) {
                 return dir;
@@ -240,7 +240,7 @@ final class BuilderWindow {
     private void showInstalled() {
         Path newest = newest();
         installed.setText(newest == null ? "No Uranium build found here"
-                : "You have " + tag(newest) + ", made " + ProcessPickerWindow.day(Updater.builtAt(newest)));
+                : "You have " + tag(newest) + ", made " + InjectorWindow.day(Updater.builtAt(newest)));
     }
 
     private static String tag(Path jar) {
@@ -268,7 +268,7 @@ final class BuilderWindow {
         new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() {
-                return MinecraftProcessService.listProcesses().stream().anyMatch(JavaProcess::minecraft);
+                return ProcessService.listProcesses().stream().anyMatch(JavaProcess::minecraft);
             }
 
             @Override
@@ -299,7 +299,7 @@ final class BuilderWindow {
     private void checkForUpdate() {
         check.setEnabled(false);
         latestLine.setText("Checking GitHub...");
-        latestLine.setForeground(ProcessPickerWindow.TEXT);
+        latestLine.setForeground(InjectorWindow.TEXT);
         new SwingWorker<Object, Void>() {
             @Override
             protected Object doInBackground() {
@@ -321,7 +321,7 @@ final class BuilderWindow {
                 }
                 if (!(result instanceof Updater.Release latest)) {
                     latestLine.setText("Couldn't check: " + result);
-                    latestLine.setForeground(ProcessPickerWindow.SOFT);
+                    latestLine.setForeground(InjectorWindow.SOFT);
                     return;
                 }
                 release = latest;
@@ -336,13 +336,13 @@ final class BuilderWindow {
                 install.setEnabled(true);
                 if (have) {
                     latestLine.setText("You're up to date");
-                    latestLine.setForeground(ProcessPickerWindow.GLOW);
+                    latestLine.setForeground(InjectorWindow.GLOW);
                 } else if (newer) {
                     latestLine.setText("New: " + (latest.name().isBlank() ? latest.tag() : latest.name()));
-                    latestLine.setForeground(ProcessPickerWindow.AMBER);
+                    latestLine.setForeground(InjectorWindow.AMBER);
                 } else {
                     latestLine.setText("Nothing newer on GitHub (" + latest.tag() + ")");
-                    latestLine.setForeground(ProcessPickerWindow.SOFT);
+                    latestLine.setForeground(InjectorWindow.SOFT);
                 }
             }
         }.execute();
@@ -372,10 +372,10 @@ final class BuilderWindow {
                 try {
                     Path jar = get();
                     status.setText("Installed " + tag(jar) + ". Open Uranium.exe to use it.");
-                    status.setForeground(ProcessPickerWindow.GLOW);
+                    status.setForeground(InjectorWindow.GLOW);
                     install.setVisible(false);
                     latestLine.setText("You're up to date");
-                    latestLine.setForeground(ProcessPickerWindow.GLOW);
+                    latestLine.setForeground(InjectorWindow.GLOW);
                     showInstalled();
                 } catch (InterruptedException exception) {
                     Thread.currentThread().interrupt();
@@ -416,8 +416,16 @@ final class BuilderWindow {
     }
 
     private void resetSettings() {
-        Path settings = minecraftDir.resolve("config").resolve("spear-injector.properties");
-        if (!Files.isRegularFile(settings)) {
+        Path config = minecraftDir.resolve("config");
+        // uranium.properties, and spear-injector.properties from before the rename (it would be
+        // copied back in otherwise).
+        List<Path> files = new ArrayList<>();
+        for (String name : List.of("uranium.properties", "spear-injector.properties")) {
+            if (Files.isRegularFile(config.resolve(name))) {
+                files.add(config.resolve(name));
+            }
+        }
+        if (files.isEmpty()) {
             status.setText("No settings saved yet: nothing to reset");
             return;
         }
@@ -425,9 +433,11 @@ final class BuilderWindow {
             return;
         }
         try {
-            Files.move(settings, settings.resolveSibling("spear-injector.properties.old"),
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            status.setText("Settings reset (the old ones are kept as spear-injector.properties.old)");
+            for (Path settings : files) {
+                Files.move(settings, settings.resolveSibling(settings.getFileName() + ".old"),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+            status.setText("Settings reset (the old ones are kept as uranium.properties.old)");
         } catch (IOException exception) {
             status.setText("Couldn't reset: " + exception.getMessage());
         }

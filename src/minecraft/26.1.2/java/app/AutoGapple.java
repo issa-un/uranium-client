@@ -45,7 +45,7 @@ final class AutoGapple {
         }
         if (!enabled || Mc.screen(minecraft) != null || now < readyAtMs || player.isUsingItem()
                 || player.getHealth() > HEALTH[healthIndex] || player.hasEffect(MobEffects.REGENERATION)
-                || !SpearSettings.combatAllowed(minecraft)) {
+                || !Settings.combatAllowed(minecraft)) {
             return;
         }
         int slot = BucketUse.findSlot(player, Items.GOLDEN_APPLE);
@@ -61,7 +61,7 @@ final class AutoGapple {
         startedMs = now;
         player.getInventory().setSelectedSlot(slot);
         SpearDash.sendSelectedSlot(minecraft, false);
-        MinecraftInputController.stopGuard();
+        InputLoop.stopGuard();
         minecraft.options.keyUse.setDown(true);
         SpearDash.setStatus("Eating gapple");
     }
@@ -78,7 +78,7 @@ final class AutoGapple {
             player.getInventory().setSelectedSlot(previousSlot);
             SpearDash.sendSelectedSlot(minecraft, false);
         }
-        SpearLog.log("auto gapple: " + (eaten ? "eaten" : interrupted ? "stopped" : "timed out")
+        UraniumLog.log("auto gapple: " + (eaten ? "eaten" : interrupted ? "stopped" : "timed out")
                 + " at " + player.getHealth() + " health");
         SpearDash.setStatus(eaten ? "Gapple eaten" : "Gapple stopped");
         eatingSlot = -1;

@@ -85,10 +85,10 @@ final class AttackHook {
             } else {
                 pipeline.addLast(NAME, new Handler());
             }
-            SpearLog.log("attack hook: on the connection to " + SpearSettings.currentServer(minecraft));
+            UraniumLog.log("attack hook: on the connection to " + Settings.currentServer(minecraft));
         } catch (RuntimeException exception) {
             // The connection closed meanwhile; the next one is hooked when you join.
-            SpearLog.log("attack hook: could not hook the connection (" + exception + ")");
+            UraniumLog.log("attack hook: could not hook the connection (" + exception + ")");
         }
     }
 
@@ -105,7 +105,7 @@ final class AttackHook {
         int maces = MACE_SWAPS.getAndSet(0);
         int weapons = WEAPON_SWITCHES.getAndSet(0);
         if (attacks + swings > 0) {
-            SpearLog.log("attack hook: last 5 s sent " + attacks + " attacks (" + own + " by modules) and "
+            UraniumLog.log("attack hook: last 5 s sent " + attacks + " attacks (" + own + " by modules) and "
                     + swings + " swings; shield break took " + held + ", mace swap " + maces
                     + ", auto weapon " + weapons);
         }

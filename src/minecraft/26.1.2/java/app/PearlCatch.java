@@ -91,7 +91,7 @@ final class PearlCatch {
         if (!enabled || player == null || minecraft.gameMode == null || Mc.screen(minecraft) != null) {
             return false;
         }
-        if (!SpearSettings.combatAllowed(minecraft)) {
+        if (!Settings.combatAllowed(minecraft)) {
             SpearDash.setStatus("Off on this server");
             return false;
         }
@@ -193,7 +193,7 @@ final class PearlCatch {
             // You picked another slot meanwhile; that choice is kept.
             running = false;
             SpearDash.setStatus("Pearl catch stopped");
-            SpearLog.log("pearl catch: stopped, hotbar moved to " + (player.getInventory().getSelectedSlot() + 1));
+            UraniumLog.log("pearl catch: stopped, hotbar moved to " + (player.getInventory().getSelectedSlot() + 1));
             return;
         }
         int age = player.tickCount - throwTick;
@@ -207,7 +207,7 @@ final class PearlCatch {
         if (plan == null) {
             swapBack(minecraft);
             SpearDash.setStatus("Lost the catch");
-            SpearLog.log("pearl catch: no meet point left at pearl age " + age);
+            UraniumLog.log("pearl catch: no meet point left at pearl age " + age);
             return;
         }
         throwToward(minecraft, player, plan.direction());
@@ -215,7 +215,7 @@ final class PearlCatch {
         tries++;
         watchPoint = plan.point();
         watchUntilTick = player.tickCount + plan.meetAge() - age + AutoStun.pingMs(minecraft) / 50 + RESULT_TICKS;
-        SpearLog.log("pearl catch: charge at pearl age " + age + " (planned " + fireAge + "), meets in "
+        UraniumLog.log("pearl catch: charge at pearl age " + age + " (planned " + fireAge + "), meets in "
                 + plan.flightTicks() + " ticks at age " + plan.meetAge() + ", "
                 + String.format(Locale.ROOT, "%.1f", plan.point().y - throwEyeY) + " blocks up");
     }
@@ -229,11 +229,11 @@ final class PearlCatch {
         if (player.position().distanceTo(watchPoint) < CAUGHT_WITHIN) {
             caught++;
             SpearDash.setStatus("Caught (" + caught + "/" + tries + ")");
-            SpearLog.log("pearl catch result: teleported to the meet point");
+            UraniumLog.log("pearl catch result: teleported to the meet point");
             watchPoint = null;
         } else if (player.tickCount > watchUntilTick) {
             SpearDash.setStatus("Missed the catch (" + caught + "/" + tries + ")");
-            SpearLog.log("pearl catch result: no teleport, ended "
+            UraniumLog.log("pearl catch result: no teleport, ended "
                     + String.format(Locale.ROOT, "%.1f", player.position().distanceTo(watchPoint)) + " blocks from the meet point");
             watchPoint = null;
         }

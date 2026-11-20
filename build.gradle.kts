@@ -111,7 +111,7 @@ tasks.jar {
     }
     manifest {
         attributes(
-            "Agent-Class" to "app.$buildTag.MinecraftGuiAgent",
+            "Agent-Class" to "app.$buildTag.UraniumAgent",
             // Hide other clients adds a check to a class the game has already loaded.
             "Can-Retransform-Classes" to "true",
             // The same jar opens the injector window, which then injects itself.

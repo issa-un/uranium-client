@@ -75,7 +75,7 @@ final class HitWheels {
                 LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(HitWheels::render);
                 active = true;
             } catch (RuntimeException | LinkageError exception) {
-                SpearLog.log("hit wheels: could not hook world drawing (" + exception + ")");
+                UraniumLog.log("hit wheels: could not hook world drawing (" + exception + ")");
             }
         }
         LocalPlayer player = minecraft.player;
@@ -151,12 +151,12 @@ final class HitWheels {
             // Skips this frame instead of crashing the game; logged once.
             if (!drawFailed) {
                 drawFailed = true;
-                SpearLog.log("hit wheels: drawing failed, skipped this frame: " + error);
+                UraniumLog.log("hit wheels: drawing failed, skipped this frame: " + error);
             }
         } catch (LinkageError error) {
             broken = true;
             SpearDash.setStatus("Hit Wheels doesn't work on this version");
-            SpearLog.log("hit wheels: switched off, this game version draws differently (" + error + ")");
+            UraniumLog.log("hit wheels: switched off, this game version draws differently (" + error + ")");
         }
     }
 

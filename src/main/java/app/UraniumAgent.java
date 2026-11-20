@@ -21,16 +21,17 @@ import java.util.regex.Pattern;
  * command is "open" (the default), "unload", "update" or "status". The result goes to the
  * status file.
  */
-public final class MinecraftGuiAgent {
+public final class UraniumAgent {
     // Each build's classes live in their own package, so the GUI is found next to this class.
-    private static final String GUI_CLASS = MinecraftGuiAgent.class.getPackageName() + ".ClickGuiScreen";
-    // Every injected version has one: app.MinecraftInputControllerV18 and so on up to v31, and
-    // app.<build tag>.MinecraftInputController since. v18 and later can switch themselves off.
+    private static final String GUI_CLASS = UraniumAgent.class.getPackageName() + ".ClickGuiScreen";
+    // Every injected version has one: app.MinecraftInputControllerV18 and so on up to v31,
+    // app.<build tag>.MinecraftInputController after that, and app.<build tag>.InputLoop since
+    // the rename. v18 and later can switch themselves off.
     private static final Pattern CONTROLLER =
-            Pattern.compile("app\\.(?:b[0-9a-f]+\\.)?MinecraftInputController(?:V\\d+)?");
+            Pattern.compile("app\\.(?:b[0-9a-f]+\\.)?(?:MinecraftInputController(?:V\\d+)?|InputLoop)");
     private static final long UNLOAD_WAIT_MS = 2000;
 
-    private MinecraftGuiAgent() {}
+    private UraniumAgent() {}
 
     /** Which injected versions were asked to switch off, and how many are too old to. */
     private record UnloadResult(List<Class<?>> unloaded, int tooOld) {}
@@ -133,7 +134,7 @@ public final class MinecraftGuiAgent {
     /** True once every controller is off, false if UNLOAD_WAIT_MS passes first. */
     private static boolean waitFor(List<Class<?>> controllers) throws InterruptedException {
         long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(UNLOAD_WAIT_MS);
-        while (controllers.stream().anyMatch(MinecraftGuiAgent::isInstalled)) {
+        while (controllers.stream().anyMatch(UraniumAgent::isInstalled)) {
             if (System.nanoTime() > deadline) {
                 return false;
             }
@@ -163,7 +164,7 @@ public final class MinecraftGuiAgent {
         String name = packageName.equals("app")
                 ? "old " + controller.getSimpleName().replace("MinecraftInputController", "controller ")
                 : "build " + packageName.substring("app.".length());
-        return packageName.equals(MinecraftGuiAgent.class.getPackageName()) ? name + " (this build)" : name;
+        return packageName.equals(UraniumAgent.class.getPackageName()) ? name + " (this build)" : name;
     }
 
     /** Whether the version's loop is still ticking; builds before the Status button cannot say. */

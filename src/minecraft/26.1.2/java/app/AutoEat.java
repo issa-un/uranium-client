@@ -72,7 +72,7 @@ final class AutoEat {
         startedMs = now;
         player.getInventory().setSelectedSlot(best);
         SpearDash.sendSelectedSlot(minecraft, false);
-        MinecraftInputController.stopGuard();
+        InputLoop.stopGuard();
         minecraft.options.keyUse.setDown(true);
         SpearDash.setStatus("Eating");
     }

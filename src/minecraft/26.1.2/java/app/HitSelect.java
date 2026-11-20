@@ -28,7 +28,7 @@ final class HitSelect {
     /** Your attack click: true if it was held back for later. */
     static boolean onAttackClick(Minecraft minecraft) {
         LocalPlayer player = minecraft.player;
-        if (!enabled || player == null || Mc.screen(minecraft) != null || !SpearSettings.combatAllowed(minecraft)) {
+        if (!enabled || player == null || Mc.screen(minecraft) != null || !Settings.combatAllowed(minecraft)) {
             return false;
         }
         if (!(minecraft.hitResult instanceof EntityHitResult hit) || !(hit.getEntity() instanceof LivingEntity target)
@@ -37,7 +37,7 @@ final class HitSelect {
         }
         boolean slam = slamReady(player);
         if (heldTargetId < 0) {
-            SpearLog.log("hit select: held your " + (slam ? "slam" : "hit") + " on " + target.getName().getString()
+            UraniumLog.log("hit select: held your " + (slam ? "slam" : "hit") + " on " + target.getName().getString()
                     + ", they are still immune");
         }
         heldSlam = slam;
@@ -57,7 +57,7 @@ final class HitSelect {
         if (!enabled || !(entity instanceof LivingEntity target) || !target.isAlive() || now - heldSinceMs > WAIT_MS
                 || heldSlam && !slamReady(player)) {
             if (entity instanceof LivingEntity gone) {
-                SpearLog.log("hit select: dropped the " + (heldSlam ? "slam" : "hit") + " on " + gone.getName().getString()
+                UraniumLog.log("hit select: dropped the " + (heldSlam ? "slam" : "hit") + " on " + gone.getName().getString()
                         + (heldSlam && player != null && player.onGround() ? ", you landed" : ", waited too long"));
             }
             heldTargetId = -1;
@@ -71,7 +71,7 @@ final class HitSelect {
         }
         heldTargetId = -1;
         TriggerBot.strike(minecraft, player, target, heldSlam, now);
-        SpearLog.log("hit select: sent the " + (heldSlam ? "slam" : "hit") + " on " + target.getName().getString() + " after " + (now - heldSinceMs)
+        UraniumLog.log("hit select: sent the " + (heldSlam ? "slam" : "hit") + " on " + target.getName().getString() + " after " + (now - heldSinceMs)
                 + " ms, their immunity was over");
     }
 

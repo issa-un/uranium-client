@@ -34,11 +34,11 @@ import org.joml.Matrix3x2fStack;
  * range, flashing when they are out of view behind you or dropping on you from above.
  * Landing, under the crosshair while falling: distance to the ground and the fall damage.
  */
-final class VelocityHud {
+final class UraniumHud {
     // Every build lives in its own package (see build.gradle.kts), and Fabric keeps the
     // name of a removed element, so each build's HUD needs a name of its own.
     private static final Identifier ID = Identifier.fromNamespaceAndPath("app",
-            "velocity_hud_" + VelocityHud.class.getPackageName().replace('.', '_'));
+            "velocity_hud_" + UraniumHud.class.getPackageName().replace('.', '_'));
     private static final AtomicBoolean REGISTERED = new AtomicBoolean();
     private static final int ALERT_ABOVE_CROSSHAIR = 44;
     // Right of the radar ring and its triangles, level with the crosshair.
@@ -121,7 +121,7 @@ final class VelocityHud {
     // Lower-case names; read on the render thread, changed from the menu on the same thread.
     private static final Set<String> FRIENDS = new TreeSet<>();
 
-    private VelocityHud() {}
+    private UraniumHud() {}
 
     /**
      * Fabric's removeElement leaves a placeholder that keeps the name, so adding the same
@@ -134,7 +134,7 @@ final class VelocityHud {
             return;
         }
         try {
-            HudElementRegistry.addLast(ID, VelocityHud::extractRenderState);
+            HudElementRegistry.addLast(ID, UraniumHud::extractRenderState);
         } catch (RuntimeException | LinkageError exception) {
             available = false; // Fabric API's HUD module is missing or changed
         }
@@ -156,7 +156,7 @@ final class VelocityHud {
             // A HUD bug must never take the frame, or the game, down; logged once.
             if (!drawFailed) {
                 drawFailed = true;
-                SpearLog.log("hud: drawing failed, skipped this frame: " + error);
+                UraniumLog.log("hud: drawing failed, skipped this frame: " + error);
             }
         } finally {
             HudFilter.ownDraw(false);

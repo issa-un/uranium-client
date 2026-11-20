@@ -60,7 +60,7 @@ final class Modules {
     private Modules() {}
 
     static List<Category> categories(Minecraft minecraft) {
-        boolean hud = VelocityHud.isAvailable();
+        boolean hud = UraniumHud.isAvailable();
         return List.of(
                 new Category("Combat", "C", 0xFF39FF14, List.of(
                         new Module("Play Style", "How aim and timing feel: Calm when off, Cracked (fast, uneven, heats up in fights) when on",
@@ -71,7 +71,7 @@ final class Modules {
                                 new Action(() -> HandProfile.isMeasured() ? "Back to an average hand" : "Using an average hand",
                                         () -> {
                                             HandProfile.reset();
-                                            SpearSettings.save(minecraft);
+                                            Settings.save(minecraft);
                                         }))),
                         new Module("Trigger Bot", "Hits what you look at whenever the hit will count",
                                 TriggerBot::isEnabled, TriggerBot::toggleEnabled, List.of(
@@ -308,17 +308,17 @@ final class Modules {
                                 new Action(AimRecorder::label, AimRecorder::toggle))))),
                 new Category("HUD", "H", 0xFF64DD17, List.of(
                         new Module("Speedometer", hud ? "A speed ring above your hotbar" : "Needs Fabric API's HUD module",
-                                VelocityHud::isSpeedHudOn, VelocityHud::toggleSpeedHud, List.of(
-                                new Choice("Position", VelocityHud::positionLabel, VelocityHud::togglePosition),
-                                new Toggle("Warnings", VelocityHud::isWarningsOn, VelocityHud::toggleWarnings),
-                                toggleKey(VelocityHud.TOGGLE_SPEED))),
+                                UraniumHud::isSpeedHudOn, UraniumHud::toggleSpeedHud, List.of(
+                                new Choice("Position", UraniumHud::positionLabel, UraniumHud::togglePosition),
+                                new Toggle("Warnings", UraniumHud::isWarningsOn, UraniumHud::toggleWarnings),
+                                toggleKey(UraniumHud.TOGGLE_SPEED))),
                         new Module("Radar", hud ? "Shows nearby players around your crosshair" : "Needs Fabric API's HUD module",
-                                VelocityHud::isRadarOn, VelocityHud::toggleRadar, List.of(
-                                new Choice("Range", () -> VelocityHud.radarRange() + " m", VelocityHud::cycleRadarRange),
-                                new Choice("Team", () -> VelocityHud.isIgnoreTeam() ? "Ignore" : "Show",
-                                        VelocityHud::toggleIgnoreTeam),
+                                UraniumHud::isRadarOn, UraniumHud::toggleRadar, List.of(
+                                new Choice("Range", () -> UraniumHud.radarRange() + " m", UraniumHud::cycleRadarRange),
+                                new Choice("Team", () -> UraniumHud.isIgnoreTeam() ? "Ignore" : "Show",
+                                        UraniumHud::toggleIgnoreTeam),
                                 new Action(() -> friendLabel(minecraft), () -> toggleFriend(minecraft)),
-                                toggleKey(VelocityHud.TOGGLE_RADAR))),
+                                toggleKey(UraniumHud.TOGGLE_RADAR))),
                         new Module("Slam Meter", "Shows how hard your mace slam will hit, and KILL or POP",
                                 SlamMeter::isEnabled, SlamMeter::toggleEnabled, List.of()),
                         new Module("Combat Alerts", "Shows when a player eats, pops a totem or loses their shield",
@@ -345,12 +345,12 @@ final class Modules {
                                 new Choice("Helmet", HitWheels::helmetLabel, HitWheels::cycleHelmet))),
                         new Module("Vanilla HUD", "Shows only the game's own HUD: hides Uranium and every other mod",
                                 HudFilter::isHideAll, HudFilter::toggleHideAll, List.of(
-                                toggleKey(VelocityHud.TOGGLE_HIDE))),
+                                toggleKey(UraniumHud.TOGGLE_HIDE))),
                         new Module("Hide Other Clients", "Hides the module lists other clients draw",
                                 HudFilter::isEnabled, HudFilter::toggleEnabled, hideRows()),
                         new Module("Fall Damage", hud ? "Shows the fall damage you'll take before you land" : "Needs Fabric API's HUD module",
-                                VelocityHud::isLandingOn, VelocityHud::toggleLanding, List.of(
-                                toggleKey(VelocityHud.TOGGLE_LANDING))),
+                                UraniumHud::isLandingOn, UraniumHud::toggleLanding, List.of(
+                                toggleKey(UraniumHud.TOGGLE_LANDING))),
                         new Module("Combat Stats", hud ? "Your ping, fall, shield timing and shield breaks"
                                 : "Needs Fabric API's HUD module",
                                 CombatStats::isOn, CombatStats::toggle, List.of()))));
@@ -373,31 +373,31 @@ final class Modules {
 
     /** A key that turns a HUD module on or off without opening the menu. */
     private static Bind toggleKey(int module) {
-        return new Bind("Toggle key", () -> VelocityHud.awaitingToggle() == module ? "Press a key (Esc: none)"
-                : bindLabel(VelocityHud.toggleKey(module), VelocityHud.toggleMouse(module)),
-                () -> VelocityHud.awaitingToggle() == module, () -> VelocityHud.awaitToggleBinding(module));
+        return new Bind("Toggle key", () -> UraniumHud.awaitingToggle() == module ? "Press a key (Esc: none)"
+                : bindLabel(UraniumHud.toggleKey(module), UraniumHud.toggleMouse(module)),
+                () -> UraniumHud.awaitingToggle() == module, () -> UraniumHud.awaitToggleBinding(module));
     }
 
     /** The player you look at, else the nearest one; friends never set off the Radar. */
     private static String friendLabel(Minecraft minecraft) {
-        Player candidate = VelocityHud.friendCandidate(minecraft);
+        Player candidate = UraniumHud.friendCandidate(minecraft);
         if (candidate == null) {
-            return "Friends: " + VelocityHud.friendCount();
+            return "Friends: " + UraniumHud.friendCount();
         }
-        return (VelocityHud.isFriend(candidate) ? "Unfriend " : "Friend ") + candidate.getName().getString();
+        return (UraniumHud.isFriend(candidate) ? "Unfriend " : "Friend ") + candidate.getName().getString();
     }
 
     private static void toggleFriend(Minecraft minecraft) {
-        Player candidate = VelocityHud.friendCandidate(minecraft);
+        Player candidate = UraniumHud.friendCandidate(minecraft);
         if (candidate != null) {
-            VelocityHud.toggleFriend(candidate);
+            UraniumHud.toggleFriend(candidate);
         }
     }
 
     /** A binding's name as the game shows it ("R", "Left Shift", "Mouse 4"), or "None". */
     static String bindLabel(int keyCode, int mouseButton) {
         if (mouseButton >= 0) {
-            return MinecraftInputController.mouseLabel(mouseButton);
+            return InputLoop.mouseLabel(mouseButton);
         }
         if (keyCode < 0) {
             return "None";

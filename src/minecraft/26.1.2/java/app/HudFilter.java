@@ -176,7 +176,7 @@ public final class HudFilter implements ClassFileTransformer {
                 out.append(" <- ").append(frame.getClassName()).append('#').append(frame.getMethodName());
             }
         }
-        SpearLog.log(out.toString());
+        UraniumLog.log(out.toString());
         return null;
     }
 
@@ -231,7 +231,7 @@ public final class HudFilter implements ClassFileTransformer {
         }
         if (!SEEN.contains(source.name())) {
             SEEN.add(source.name());
-            SpearLog.log("hide other clients: " + source.name() + " draws on the HUD (" + caller.getName() + "), "
+            UraniumLog.log("hide other clients: " + source.name() + " draws on the HUD (" + caller.getName() + "), "
                     + (HIDDEN.get(source.name()) ? "hidden" : "shown"));
         }
         return hideAll || HIDDEN.get(source.name());
@@ -324,7 +324,7 @@ public final class HudFilter implements ClassFileTransformer {
             samples.merge(source.name(), type.getName(), (a, b) -> a.split(", ").length < 3 ? a + ", " + b : a);
         }
         if (counts.isEmpty()) {
-            SpearLog.log("hide other clients: no injected classes found besides Uranium");
+            UraniumLog.log("hide other clients: no injected classes found besides Uranium");
         }
         Map<String, Integer> renderers = new TreeMap<>();
         for (Class<?> type : inst.getAllLoadedClasses()) {
@@ -335,9 +335,9 @@ public final class HudFilter implements ClassFileTransformer {
                 }
             }
         }
-        renderers.forEach((lib, count) -> SpearLog.log("hide other clients: " + count + " classes of " + lib
+        renderers.forEach((lib, count) -> UraniumLog.log("hide other clients: " + count + " classes of " + lib
                 + " loaded: a client drawing with its own renderer, past Minecraft's HUD"));
-        counts.forEach((name, count) -> SpearLog.log("hide other clients: " + count + " classes from "
+        counts.forEach((name, count) -> UraniumLog.log("hide other clients: " + count + " classes from "
                 + printable(name) + " (" + printable(samples.get(name)) + ")"));
         // No render-thread sampling here: snapshotting the render thread every few ms for
         // seconds paused the game at each snapshot, a heavy stutter every time this turned on.
@@ -407,7 +407,7 @@ public final class HudFilter implements ClassFileTransformer {
             try {
                 scanLoaded(instrumentation);
             } catch (Throwable error) {
-                SpearLog.log("hide other clients: class scan failed: " + error);
+                UraniumLog.log("hide other clients: class scan failed: " + error);
             }
             TRACED.clear();
             traceUntilMs = System.nanoTime() / 1_000_000 + TRACE_MS;
@@ -430,7 +430,7 @@ public final class HudFilter implements ClassFileTransformer {
             SpearDash.setStatus(status);
         }
         hideAll = on;
-        SpearLog.log("vanilla hud: " + (on ? "on" : "off"));
+        UraniumLog.log("vanilla hud: " + (on ? "on" : "off"));
         SpearDash.setStatus(on ? "UI hidden" : "UI shown");
     }
 
@@ -453,12 +453,12 @@ public final class HudFilter implements ClassFileTransformer {
             inst.addTransformer(INSTANCE, true);
             inst.retransformClasses(GuiGraphicsExtractor.class, GuiRenderState.class);
             installed = true;
-            SpearLog.log("hide other clients: drawing check added");
+            UraniumLog.log("hide other clients: drawing check added");
             return true;
         } catch (Throwable error) {
             inst.removeTransformer(INSTANCE);
             status = "Hide Other Clients failed: " + error.getClass().getSimpleName();
-            SpearLog.log("hide other clients: could not add the drawing check: " + error);
+            UraniumLog.log("hide other clients: could not add the drawing check: " + error);
             return false;
         }
     }
@@ -476,7 +476,7 @@ public final class HudFilter implements ClassFileTransformer {
         try {
             inst.retransformClasses(GuiGraphicsExtractor.class, GuiRenderState.class);
         } catch (Throwable error) {
-            SpearLog.log("hide other clients: could not take the drawing check out: " + error);
+            UraniumLog.log("hide other clients: could not take the drawing check out: " + error);
         }
         installed = false;
     }
@@ -491,7 +491,7 @@ public final class HudFilter implements ClassFileTransformer {
         try {
             return addCheck(bytes, methods);
         } catch (Throwable error) {
-            SpearLog.log("hide other clients: rewrite of " + className + " failed: " + error);
+            UraniumLog.log("hide other clients: rewrite of " + className + " failed: " + error);
             return null; // leave the class unchanged
         }
     }

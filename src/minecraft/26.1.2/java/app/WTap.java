@@ -43,7 +43,7 @@ final class WTap {
     /** Your attack click: remember it if it lands on something living. */
     static void onAttackClick(Minecraft minecraft) {
         LocalPlayer player = minecraft.player;
-        if (enabled && !anyAttack && player != null && Mc.screen(minecraft) == null && SpearSettings.combatAllowed(minecraft)
+        if (enabled && !anyAttack && player != null && Mc.screen(minecraft) == null && Settings.combatAllowed(minecraft)
                 && minecraft.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof LivingEntity) {
             clickTick = player.tickCount;
             clickWasSprint = player.isSprinting();
@@ -67,7 +67,7 @@ final class WTap {
     static void onAnyAttack(Minecraft minecraft, boolean wasSprinting) {
         LocalPlayer player = minecraft.player;
         if (enabled && anyAttack && player != null && Mc.screen(minecraft) == null
-                && SpearSettings.combatAllowed(minecraft)) {
+                && Settings.combatAllowed(minecraft)) {
             clickTick = player.tickCount;
             clickWasSprint = wasSprinting;
         }

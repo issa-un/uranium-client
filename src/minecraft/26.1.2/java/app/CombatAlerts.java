@@ -56,7 +56,7 @@ final class CombatAlerts {
             if (before != null && absorption >= TOTEM_ABSORPTION && absorption > before + 1
                     && other.getHealth() <= TOTEM_HEALTH) {
                 POPPED_AT.put(other.getId(), now);
-                SpearLog.log("combat alerts: " + other.getName().getString() + " popped a totem");
+                UraniumLog.log("combat alerts: " + other.getName().getString() + " popped a totem");
             }
         }
         POPPED_AT.values().removeIf(at -> now - at > POP_MS);

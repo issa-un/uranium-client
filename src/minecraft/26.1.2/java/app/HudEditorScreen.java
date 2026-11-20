@@ -36,10 +36,10 @@ public final class HudEditorScreen extends Screen {
     protected void init() {
         int center = width / 2;
         addRenderableWidget(Button.builder(Component.literal("Reset"), button -> {
-            for (int element = 0; element < VelocityHud.ELEMENTS; element++) {
-                VelocityHud.setOffset(element, 0, 0);
+            for (int element = 0; element < UraniumHud.ELEMENTS; element++) {
+                UraniumHud.setOffset(element, 0, 0);
             }
-            SpearSettings.save(Minecraft.getInstance());
+            Settings.save(Minecraft.getInstance());
         }).bounds(center - 62, 6, 60, 16).build());
         addRenderableWidget(Button.builder(Component.literal("Done"), button -> onClose())
                 .bounds(center + 2, 6, 60, 16).build());
@@ -52,20 +52,20 @@ public final class HudEditorScreen extends Screen {
 
     @Override
     public void onClose() {
-        SpearSettings.save(Minecraft.getInstance());
+        Settings.save(Minecraft.getInstance());
         Mc.setScreen(Minecraft.getInstance(), new ClickGuiScreen());
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (event.button() == 0) {
-            for (int element = VelocityHud.ELEMENTS - 1; element >= 0; element--) {
+            for (int element = UraniumHud.ELEMENTS - 1; element >= 0; element--) {
                 if (insideBox(element, event.x(), event.y())) {
                     dragging = element;
                     dragStartX = event.x();
                     dragStartY = event.y();
-                    startOffsetX = VelocityHud.offsetX(element);
-                    startOffsetY = VelocityHud.offsetY(element);
+                    startOffsetX = UraniumHud.offsetX(element);
+                    startOffsetY = UraniumHud.offsetY(element);
                     return true;
                 }
             }
@@ -77,7 +77,7 @@ public final class HudEditorScreen extends Screen {
     public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
         if (dragging >= 0) {
             // From where the drag started, so small mouse steps are not lost to rounding.
-            VelocityHud.setOffset(dragging,
+            UraniumHud.setOffset(dragging,
                     startOffsetX + (int) Math.round(event.x() - dragStartX),
                     startOffsetY + (int) Math.round(event.y() - dragStartY));
             return true;
@@ -89,7 +89,7 @@ public final class HudEditorScreen extends Screen {
     public boolean mouseReleased(MouseButtonEvent event) {
         if (event.button() == 0 && dragging >= 0) {
             dragging = -1;
-            SpearSettings.save(Minecraft.getInstance());
+            Settings.save(Minecraft.getInstance());
             return true;
         }
         return super.mouseReleased(event);
@@ -97,14 +97,14 @@ public final class HudEditorScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        for (int element = 0; element < VelocityHud.ELEMENTS; element++) {
+        for (int element = 0; element < UraniumHud.ELEMENTS; element++) {
             int[] box = box(element);
             graphics.fill(box[0], box[1], box[2], box[3], element == dragging ? BOX_DRAGGED_COLOR : BOX_COLOR);
             graphics.fill(box[0], box[1], box[2], box[1] + 1, EDGE_COLOR);
             graphics.fill(box[0], box[3] - 1, box[2], box[3], EDGE_COLOR);
             graphics.fill(box[0], box[1], box[0] + 1, box[3], EDGE_COLOR);
             graphics.fill(box[2] - 1, box[1], box[2], box[3], EDGE_COLOR);
-            graphics.centeredText(font, VelocityHud.elementName(element),
+            graphics.centeredText(font, UraniumHud.elementName(element),
                     (box[0] + box[2]) / 2, (box[1] + box[3]) / 2 - 4, LABEL_COLOR);
         }
         graphics.centeredText(font, "Drag the boxes to move the HUD", width / 2, 26, LABEL_COLOR);
@@ -112,7 +112,7 @@ public final class HudEditorScreen extends Screen {
     }
 
     private int[] box(int element) {
-        int[] spot = VelocityHud.position(element, width, height);
+        int[] spot = UraniumHud.position(element, width, height);
         int[] edges = BOXES[element];
         return new int[] {spot[0] + edges[0], spot[1] + edges[1], spot[0] + edges[2], spot[1] + edges[3]};
     }

@@ -61,10 +61,10 @@ final class ElytraSwap {
             game.gameMode.useItem(game.player, InteractionHand.MAIN_HAND);
             return true;
         }, (game, worn, from, used) -> {
-            MinecraftInputController.stopGuard();
+            InputLoop.stopGuard();
             if (worn) {
                 SpearDash.setStatus(wearingElytra ? "Chestplate on" : "Elytra on");
-                SpearLog.log("elytra swap: " + (wearingElytra ? "chestplate" : "elytra") + " from hotbar " + (used + 1));
+                UraniumLog.log("elytra swap: " + (wearingElytra ? "chestplate" : "elytra") + " from hotbar " + (used + 1));
             }
         });
         return true;

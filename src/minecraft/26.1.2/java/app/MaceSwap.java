@@ -46,7 +46,7 @@ final class MaceSwap {
         }
         // Every hit that goes out holding a mace is logged too, swapped or not (see MaceLog).
         boolean holdingMace = heldSlot >= 0 && heldSlot < 9 && player.getInventory().getItem(heldSlot).is(Items.MACE);
-        if (!enabled || Mc.screen(minecraft) != null || !SpearSettings.combatAllowed(minecraft)) {
+        if (!enabled || Mc.screen(minecraft) != null || !Settings.combatAllowed(minecraft)) {
             if (holdingMace) {
                 MaceLog.attack(minecraft, target, heldSlot, heldSlot, "held, Mace Swap off");
             }
@@ -73,7 +73,7 @@ final class MaceSwap {
             if (holdingMace) {
                 MaceLog.attack(minecraft, target, heldSlot, heldSlot, "held, fall under " + WORTH_FALL);
             } else if (player.fallDistance > SMASH_FALL_DISTANCE || player.isFallFlying()) {
-                SpearLog.log(String.format(java.util.Locale.ROOT,
+                UraniumLog.log(String.format(java.util.Locale.ROOT,
                         "mace swap: not swapped on %s, %s", target.getName().getString(), player.isFallFlying()
                                 ? "gliding (no slam while flying an elytra)"
                                 : "fell only " + String.format(java.util.Locale.ROOT, "%.1f", player.fallDistance)
@@ -97,10 +97,10 @@ final class MaceSwap {
         if (player == null) {
             return;
         }
-        MinecraftInputController.guardSwitchBack(previousSlot, maceSlot);
+        InputLoop.guardSwitchBack(previousSlot, maceSlot);
         String kind = describe(player.getInventory().getItem(maceSlot));
         SpearDash.setStatus(kind + " hit");
-        SpearLog.log("mace swap: hotbar " + (previousSlot + 1) + " -> " + kind + " " + (maceSlot + 1)
+        UraniumLog.log("mace swap: hotbar " + (previousSlot + 1) + " -> " + kind + " " + (maceSlot + 1)
                 + " -> back to " + (previousSlot + 1) + (isSlam(player) ? " (slam)" : "")
                 + " on " + target.getName().getString());
     }

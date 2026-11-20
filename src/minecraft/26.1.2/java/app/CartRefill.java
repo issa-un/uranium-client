@@ -104,17 +104,17 @@ final class CartRefill {
                 || !player.onGround() && !player.isInWater() // not mid-air: once you land
                 || player.getDeltaMovement().horizontalDistance() > 0.3 // not at a full sprint
                 || CrossbowCart.isBusy() || BowCart.isBusy() || CrossbowReload.isBusy() || AntiCart.isBusy() || now() - lastDoneMs < RETRY_MS
-                || !SpearSettings.combatAllowed(minecraft)) {
+                || !Settings.combatAllowed(minecraft)) {
             return;
         }
         blown = false;
         if (!findJob(player)) {
-            SpearLog.log("cart replenish: nothing to refill (hotbar has it, none left in the inventory, or no empty slot)");
+            UraniumLog.log("cart replenish: nothing to refill (hotbar has it, none left in the inventory, or no empty slot)");
         } else {
             Mc.setScreen(minecraft, new InventoryScreen(player));
             step = Step.OPEN;
             nextMs = now() + random(90, 160);
-            SpearLog.log("cart replenish: inventory slot " + fromSlot + " to hotbar " + (toHotbar + 1));
+            UraniumLog.log("cart replenish: inventory slot " + fromSlot + " to hotbar " + (toHotbar + 1));
         }
     }
 
@@ -136,7 +136,7 @@ final class CartRefill {
         if (Mc.screen(minecraft) instanceof InventoryScreen screen) {
             screen.onClose();
         }
-        SpearLog.log("cart replenish: stopped, " + why + " (it would have moved the stack under the mouse)");
+        UraniumLog.log("cart replenish: stopped, " + why + " (it would have moved the stack under the mouse)");
     }
 
     static void requestNow() {
@@ -163,7 +163,7 @@ final class CartRefill {
         } else if (sawCart) {
             blown = true;
             watchSpot = null;
-            SpearLog.log("cart replenish: the cart blew");
+            UraniumLog.log("cart replenish: the cart blew");
             return;
         }
         if (now() > watchUntilMs) {
@@ -287,7 +287,7 @@ final class CartRefill {
                             ContainerInput.SWAP, player);
                     SpearDash.setStatus("Replenished");
                     if (!was.isEmpty()) {
-                        SpearLog.log("cart replenish: " + was.getHoverName().getString() + " went from hotbar "
+                        UraniumLog.log("cart replenish: " + was.getHoverName().getString() + " went from hotbar "
                                 + (toHotbar + 1) + " back into the inventory");
                     }
                 }

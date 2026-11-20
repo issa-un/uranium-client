@@ -148,7 +148,7 @@ final class AutoStun {
         if (!enabled || player == null || minecraft.gameMode == null || target != null) {
             return false;
         }
-        if (!SpearSettings.combatAllowed(minecraft)) {
+        if (!Settings.combatAllowed(minecraft)) {
             SpearDash.setStatus("Off on this server");
             return false;
         }
@@ -200,7 +200,7 @@ final class AutoStun {
      */
     static boolean handleAttackClick(Minecraft minecraft) {
         if (!enabled || !onAttackClick || minecraft.player == null || Mc.screen(minecraft) != null
-                || !SpearSettings.combatAllowed(minecraft)) {
+                || !Settings.combatAllowed(minecraft)) {
             return false;
         }
         // Any attack catches attack packets, but a click past your crosshair's reach sends
@@ -249,7 +249,7 @@ final class AutoStun {
             return; // an extra hit during a break, dropped like an extra click
         }
         if (!CHANCE.roll() || !activate(minecraft, blockingToward(minecraft, entity) ? entity : null)) {
-            SpearLog.log("auto stun: held-back hit on " + entity.getName().getString()
+            UraniumLog.log("auto stun: held-back hit on " + entity.getName().getString()
                     + " went out as a plain hit (" + SpearDash.status() + ")");
             AttackHook.resend(minecraft, attack);
         }
@@ -288,7 +288,7 @@ final class AutoStun {
         if (!reason.equals(lastSkipReason) || now - lastSkipMs > 1000) {
             lastSkipReason = reason;
             lastSkipMs = now;
-            SpearLog.log("auto stun: skipped " + near.getName().getString() + " via spear click: " + reason);
+            UraniumLog.log("auto stun: skipped " + near.getName().getString() + " via spear click: " + reason);
         }
     }
 
@@ -308,7 +308,7 @@ final class AutoStun {
         String reason;
         if (!enabled) {
             reason = "Auto Stun is off";
-        } else if (!SpearSettings.combatAllowed(minecraft)) {
+        } else if (!Settings.combatAllowed(minecraft)) {
             reason = "combat modules are off on this server";
         } else if (!onAttackClick) {
             reason = "On attack click is off, so only the bind starts a break";
@@ -332,7 +332,7 @@ final class AutoStun {
         if (!reason.equals(lastSkipReason) || now - lastSkipMs > 1000) {
             lastSkipReason = reason;
             lastSkipMs = now;
-            SpearLog.log("auto stun: skipped " + entity.getName().getString() + " via " + via + ": " + reason);
+            UraniumLog.log("auto stun: skipped " + entity.getName().getString() + " via " + via + ": " + reason);
         }
     }
 
@@ -370,7 +370,7 @@ final class AutoStun {
     static boolean wouldBreak(Minecraft minecraft, LivingEntity entity) {
         LocalPlayer player = minecraft.player;
         if (!enabled || !onAttackClick || player == null || minecraft.gameMode == null
-                || !SpearSettings.combatAllowed(minecraft) || !blockingToward(minecraft, entity)) {
+                || !Settings.combatAllowed(minecraft) || !blockingToward(minecraft, entity)) {
             return false;
         }
         int axe = findSlot(player, AutoStun::disablesShields);
@@ -393,7 +393,7 @@ final class AutoStun {
         }
         if (player.getInventory().getSelectedSlot() != heldSlot) {
             // You picked another slot mid-press; leave your choice alone.
-            SpearLog.log("auto stun: stopped, hotbar moved to "
+            UraniumLog.log("auto stun: stopped, hotbar moved to "
                     + (player.getInventory().getSelectedSlot() + 1) + " mid-press on "
                     + target.getName().getString() + " (" + (nowMs() - startedMs) + " ms)");
             target = null;
@@ -514,7 +514,7 @@ final class AutoStun {
         LocalPlayer player = minecraft.player;
         int lastSlot = heldSlot;
         swapBack(minecraft);
-        MinecraftInputController.guardSwitchBack(previousSlot, lastSlot);
+        InputLoop.guardSwitchBack(previousSlot, lastSlot);
         String axePart = hitsDone == 1 ? "Shield hit" : "Shield hit x" + hitsDone;
         SpearDash.setStatus(maceHit ? axePart + " + mace"
                 : landedEarly ? axePart + ", landed before mace" : axePart);
@@ -525,7 +525,7 @@ final class AutoStun {
         watchSeenUp = seenUp;
         watchMinDownMs = pingMs(minecraft) / 2;
         breaksTried++;
-        SpearLog.log("auto stun: hotbar " + (previousSlot + 1) + " -> axe " + (axeSlot + 1)
+        UraniumLog.log("auto stun: hotbar " + (previousSlot + 1) + " -> axe " + (axeSlot + 1)
                 + " x" + hitsDone + (seenUp ? "" : " (shield still going up)")
                 + (maceHit ? " -> mace " + (maceSlot + 1) + (slamWanted || MaceSwap.isSlam(player) ? " (slam)" : " (no fall)") : "")
                 + (landedEarly ? " (landed before mace)" : "") + " -> back to "
@@ -544,7 +544,7 @@ final class AutoStun {
         if (minecraft.player != null && heldSlot != previousSlot) {
             swapBack(minecraft);
         }
-        SpearLog.log("auto stun: cancelled (" + reason + ") on " + target.getName().getString()
+        UraniumLog.log("auto stun: cancelled (" + reason + ") on " + target.getName().getString()
                 + " after " + (nowMs() - startedMs) + " ms, axe hits " + hitsDone);
         lastPress = "cancelled after " + (nowMs() - startedMs) + " ms";
         lastResult = reason;
@@ -626,7 +626,7 @@ final class AutoStun {
         lastResult = "shield down in " + afterMs + " ms";
         lastResultGood = true;
         SpearDash.setStatus("Shield down (" + breaksLanded + "/" + breaksTried + ")");
-        SpearLog.log("auto stun result: shield went down " + afterMs + " ms after the break");
+        UraniumLog.log("auto stun result: shield went down " + afterMs + " ms after the break");
     }
 
     private static void missed(String status, String logged) {
@@ -634,7 +634,7 @@ final class AutoStun {
         lastResult = status.toLowerCase(java.util.Locale.ROOT);
         lastResultGood = false;
         SpearDash.setStatus(status + " (" + breaksLanded + "/" + breaksTried + ")");
-        SpearLog.log("auto stun result: " + logged);
+        UraniumLog.log("auto stun result: " + logged);
     }
 
     /**

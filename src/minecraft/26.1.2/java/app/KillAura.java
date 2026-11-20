@@ -73,7 +73,7 @@ final class KillAura {
         lastStepMs = now;
         LocalPlayer player = minecraft.player;
         if (!enabled || player == null || minecraft.level == null || minecraft.gameMode == null
-                || Mc.screen(minecraft) != null || !SpearSettings.combatAllowed(minecraft)) {
+                || Mc.screen(minecraft) != null || !Settings.combatAllowed(minecraft)) {
             drop();
             return;
         }
@@ -200,7 +200,7 @@ final class KillAura {
             return false;
         }
         if (entity instanceof Player other) {
-            return !other.isSpectator() && !other.isCreative() && !VelocityHud.isFriend(other);
+            return !other.isSpectator() && !other.isCreative() && !UraniumHud.isFriend(other);
         }
         return mobs;
     }
@@ -243,7 +243,7 @@ final class KillAura {
     private static void note(String what, long now) {
         String kind = what.contains(":") ? what.substring(0, what.indexOf(':')) : what;
         if (!kind.equals(lastNoteKind) || now - lastNoteMs >= LOG_GAP_MS) {
-            SpearLog.log("kill aura: " + what);
+            UraniumLog.log("kill aura: " + what);
             lastNoteKind = kind;
             lastNoteMs = now;
         }

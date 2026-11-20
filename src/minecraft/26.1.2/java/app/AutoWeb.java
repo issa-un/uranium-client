@@ -76,7 +76,7 @@ final class AutoWeb {
                 || Mc.screen(minecraft) != null) {
             return false;
         }
-        if (!SpearSettings.combatAllowed(minecraft)) {
+        if (!Settings.combatAllowed(minecraft)) {
             SpearDash.setStatus("Off on this server");
             return false;
         }
@@ -85,7 +85,7 @@ final class AutoWeb {
             SpearDash.setStatus("No player in sight");
             return false;
         }
-        if (VelocityHud.isFriend(target)) {
+        if (UraniumHud.isFriend(target)) {
             SpearDash.setStatus("Friend, not webbed");
             return false;
         }
@@ -109,7 +109,7 @@ final class AutoWeb {
         }
         boolean placed = placeWeb(minecraft, player, web, spot);
         SpearDash.setStatus(placed ? "Webbed " + target.getName().getString() : "Web refused");
-        SpearLog.log("auto web: " + (placed ? "web" : "web refused") + " at " + spot.toShortString()
+        UraniumLog.log("auto web: " + (placed ? "web" : "web refused") + " at " + spot.toShortString()
                 + " for " + target.getName().getString() + (target.onGround() ? " (on ground" : " (in the air")
                 + (led ? String.format(Locale.ROOT, ", led %.1f blocks)", lead.subtract(target.position()).horizontalDistance())
                         : ", where seen)"));
@@ -262,7 +262,7 @@ final class AutoWeb {
             inventory.setSelectedSlot(previousSlot);
             SpearDash.sendSelectedSlot(minecraft, false);
         }
-        MinecraftInputController.stopGuard();
+        InputLoop.stopGuard();
         return result.consumesAction();
     }
 
@@ -278,7 +278,7 @@ final class AutoWeb {
                 BucketUse.placeLava(minecraft, lava, aim[0], aim[1]);
                 View.release(VIEW_HOLD_MS);
                 SpearDash.setStatus("Drained " + target.getName().getString());
-                SpearLog.log("auto web: lava into water at " + water.toShortString() + " next to "
+                UraniumLog.log("auto web: lava into water at " + water.toShortString() + " next to "
                         + target.getName().getString());
                 return true;
             }

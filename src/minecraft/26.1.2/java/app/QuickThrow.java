@@ -36,7 +36,7 @@ final class QuickThrow {
         if (!enabled || player == null || minecraft.gameMode == null || Mc.screen(minecraft) != null) {
             return false;
         }
-        if (!SpearSettings.combatAllowed(minecraft)) {
+        if (!Settings.combatAllowed(minecraft)) {
             SpearDash.setStatus("Off on this server");
             return false;
         }
@@ -64,10 +64,10 @@ final class QuickThrow {
             }
             return result.consumesAction();
         }, (game, thrown, from, used) -> {
-            MinecraftInputController.stopGuard();
+            InputLoop.stopGuard();
             if (thrown) {
                 SpearDash.setStatus(name + " thrown");
-                SpearLog.log("quick throw: " + name.toLowerCase(Locale.ROOT) + " from hotbar " + (used + 1));
+                UraniumLog.log("quick throw: " + name.toLowerCase(Locale.ROOT) + " from hotbar " + (used + 1));
             }
         });
         return true;

@@ -63,7 +63,7 @@ final class ReachSwap {
     static boolean handleAttackClick(Minecraft minecraft) {
         LocalPlayer player = minecraft.player;
         if (!enabled || player == null || minecraft.gameMode == null || Mc.screen(minecraft) != null
-                || !SpearSettings.combatAllowed(minecraft) || player.isUsingItem()) {
+                || !Settings.combatAllowed(minecraft) || player.isUsingItem()) {
             return false;
         }
         int previousSlot = player.getInventory().getSelectedSlot();
@@ -101,14 +101,14 @@ final class ReachSwap {
         }
         // The spear stays in your hand on purpose: for good (Switch only), or for a moment
         // you can see (Jab), and the switch back comes from update.
-        MinecraftInputController.stopGuard();
+        InputLoop.stopGuard();
         SpearDash.sendSelectedSlot(minecraft, false);
         switchedTo = spearSlot;
         fromSlot = previousSlot;
         backAtMs = mode == SWITCH_ONLY ? -1
                 : System.nanoTime() / 1_000_000 + Math.max(SHOW_MS, SWITCH_BACK.pick());
         SpearDash.setStatus("Reach jab");
-        SpearLog.log("reach swap: hotbar " + (previousSlot + 1) + " -> spear " + (spearSlot + 1)
+        UraniumLog.log("reach swap: hotbar " + (previousSlot + 1) + " -> spear " + (spearSlot + 1)
                 + (mode == SWITCH_ONLY ? ", spear kept, " : " -> back, ")
                 + String.format("%.2f", player.distanceTo(target)) + " blocks to " + target.getName().getString());
         return true;
@@ -152,7 +152,7 @@ final class ReachSwap {
         }
         if (now >= backAtMs) {
             select(minecraft, fromSlot);
-            SpearLog.log("reach swap: " + (mode != SWITCH_ONLY ? "jab shown" : target == null ? "looked away"
+            UraniumLog.log("reach swap: " + (mode != SWITCH_ONLY ? "jab shown" : target == null ? "looked away"
                     : "in weapon reach") + ", back to hotbar " + (fromSlot + 1));
             switchedTo = -1;
             backAtMs = -1;
@@ -167,7 +167,7 @@ final class ReachSwap {
     private static void select(Minecraft minecraft, int slot) {
         minecraft.player.getInventory().setSelectedSlot(slot);
         SpearDash.sendSelectedSlot(minecraft, false);
-        MinecraftInputController.stopGuard(); // our own switch, not a server correction
+        InputLoop.stopGuard(); // our own switch, not a server correction
     }
 
     private static void logDamage() {
@@ -175,7 +175,7 @@ final class ReachSwap {
             return;
         }
         float lost = watchedHealth - (watched.getHealth() + watched.getAbsorptionAmount());
-        SpearLog.log("reach swap result: " + watched.getName().getString() + " lost "
+        UraniumLog.log("reach swap result: " + watched.getName().getString() + " lost "
                 + String.format("%.1f", lost) + " health (" + String.format("%.1f", lost / 2) + " hearts), damage from "
                 + watchedFrom);
         SpearDash.setStatus("Reach jab: " + String.format("%.1f", lost / 2) + " hearts");
@@ -200,7 +200,7 @@ final class ReachSwap {
                 ClipContext.Block.COLLIDER).map(block -> List.<EntityHitResult>of(), entities -> entities);
         for (EntityHitResult hit : hits) {
             if (hit.getType() == HitResult.Type.ENTITY && hit.getEntity() instanceof LivingEntity living
-                    && !(living instanceof Player other && VelocityHud.isFriend(other))) {
+                    && !(living instanceof Player other && UraniumHud.isFriend(other))) {
                 return living;
             }
         }

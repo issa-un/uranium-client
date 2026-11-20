@@ -60,7 +60,7 @@ final class CrossbowReload {
                 || CrossbowCart.isBusy() || BowCart.isBusy() || CartRefill.isBusy() || AntiCart.isBusy()
                 || WTap.physicallyDown(minecraft, minecraft.options.keyUse)
                 || WTap.physicallyDown(minecraft, minecraft.options.keyAttack)
-                || !SpearSettings.combatAllowed(minecraft)) {
+                || !Settings.combatAllowed(minecraft)) {
             quietSinceMs = -1;
             return;
         }
@@ -86,7 +86,7 @@ final class CrossbowReload {
         }
         step = Step.DRAW_START;
         nextMs = now + random(60, 120);
-        SpearLog.log("auto reload: loading the crossbow in hotbar " + (slot + 1));
+        UraniumLog.log("auto reload: loading the crossbow in hotbar " + (slot + 1));
     }
 
     private static void run(Minecraft minecraft, LocalPlayer player) {
@@ -128,7 +128,7 @@ final class CrossbowReload {
                     Cart.select(minecraft, player, backSlot);
                 }
                 SpearDash.setStatus(CrossbowItem.isCharged(crossbow) ? "Crossbow loaded" : "Reload failed");
-                SpearLog.log("auto reload: " + (CrossbowItem.isCharged(crossbow) ? "loaded" : "didn't load"));
+                UraniumLog.log("auto reload: " + (CrossbowItem.isCharged(crossbow) ? "loaded" : "didn't load"));
             }
         }
     }
@@ -138,7 +138,7 @@ final class CrossbowReload {
             letGo(minecraft);
         }
         step = null;
-        SpearLog.log("auto reload: " + why);
+        UraniumLog.log("auto reload: " + why);
     }
 
     private static void letGo(Minecraft minecraft) {

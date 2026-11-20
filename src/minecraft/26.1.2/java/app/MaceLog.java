@@ -175,7 +175,7 @@ final class MaceLog {
             strength = player.getAttackStrengthScale(0.5F);
         }
         for (String line; (line = PENDING_LINES.poll()) != null; ) {
-            SpearLog.log(line);
+            UraniumLog.log(line);
         }
         for (Shot shot; (shot = NEW.poll()) != null; ) {
             WATCHING.add(shot);
@@ -198,7 +198,7 @@ final class MaceLog {
                 continue;
             }
             it.remove();
-            SpearLog.log(result(shot, entity, now));
+            UraniumLog.log(result(shot, entity, now));
         }
     }
 

@@ -72,7 +72,7 @@ final class TriggerBot {
             return;
         }
         if (!enabled || player == null || minecraft.gameMode == null || Mc.screen(minecraft) != null
-                || !SpearSettings.combatAllowed(minecraft) || player.isUsingItem()
+                || !Settings.combatAllowed(minecraft) || player.isUsingItem()
                 || AutoStun.isRunning() || PearlCatch.isRunning()
                 || CrossbowCart.isBusy() || BowCart.isBusy() || AntiCart.isBusy() || CartRefill.isBusy()) {
             return;
@@ -80,7 +80,7 @@ final class TriggerBot {
         if (!(minecraft.hitResult instanceof EntityHitResult result)
                 || !(result.getEntity() instanceof LivingEntity target)
                 || !target.isAlive() || target instanceof ArmorStand
-                || target instanceof Player other && VelocityHud.isFriend(other)) {
+                || target instanceof Player other && UraniumHud.isFriend(other)) {
             pendingAtMs = -1;
             return;
         }
@@ -92,7 +92,7 @@ final class TriggerBot {
             } else if (System.nanoTime() / 1.0E6 >= pendingAtMs) {
                 pendingAtMs = -1;
                 strike(minecraft, player, target, false, now);
-                SpearLog.log(String.format(java.util.Locale.ROOT, "hit: went %.1f ms after it could", pendingDelayMs));
+                UraniumLog.log(String.format(java.util.Locale.ROOT, "hit: went %.1f ms after it could", pendingDelayMs));
             }
             return;
         }
@@ -195,7 +195,7 @@ final class TriggerBot {
         boolean fighting = !windCharge && now - lookedMs < SIGN_MS && !signs.isEmpty();
         if (fighting != wasFighting) {
             wasFighting = fighting;
-            SpearLog.log("trigger bot auto: " + (fighting ? "on (" + String.join(", ", signs) + ")"
+            UraniumLog.log("trigger bot auto: " + (fighting ? "on (" + String.join(", ", signs) + ")"
                     : "off (" + (windCharge ? holding + " in hand" : now - lookedMs >= SIGN_MS
                     ? "nobody in front of you" : "no signs of a fight") + ")"));
             SpearDash.setStatus(fighting ? "Trigger Bot on" : "Trigger Bot off");
@@ -210,7 +210,7 @@ final class TriggerBot {
         Player best = null;
         double bestDistance = LOOK_RANGE;
         for (Player other : minecraft.level.players()) {
-            if (other == player || !other.isAlive() || other.isSpectator() || VelocityHud.isFriend(other)) {
+            if (other == player || !other.isAlive() || other.isSpectator() || UraniumHud.isFriend(other)) {
                 continue;
             }
             net.minecraft.world.phys.Vec3 to = other.getBoundingBox().getCenter().subtract(eye);

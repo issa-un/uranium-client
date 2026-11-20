@@ -15,7 +15,7 @@ import net.minecraft.world.phys.EntityHitResult;
  * ms and ticks, your fall and whether the next mace hit is a slam, the mace and axe it would
  * use, your attack charge; the target under your crosshair (else the last one broken) with
  * its health, distance and shield (up, or still going up with its block-delay ticks); and
- * Auto Stun's landed count, last press and its result. Drawn by VelocityHud, movable in
+ * Auto Stun's landed count, last press and its result. Drawn by UraniumHud, movable in
  * the HUD editor.
  */
 final class CombatStats {

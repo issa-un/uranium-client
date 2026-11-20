@@ -16,7 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 
 /**
- * Saves the SPEAR settings to .minecraft/config/spear-injector.properties after every
+ * Saves the settings to .minecraft/config/uranium.properties after every
  * change and loads them when an injected version starts and whenever you change server, so
  * new versions and Unload keep your setup. The keys never change between versions.
  *
@@ -27,15 +27,17 @@ import net.minecraft.client.multiplayer.ServerData;
  * "server.<address>." keys, and anywhere else uses the plain keys (your defaults). The HUD
  * layout, toggle keys, menu position and open tab are shared by every server.
  */
-final class SpearSettings {
-    private static final String FILE_NAME = "spear-injector.properties";
+final class Settings {
+    private static final String FILE_NAME = "uranium.properties";
+    /** Where settings lived before the rename; copied over once, and left in place. */
+    private static final String OLD_FILE_NAME = "spear-injector.properties";
     private static final String SERVER_PREFIX = "server.";
     // Server addresses; read and changed on the render thread only.
     private static final Set<String> COMBAT_OFF = new TreeSet<>();
     private static final Set<String> OWN_SETTINGS = new TreeSet<>();
     private static String loadedFor = "";
 
-    private SpearSettings() {}
+    private Settings() {}
 
     static void load(Minecraft minecraft) {
         Properties file = read(minecraft);
@@ -83,17 +85,17 @@ final class SpearSettings {
         ClickGuiScreen.setTab(integer(file, "gui.tab", ClickGuiScreen.tab()));
         HandProfile.load(file);
         Debug.setEnabled(Boolean.parseBoolean(file.getProperty("debug.enabled", String.valueOf(Debug.isEnabled()))));
-        for (int element = 0; element < VelocityHud.ELEMENTS; element++) {
-            String key = "hud.offset." + VelocityHud.elementKey(element);
-            VelocityHud.setOffset(element,
-                    integer(file, key + ".x", VelocityHud.offsetX(element)),
-                    integer(file, key + ".y", VelocityHud.offsetY(element)));
+        for (int element = 0; element < UraniumHud.ELEMENTS; element++) {
+            String key = "hud.offset." + UraniumHud.elementKey(element);
+            UraniumHud.setOffset(element,
+                    integer(file, key + ".x", UraniumHud.offsetX(element)),
+                    integer(file, key + ".y", UraniumHud.offsetY(element)));
         }
-        for (int module = 0; module < VelocityHud.TOGGLES; module++) {
-            String key = "hud.toggle." + VelocityHud.toggleKeyName(module);
-            VelocityHud.setToggleBinding(module,
-                    integer(file, key + ".key", VelocityHud.toggleKey(module)),
-                    integer(file, key + ".mouse", VelocityHud.toggleMouse(module)));
+        for (int module = 0; module < UraniumHud.TOGGLES; module++) {
+            String key = "hud.toggle." + UraniumHud.toggleKeyName(module);
+            UraniumHud.setToggleBinding(module,
+                    integer(file, key + ".key", UraniumHud.toggleKey(module)),
+                    integer(file, key + ".mouse", UraniumHud.toggleMouse(module)));
         }
     }
 
@@ -103,15 +105,15 @@ final class SpearSettings {
         file.setProperty("gui.tab", String.valueOf(ClickGuiScreen.tab()));
         HandProfile.save(file);
         file.setProperty("debug.enabled", String.valueOf(Debug.isEnabled()));
-        for (int element = 0; element < VelocityHud.ELEMENTS; element++) {
-            String key = "hud.offset." + VelocityHud.elementKey(element);
-            file.setProperty(key + ".x", String.valueOf(VelocityHud.offsetX(element)));
-            file.setProperty(key + ".y", String.valueOf(VelocityHud.offsetY(element)));
+        for (int element = 0; element < UraniumHud.ELEMENTS; element++) {
+            String key = "hud.offset." + UraniumHud.elementKey(element);
+            file.setProperty(key + ".x", String.valueOf(UraniumHud.offsetX(element)));
+            file.setProperty(key + ".y", String.valueOf(UraniumHud.offsetY(element)));
         }
-        for (int module = 0; module < VelocityHud.TOGGLES; module++) {
-            String key = "hud.toggle." + VelocityHud.toggleKeyName(module);
-            file.setProperty(key + ".key", String.valueOf(VelocityHud.toggleKey(module)));
-            file.setProperty(key + ".mouse", String.valueOf(VelocityHud.toggleMouse(module)));
+        for (int module = 0; module < UraniumHud.TOGGLES; module++) {
+            String key = "hud.toggle." + UraniumHud.toggleKeyName(module);
+            file.setProperty(key + ".key", String.valueOf(UraniumHud.toggleKey(module)));
+            file.setProperty(key + ".mouse", String.valueOf(UraniumHud.toggleMouse(module)));
         }
     }
 
@@ -311,14 +313,14 @@ final class SpearSettings {
         WTap.setAnyAttack(p.bool("wtap.anyAttack", WTap.isAnyAttack()));
         JumpReset.setEnabled(p.bool("jumpReset.enabled", JumpReset.isEnabled()));
         JumpReset.setOnlyWhileSprinting(p.bool("jumpReset.onlySprinting", JumpReset.isOnlyWhileSprinting()));
-        VelocityHud.setSpeedHudOn(p.bool("hud.speed", VelocityHud.isSpeedHudOn()));
-        VelocityHud.setSpeedHudHigh(p.bool("hud.high", VelocityHud.isSpeedHudHigh()));
-        VelocityHud.setWarningsOn(p.bool("hud.warnings", VelocityHud.isWarningsOn()));
-        VelocityHud.setRadarOn(p.bool("radar.on", VelocityHud.isRadarOn()));
-        VelocityHud.setRadarRange(p.integer("radar.range", VelocityHud.radarRange()));
-        VelocityHud.setIgnoreTeam(p.bool("radar.ignoreTeam", VelocityHud.isIgnoreTeam()));
-        VelocityHud.setFriends(Arrays.asList(p.string("radar.friends", "").split(",")));
-        VelocityHud.setLandingOn(p.bool("landing.on", VelocityHud.isLandingOn()));
+        UraniumHud.setSpeedHudOn(p.bool("hud.speed", UraniumHud.isSpeedHudOn()));
+        UraniumHud.setSpeedHudHigh(p.bool("hud.high", UraniumHud.isSpeedHudHigh()));
+        UraniumHud.setWarningsOn(p.bool("hud.warnings", UraniumHud.isWarningsOn()));
+        UraniumHud.setRadarOn(p.bool("radar.on", UraniumHud.isRadarOn()));
+        UraniumHud.setRadarRange(p.integer("radar.range", UraniumHud.radarRange()));
+        UraniumHud.setIgnoreTeam(p.bool("radar.ignoreTeam", UraniumHud.isIgnoreTeam()));
+        UraniumHud.setFriends(Arrays.asList(p.string("radar.friends", "").split(",")));
+        UraniumHud.setLandingOn(p.bool("landing.on", UraniumHud.isLandingOn()));
         CombatStats.setOn(p.bool("combatStats.on", CombatStats.isOn()));
     }
 
@@ -504,14 +506,14 @@ final class SpearSettings {
         put(file, prefix, "wtap.anyAttack", WTap.isAnyAttack());
         put(file, prefix, "jumpReset.enabled", JumpReset.isEnabled());
         put(file, prefix, "jumpReset.onlySprinting", JumpReset.isOnlyWhileSprinting());
-        put(file, prefix, "hud.speed", VelocityHud.isSpeedHudOn());
-        put(file, prefix, "hud.high", VelocityHud.isSpeedHudHigh());
-        put(file, prefix, "hud.warnings", VelocityHud.isWarningsOn());
-        put(file, prefix, "radar.on", VelocityHud.isRadarOn());
-        put(file, prefix, "radar.range", VelocityHud.radarRange());
-        put(file, prefix, "radar.ignoreTeam", VelocityHud.isIgnoreTeam());
-        put(file, prefix, "radar.friends", String.join(",", VelocityHud.friends()));
-        put(file, prefix, "landing.on", VelocityHud.isLandingOn());
+        put(file, prefix, "hud.speed", UraniumHud.isSpeedHudOn());
+        put(file, prefix, "hud.high", UraniumHud.isSpeedHudHigh());
+        put(file, prefix, "hud.warnings", UraniumHud.isWarningsOn());
+        put(file, prefix, "radar.on", UraniumHud.isRadarOn());
+        put(file, prefix, "radar.range", UraniumHud.radarRange());
+        put(file, prefix, "radar.ignoreTeam", UraniumHud.isIgnoreTeam());
+        put(file, prefix, "radar.friends", String.join(",", UraniumHud.friends()));
+        put(file, prefix, "landing.on", UraniumHud.isLandingOn());
         put(file, prefix, "combatStats.on", CombatStats.isOn());
     }
 
@@ -576,7 +578,18 @@ final class SpearSettings {
     }
 
     private static Path file(Minecraft minecraft) {
-        return minecraft.gameDirectory.toPath().resolve("config").resolve(FILE_NAME);
+        Path config = minecraft.gameDirectory.toPath().resolve("config");
+        Path file = config.resolve(FILE_NAME);
+        Path old = config.resolve(OLD_FILE_NAME);
+        if (!java.nio.file.Files.exists(file) && java.nio.file.Files.isRegularFile(old)) {
+            try {
+                java.nio.file.Files.copy(old, file);
+                UraniumLog.log("settings: copied your settings from " + OLD_FILE_NAME + " to " + FILE_NAME);
+            } catch (java.io.IOException ignored) {
+                return old; // couldn't copy: keep using the old file
+            }
+        }
+        return file;
     }
 
     private static List<String> list(Properties file, String key) {

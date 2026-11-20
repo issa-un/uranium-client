@@ -90,13 +90,13 @@ public final class MouseTestScreen extends Screen {
 
     private void skip() {
         HandProfile.markAsked();
-        SpearSettings.save(Minecraft.getInstance());
+        Settings.save(Minecraft.getInstance());
         close();
     }
 
     private void close() {
         HandProfile.markAsked();
-        SpearSettings.save(Minecraft.getInstance());
+        Settings.save(Minecraft.getInstance());
         Mc.setScreen(Minecraft.getInstance(), new ClickGuiScreen());
     }
 
@@ -321,7 +321,7 @@ public final class MouseTestScreen extends Screen {
         bendValue = spread(bends);
         result = String.format(Locale.ROOT, "Stops %.0f%% of the way, goes past %.0f%%, fastest %.0f%% in, bends %.1f%%",
                 reachValue * 100, overshootValue * 100, peakValue * 100, bendValue * 100);
-        SpearLog.log("mouse test: " + flicks.size() + " moves read, " + result);
+        UraniumLog.log("mouse test: " + flicks.size() + " moves read, " + result);
         init();
     }
 
@@ -335,10 +335,10 @@ public final class MouseTestScreen extends Screen {
     private void save() {
         HandProfile.set(reachValue, reachSpreadValue, overshootValue, peakValue, peakSpreadValue, bendValue);
         HandProfile.saveHumans();
-        SpearSettings.save(Minecraft.getInstance());
+        Settings.save(Minecraft.getInstance());
         saved = true;
         result = "Saved: " + HandProfile.describe();
-        SpearLog.log("mouse test: saved, " + HandProfile.describe());
+        UraniumLog.log("mouse test: saved, " + HandProfile.describe());
         init();
     }
 

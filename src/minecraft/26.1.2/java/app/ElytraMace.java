@@ -67,7 +67,7 @@ final class ElytraMace {
             watchHit(minecraft, player, now);
             return;
         }
-        if (!enabled || Mc.screen(minecraft) != null || !SpearSettings.combatAllowed(minecraft)
+        if (!enabled || Mc.screen(minecraft) != null || !Settings.combatAllowed(minecraft)
                 || now - lastDoneMs < REARM_MS || !player.isFallFlying()
                 || !player.getItemBySlot(EquipmentSlot.CHEST).is(Items.ELYTRA) || MaceSwap.bestMace(player) < 0
                 // The hit has to go out with a mace: held, or swapped in by Mace Swap.
@@ -101,7 +101,7 @@ final class ElytraMace {
         target = looked;
         targetHurt = looked.hurtTime;
         SpearDash.setStatus("Elytra off");
-        SpearLog.log(String.format(Locale.ROOT,
+        UraniumLog.log(String.format(Locale.ROOT,
                 "elytra mace: elytra off %.1f blocks from %s, %.1f blocks above, falling %.2f/tick, ping %d ms",
                 distance, looked.getName().getString(), player.getY() - looked.getY(), fall,
                 AutoStun.pingMs(minecraft)));
@@ -119,7 +119,7 @@ final class ElytraMace {
         }
         dropped = false;
         lastDoneMs = now;
-        SpearLog.log("elytra mace: " + (hit ? "hit landed" : landed ? "landed without a hit" : "no hit in time")
+        UraniumLog.log("elytra mace: " + (hit ? "hit landed" : landed ? "landed without a hit" : "no hit in time")
                 + String.format(Locale.ROOT, " (fall %.1f blocks)", player.fallDistance));
         if (glideAgain && !landed && elytraSlot >= 0
                 && player.getInventory().getItem(elytraSlot).is(Items.ELYTRA)) {
@@ -184,7 +184,7 @@ final class ElytraMace {
         Player best = null;
         double bestAngle = LOOK_ANGLE;
         for (Player other : minecraft.level.players()) {
-            if (other == player || !other.isAlive() || other.isSpectator() || VelocityHud.isFriend(other)
+            if (other == player || !other.isAlive() || other.isSpectator() || UraniumHud.isFriend(other)
                     || player.getY() - other.getY() < MIN_ABOVE) {
                 continue;
             }

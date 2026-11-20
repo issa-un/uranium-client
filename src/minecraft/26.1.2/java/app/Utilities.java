@@ -120,10 +120,10 @@ final class Utilities {
                 || !(minecraft.hitResult instanceof EntityHitResult hit) || !(hit.getEntity() instanceof Player target)) {
             return false;
         }
-        VelocityHud.toggleFriend(target);
-        SpearSettings.save(minecraft);
+        UraniumHud.toggleFriend(target);
+        Settings.save(minecraft);
         String name = target.getName().getString();
-        SpearDash.setStatus((VelocityHud.isFriend(target) ? "Friended " : "Unfriended ") + name);
+        SpearDash.setStatus((UraniumHud.isFriend(target) ? "Friended " : "Unfriended ") + name);
         return true;
     }
 
@@ -226,7 +226,7 @@ final class Utilities {
         if (deathSeenMs < 0) {
             deathSeenMs = now;
             String where = player.getBlockX() + " " + player.getBlockY() + " " + player.getBlockZ();
-            SpearLog.log("auto respawn: died at " + where + " in " + minecraft.level.dimension().identifier());
+            UraniumLog.log("auto respawn: died at " + where + " in " + minecraft.level.dimension().identifier());
             if (deathCoords) {
                 Mc.chat(minecraft).addClientSystemMessage(Component.literal("Died at " + where));
             }

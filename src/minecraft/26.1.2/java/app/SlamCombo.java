@@ -54,7 +54,7 @@ final class SlamCombo {
             return;
         }
         if (!enabled || now - slamMs > GIVE_UP_MS || Mc.screen(minecraft) != null
-                || !SpearSettings.combatAllowed(minecraft)) {
+                || !Settings.combatAllowed(minecraft)) {
             slamTargetId = -1;
             return;
         }
@@ -84,7 +84,7 @@ final class SlamCombo {
             backToSlot = previous;
             backAtMs = now + SHOW_MS;
         }
-        SpearLog.log("slam combo: sword hit on " + target.getName().getString() + " " + (now - slamMs)
+        UraniumLog.log("slam combo: sword hit on " + target.getName().getString() + " " + (now - slamMs)
                 + " ms after the slam");
     }
 

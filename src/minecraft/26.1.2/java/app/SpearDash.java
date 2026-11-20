@@ -93,7 +93,7 @@ final class SpearDash {
         if (fromSlot >= 0 && minecraft.player.getInventory().getSelectedSlot() != fromSlot) {
             return false;
         }
-        if (!SpearSettings.combatAllowed(minecraft)) {
+        if (!Settings.combatAllowed(minecraft)) {
             status = "Off on this server";
             return false;
         }
@@ -218,7 +218,7 @@ final class SpearDash {
         LocalPlayer player = minecraft.player;
         ItemStack spear = player == null ? ItemStack.EMPTY : lungeSpear(minecraft);
         boolean charged = !spear.isEmpty() && !player.cannotAttackWithItem(spear, 0);
-        if (charged && !wasCharged && readySound && enabled && SpearSettings.combatAllowed(minecraft)) {
+        if (charged && !wasCharged && readySound && enabled && Settings.combatAllowed(minecraft)) {
             minecraft.getSoundManager().play(
                     SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.8F, 0.35F));
         }
@@ -255,7 +255,7 @@ final class SpearDash {
         dashLevelled = levelled;
         jabResult = false;
         // A new dash is ours: the last dash's switch-back watch must not take it for the server.
-        MinecraftInputController.stopGuard();
+        InputLoop.stopGuard();
         // With Return at 0 the spear still stays in hand for a moment, so the swap shows.
         SWAP.start(minecraft, spearSlot, true, SWAP_DELAY, JAB_DELAY, RETURN.isZero() ? SHOW : RETURN,
                 SpearDash::jab, SpearDash::dashDone);
@@ -265,7 +265,7 @@ final class SpearDash {
 
     /** Once the slot is back: counts the dash, or ends the press if the jab did not go out. */
     private static void dashDone(Minecraft minecraft, boolean jabbed, int previousSlot, int spearSlot) {
-        SpearLog.log("dash: hotbar " + (previousSlot + 1) + " -> spear " + (spearSlot + 1) + " -> back to "
+        UraniumLog.log("dash: hotbar " + (previousSlot + 1) + " -> spear " + (spearSlot + 1) + " -> back to "
                 + (minecraft.player == null ? "?" : String.valueOf(minecraft.player.getInventory().getSelectedSlot() + 1))
                 + (jabbed ? ", jab sent" : ", no jab (" + status + ")"));
         jabResult = jabbed;
@@ -273,7 +273,7 @@ final class SpearDash {
             cancel(status); // jab() said why
             return;
         }
-        MinecraftInputController.guardSwitchBack(previousSlot, spearSlot);
+        InputLoop.guardSwitchBack(previousSlot, spearSlot);
         if (dashesLeft <= 0) {
             return; // the press was cancelled while this dash was on its way
         }
@@ -607,7 +607,7 @@ final class SpearDash {
         status = message;
         alert = message;
         alertUntilMs = System.nanoTime() / 1_000_000 + ALERT_MS;
-        SpearLog.log("alert: " + message);
+        UraniumLog.log("alert: " + message);
     }
 
     /** The warning to show now, or null. */
