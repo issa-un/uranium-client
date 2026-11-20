@@ -66,7 +66,7 @@ final class WindClutch {
         select(minecraft, slot);
         throwDown(minecraft, player);
         select(minecraft, previous);
-        MinecraftSpearDash.setStatus("Wind clutch");
+        SpearDash.setStatus("Wind clutch");
         SpearLog.log(String.format(Locale.ROOT, "wind clutch: thrown %.1f blocks up, the fall would have done %d of your %.0f hp",
                 landing.drop(), landing.damage(), health));
     }
@@ -99,7 +99,7 @@ final class WindClutch {
     private static void select(Minecraft minecraft, int slot) {
         if (minecraft.player.getInventory().getSelectedSlot() != slot) {
             minecraft.player.getInventory().setSelectedSlot(slot);
-            MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+            SpearDash.sendSelectedSlot(minecraft, false);
         }
     }
 

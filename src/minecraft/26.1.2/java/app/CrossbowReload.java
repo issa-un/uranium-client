@@ -36,8 +36,8 @@ final class CrossbowReload {
     }
 
     private static boolean wanted() {
-        return CartHighTier.isEnabled() && CartHighTier.isAutoReload()
-                || CartLowTier.isEnabled() && CartLowTier.isAutoReload();
+        return CrossbowCart.isEnabled() && CrossbowCart.isAutoReload()
+                || BowCart.isEnabled() && BowCart.isAutoReload();
     }
 
     static boolean isBusy() {
@@ -57,7 +57,7 @@ final class CrossbowReload {
         }
         long now = now();
         if (!wanted() || Mc.screen(minecraft) != null || player.isUsingItem() || player.isSpectator()
-                || CartHighTier.isBusy() || CartLowTier.isBusy() || CartRefill.isBusy() || CartBlock.isBusy()
+                || CrossbowCart.isBusy() || BowCart.isBusy() || CartRefill.isBusy() || AntiCart.isBusy()
                 || WTap.physicallyDown(minecraft, minecraft.options.keyUse)
                 || WTap.physicallyDown(minecraft, minecraft.options.keyAttack)
                 || !SpearSettings.combatAllowed(minecraft)) {
@@ -127,7 +127,7 @@ final class CrossbowReload {
                 if (backSlot != crossbowSlot) {
                     Cart.select(minecraft, player, backSlot);
                 }
-                MinecraftSpearDash.setStatus(CrossbowItem.isCharged(crossbow) ? "Crossbow loaded" : "Reload failed");
+                SpearDash.setStatus(CrossbowItem.isCharged(crossbow) ? "Crossbow loaded" : "Reload failed");
                 SpearLog.log("auto reload: " + (CrossbowItem.isCharged(crossbow) ? "loaded" : "didn't load"));
             }
         }
@@ -147,7 +147,7 @@ final class CrossbowReload {
 
     /** The first hotbar crossbow that isn't loaded; -1 if none. */
     private static int emptyCrossbow(LocalPlayer player) {
-        if (CartHighTier.isHardSwitch() && anyLoaded(player)) {
+        if (CrossbowCart.isHardSwitch() && anyLoaded(player)) {
             return -1; // Hard switch: another crossbow is loaded, the shot uses that one
         }
         for (int slot = 0; slot < 9; slot++) {

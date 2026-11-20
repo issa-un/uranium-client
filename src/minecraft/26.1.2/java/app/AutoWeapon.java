@@ -17,7 +17,7 @@ import net.minecraft.world.phys.EntityHitResult;
  * that is not a weapon (blocks, food, a pickaxe), switches to the hardest-hitting weapon in
  * your hotbar first, so that click already hits with it, and stays on it. A weapon is
  * anything that adds attack damage over a bare hand; the pick is by that damage. If you
- * already hold one, nothing changes, so your own sword/axe choice is kept. Shield Break and
+ * already hold one, nothing changes, so your own sword/axe choice is kept. Auto Stun and
  * Mace Swap take the click first when they act. With Trigger on Any attack, it acts on
  * every attack your client sends (see AttackHook) instead of your click.
  */
@@ -54,7 +54,7 @@ final class AutoWeapon {
         }
         if (!isDelayed()) {
             player.getInventory().setSelectedSlot(best);
-            MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+            SpearDash.sendSelectedSlot(minecraft, false);
             MinecraftInputController.stopGuard();
             SpearLog.log("auto weapon: hotbar " + (best + 1) + " (" + damage(player.getInventory().getItem(best)) + " damage)");
             return false;
@@ -129,7 +129,7 @@ final class AutoWeapon {
             return;
         }
         player.getInventory().setSelectedSlot(weapon);
-        MinecraftSpearDash.markSlotSent(minecraft, weapon);
+        SpearDash.markSlotSent(minecraft, weapon);
         MinecraftInputController.stopGuard();
         SpearLog.log("auto weapon (any attack): hotbar " + (weapon + 1)
                 + " (" + damage(player.getInventory().getItem(weapon)) + " damage)");

@@ -101,7 +101,7 @@ final class VelocityHud {
     static final int LANDING = 2;
     static final int COMBAT_STATS = 3;
     private static final String[] ELEMENT_KEYS = {"speed", "angle", "landing", "combatStats"};
-    private static final String[] ELEMENT_NAMES = {"Speed HUD", "Look angle", "Landing", "Combat stats"};
+    private static final String[] ELEMENT_NAMES = {"Speedometer", "Look angle", "Fall Damage", "Combat Stats"};
     private static final int[] OFFSET_X = new int[ELEMENTS];
     private static final int[] OFFSET_Y = new int[ELEMENTS];
 
@@ -164,19 +164,19 @@ final class VelocityHud {
         Minecraft minecraft = Minecraft.getInstance();
         // Every frame, so a Flat lunge glide is smooth; the input loop covers it when the
         // HUD is not drawn (F1).
-        MinecraftSpearDash.updateDash(minecraft, false);
-        AimHelper.update(minecraft);
+        SpearDash.updateDash(minecraft, false);
+        AimAssist.update(minecraft);
         AimRecorder.frame(minecraft);
         Utilities.zoomFrame(minecraft);
-        WorldSlash.update(minecraft);
-        CartLowTier.frame(minecraft);
-        CartHighTier.frame(minecraft);
-        Hit.frame(minecraft);
-        KnockbackSteer.frame(minecraft);
-        CartBlock.frame(minecraft);
+        KillAura.update(minecraft);
+        BowCart.frame(minecraft);
+        CrossbowCart.frame(minecraft);
+        TriggerBot.frame(minecraft);
+        KnockbackDisplacement.frame(minecraft);
+        AntiCart.frame(minecraft);
         CartRefill.update(minecraft);
         if (HudFilter.isHideAll()) {
-            return; // Hide UI: nothing of Uranium's on screen, only the game's own HUD
+            return; // Vanilla HUD: nothing of Uranium's on screen, only the game's own HUD
         }
         LocalPlayer player = minecraft.player;
         if (player == null || Mc.hudHidden(minecraft)) {
@@ -194,26 +194,26 @@ final class VelocityHud {
             drawLanding(graphics, minecraft, player);
         }
         SlamMeter.draw(graphics, minecraft);
-        CartHighTier.drawUnloaded(graphics, minecraft);
-        PunishAlerts.draw(graphics, minecraft);
+        CrossbowCart.drawUnloaded(graphics, minecraft);
+        CombatAlerts.draw(graphics, minecraft);
         PopChams.drawHud(graphics, minecraft);
-        NightShift.draw(graphics, minecraft);
-        ArmorSlots.draw(graphics, minecraft);
+        MinimalHud.draw(graphics, minecraft);
+        ArmorHud.draw(graphics, minecraft);
         Debug.drawBadge(graphics, minecraft);
-        AimHelper.drawSpearGlow(graphics, minecraft);
+        AimAssist.drawSpearGlow(graphics, minecraft);
         AimRecorder.drawBadge(graphics, minecraft);
-        CartBlock.drawAlert(graphics, minecraft);
+        AntiCart.drawAlert(graphics, minecraft);
         if (CombatStats.isOn()) {
             int[] panel = position(COMBAT_STATS, graphics.guiWidth(), graphics.guiHeight());
             CombatStats.draw(graphics, minecraft, player, panel[0], panel[1]);
         }
-        if (ShieldBreak.isEnabled() && ShieldBreak.blockingTarget(minecraft) != null) {
-            boolean axe = ShieldBreak.hasAxe(minecraft);
+        if (AutoStun.isEnabled() && AutoStun.blockingTarget(minecraft) != null) {
+            boolean axe = AutoStun.hasAxe(minecraft);
             graphics.text(minecraft.font, axe ? "BLOCKING" : "BLOCKING (no axe)",
                     graphics.guiWidth() / 2 + BLOCKING_RIGHT_OF_CROSSHAIR,
                     graphics.guiHeight() / 2 - 4, axe ? YELLOW : RED);
         }
-        String alert = MinecraftSpearDash.activeAlert();
+        String alert = SpearDash.activeAlert();
         if (alert != null) {
             graphics.centeredText(minecraft.font, alert, graphics.guiWidth() / 2,
                     graphics.guiHeight() / 2 - ALERT_ABOVE_CROSSHAIR, RED);
@@ -230,14 +230,14 @@ final class VelocityHud {
         float moveAngle = (float) (Math.atan2(-velocityX, velocityZ) - yawRadians);
         float pitch = player.getViewXRot(partialTick);
 
-        ItemStack spear = MinecraftSpearDash.lungeSpear(minecraft);
-        int lungeLevel = MinecraftSpearDash.lungeLevel(spear);
+        ItemStack spear = SpearDash.lungeSpear(minecraft);
+        int lungeLevel = SpearDash.lungeLevel(spear);
         double fullPush = lungeLevel * LUNGE_PUSH_PER_LEVEL;
         double push = 0;
-        if (lungeLevel > 0 && MinecraftSpearDash.lungeCanPush(player)) {
+        if (lungeLevel > 0 && SpearDash.lungeCanPush(player)) {
             // Lunge pushes along your look with the vertical part removed; Flat lunge
             // levels you first, so it always gets the full push.
-            double lookFactor = MinecraftSpearDash.isFlatLungeOn()
+            double lookFactor = SpearDash.isFlatLungeOn()
                     ? 1
                     : Math.cos(Math.toRadians(pitch));
             push = fullPush * lookFactor;

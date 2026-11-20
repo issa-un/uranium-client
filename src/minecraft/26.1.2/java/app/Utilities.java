@@ -132,7 +132,7 @@ final class Utilities {
         VelocityHud.toggleFriend(target);
         SpearSettings.save(minecraft);
         String name = target.getName().getString();
-        MinecraftSpearDash.setStatus((VelocityHud.isFriend(target) ? "Friended " : "Unfriended ") + name);
+        SpearDash.setStatus((VelocityHud.isFriend(target) ? "Friended " : "Unfriended ") + name);
         return true;
     }
 

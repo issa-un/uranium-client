@@ -19,7 +19,7 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * Replenish, for the Cart modules: once the cart you put down has blown (it is gone from its
- * rail), if your rails, TNT minecarts or (for High Tier) flint and steel ran out of your
+ * rail), if your rails, TNT minecarts or (for Crossbow Cart) flint and steel ran out of your
  * hotbar and you still have some in your inventory, it opens your
  * inventory, glides the mouse over to a stack the way a hand would (a different path every
  * time), presses the number key of the hotbar slot it ran out of (the slot it was in), and
@@ -79,8 +79,8 @@ final class CartRefill {
     }
 
     private static boolean watches(Kind kind) {
-        boolean high = CartHighTier.isEnabled() && CartHighTier.isReplenish();
-        boolean low = CartLowTier.isEnabled() && CartLowTier.isReplenish();
+        boolean high = CrossbowCart.isEnabled() && CrossbowCart.isReplenish();
+        boolean low = BowCart.isEnabled() && BowCart.isReplenish();
         return kind == Kind.FLINT ? high : high || low;
     }
 
@@ -103,7 +103,7 @@ final class CartRefill {
         if (!blown || Mc.screen(minecraft) != null || player.isCreative() || player.isUsingItem()
                 || !player.onGround() && !player.isInWater() // not mid-air: once you land
                 || player.getDeltaMovement().horizontalDistance() > 0.3 // not at a full sprint
-                || CartHighTier.isBusy() || CartLowTier.isBusy() || CrossbowReload.isBusy() || CartBlock.isBusy() || now() - lastDoneMs < RETRY_MS
+                || CrossbowCart.isBusy() || BowCart.isBusy() || CrossbowReload.isBusy() || AntiCart.isBusy() || now() - lastDoneMs < RETRY_MS
                 || !SpearSettings.combatAllowed(minecraft)) {
             return;
         }
@@ -285,7 +285,7 @@ final class CartRefill {
                     ItemStack was = player.getInventory().getItem(toHotbar);
                     minecraft.gameMode.handleContainerInput(menu.containerId, fromSlot, toHotbar,
                             ContainerInput.SWAP, player);
-                    MinecraftSpearDash.setStatus("Replenished");
+                    SpearDash.setStatus("Replenished");
                     if (!was.isEmpty()) {
                         SpearLog.log("cart replenish: " + was.getHoverName().getString() + " went from hotbar "
                                 + (toHotbar + 1) + " back into the inventory");

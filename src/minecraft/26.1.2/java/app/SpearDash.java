@@ -18,7 +18,7 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 
-final class MinecraftSpearDash {
+final class SpearDash {
     private static volatile boolean enabled;
     private static volatile int keyCode = 71;
     private static volatile int mouseButton = -1;
@@ -72,7 +72,7 @@ final class MinecraftSpearDash {
     private static boolean dashLevelled;
     private static boolean jabResult;
 
-    private MinecraftSpearDash() {}
+    private SpearDash() {}
 
     /**
      * A press of the dash binding; true if a dash went out or is on its way. With Only from
@@ -256,7 +256,7 @@ final class MinecraftSpearDash {
         MinecraftInputController.stopGuard();
         // With Return at 0 the spear still stays in hand for a moment, so the swap shows.
         SWAP.start(minecraft, spearSlot, true, SWAP_DELAY, JAB_DELAY, RETURN.isZero() ? SHOW : RETURN,
-                MinecraftSpearDash::jab, MinecraftSpearDash::dashDone);
+                SpearDash::jab, SpearDash::dashDone);
         // Without delays the dash is already over; dashDone cancelled the press if it failed.
         return SWAP.busy() || jabResult;
     }

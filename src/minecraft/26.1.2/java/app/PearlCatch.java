@@ -92,7 +92,7 @@ final class PearlCatch {
             return false;
         }
         if (!SpearSettings.combatAllowed(minecraft)) {
-            MinecraftSpearDash.setStatus("Off on this server");
+            SpearDash.setStatus("Off on this server");
             return false;
         }
         if (running) {
@@ -103,15 +103,15 @@ final class PearlCatch {
                 : BucketUse.findSlot(player, Items.ENDER_PEARL);
         int wind = BucketUse.findSlot(player, Items.WIND_CHARGE);
         if (pearl < 0) {
-            MinecraftSpearDash.setStatus("No ender pearl in hotbar");
+            SpearDash.setStatus("No ender pearl in hotbar");
             return false;
         }
         if (wind < 0) {
-            MinecraftSpearDash.setStatus("No wind charge in hotbar");
+            SpearDash.setStatus("No wind charge in hotbar");
             return false;
         }
         if (coolingDown(player, pearl) || coolingDown(player, wind)) {
-            MinecraftSpearDash.setStatus("Pearl or wind charge cooling down");
+            SpearDash.setStatus("Pearl or wind charge cooling down");
             return false;
         }
         Vec3 eye = player.getEyePosition();
@@ -129,7 +129,7 @@ final class PearlCatch {
             }
         }
         if (best == null) {
-            MinecraftSpearDash.setStatus("No catch point on this throw");
+            SpearDash.setStatus("No catch point on this throw");
             return false;
         }
         previousSlot = selected;
@@ -140,7 +140,7 @@ final class PearlCatch {
         }
         if (!result.consumesAction()) {
             select(minecraft, previousSlot);
-            MinecraftSpearDash.setStatus("Pearl not thrown");
+            SpearDash.setStatus("Pearl not thrown");
             return true;
         }
         select(minecraft, wind);
@@ -150,7 +150,7 @@ final class PearlCatch {
         fireAge = bestWait;
         throwEyeY = eye.y;
         running = true;
-        MinecraftSpearDash.setStatus("Catch in " + bestWait + " ticks, "
+        SpearDash.setStatus("Catch in " + bestWait + " ticks, "
                 + String.format(Locale.ROOT, "%.1f", best.point().y - eye.y) + " up");
         return true;
     }
@@ -186,13 +186,13 @@ final class PearlCatch {
         if (Mc.screen(minecraft) != null) {
             running = false;
             swapBack(minecraft);
-            MinecraftSpearDash.setStatus("Pearl catch cancelled");
+            SpearDash.setStatus("Pearl catch cancelled");
             return;
         }
         if (player.getInventory().getSelectedSlot() != windSlot) {
             // You picked another slot meanwhile; that choice is kept.
             running = false;
-            MinecraftSpearDash.setStatus("Pearl catch stopped");
+            SpearDash.setStatus("Pearl catch stopped");
             SpearLog.log("pearl catch: stopped, hotbar moved to " + (player.getInventory().getSelectedSlot() + 1));
             return;
         }
@@ -206,7 +206,7 @@ final class PearlCatch {
         Plan plan = solve(minecraft, flight, age, eye, drift(player), throwEyeY + MIN_RISE);
         if (plan == null) {
             swapBack(minecraft);
-            MinecraftSpearDash.setStatus("Lost the catch");
+            SpearDash.setStatus("Lost the catch");
             SpearLog.log("pearl catch: no meet point left at pearl age " + age);
             return;
         }
@@ -214,7 +214,7 @@ final class PearlCatch {
         swapBack(minecraft);
         tries++;
         watchPoint = plan.point();
-        watchUntilTick = player.tickCount + plan.meetAge() - age + ShieldBreak.pingMs(minecraft) / 50 + RESULT_TICKS;
+        watchUntilTick = player.tickCount + plan.meetAge() - age + AutoStun.pingMs(minecraft) / 50 + RESULT_TICKS;
         SpearLog.log("pearl catch: charge at pearl age " + age + " (planned " + fireAge + "), meets in "
                 + plan.flightTicks() + " ticks at age " + plan.meetAge() + ", "
                 + String.format(Locale.ROOT, "%.1f", plan.point().y - throwEyeY) + " blocks up");
@@ -228,11 +228,11 @@ final class PearlCatch {
         }
         if (player.position().distanceTo(watchPoint) < CAUGHT_WITHIN) {
             caught++;
-            MinecraftSpearDash.setStatus("Caught (" + caught + "/" + tries + ")");
+            SpearDash.setStatus("Caught (" + caught + "/" + tries + ")");
             SpearLog.log("pearl catch result: teleported to the meet point");
             watchPoint = null;
         } else if (player.tickCount > watchUntilTick) {
-            MinecraftSpearDash.setStatus("Missed the catch (" + caught + "/" + tries + ")");
+            SpearDash.setStatus("Missed the catch (" + caught + "/" + tries + ")");
             SpearLog.log("pearl catch result: no teleport, ended "
                     + String.format(Locale.ROOT, "%.1f", player.position().distanceTo(watchPoint)) + " blocks from the meet point");
             watchPoint = null;
@@ -437,7 +437,7 @@ final class PearlCatch {
     private static void select(Minecraft minecraft, int slot) {
         if (minecraft.player.getInventory().getSelectedSlot() != slot) {
             minecraft.player.getInventory().setSelectedSlot(slot);
-            MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+            SpearDash.sendSelectedSlot(minecraft, false);
         }
     }
 

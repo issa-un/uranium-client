@@ -22,7 +22,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Cart, Low Tier: when you fire your bow, it works out where the arrow will come down,
+ * Bow Cart: when you fire your bow, it works out where the arrow will come down,
  * then puts a rail and a TNT minecart there before the arrow lands, so a flame arrow sets
  * it off. You can only place within your normal reach, so it works for arrows that come
  * down near you: shoot up high and it has the second or two it needs.
@@ -36,7 +36,7 @@ import net.minecraft.world.phys.Vec3;
  * One cart goes down per shot (insta carting). Crossbow too also does it for crossbow
  * shots (crossbow carting), not only the bow.
  */
-final class CartLowTier {
+final class BowCart {
     private enum Step { AIM_RAIL, WAIT_CART, AIM_CART, BOW }
 
     private static final int MAX_FLIGHT_TICKS = 200;
@@ -86,7 +86,7 @@ final class CartLowTier {
     private static int checkTick;
     private static BlockPos checkSpot;
 
-    private CartLowTier() {}
+    private BowCart() {}
 
     /** Called from the input loop each tick: watches for your new arrows, places when the crosshair is there. */
     static void update(Minecraft minecraft) {
@@ -144,7 +144,7 @@ final class CartLowTier {
         minecraft.gameMode.releaseUsingItem(player);
         minecraft.options.keyUse.setDown(false);
         waitForRelease = true;
-        SpearLog.log("cart low tier: bow let go at the lowest draw (" + LOWEST_DRAW_TICKS + " ticks)");
+        SpearLog.log("bow cart: bow let go at the lowest draw (" + LOWEST_DRAW_TICKS + " ticks)");
     }
 
     /** Called every frame by the HUD: one smooth step of the camera toward the spot. */
@@ -168,7 +168,7 @@ final class CartLowTier {
     private static void run(Minecraft minecraft, LocalPlayer player) {
         if (Mc.screen(minecraft) != null) {
             stop();
-            MinecraftSpearDash.setStatus("Cart stopped");
+            SpearDash.setStatus("Cart stopped");
             return;
         }
         switch (step) {
@@ -226,8 +226,8 @@ final class CartLowTier {
             return true;
         }
         if (retryAtTick == 0 && (cartRetries >= 1 || !Cart.hasCart(player) || !Cart.hasRail(minecraft, spot))) {
-            SpearLog.log("cart low tier: the server blocked the cart" + (cartRetries >= 1 ? " twice" : ""));
-            MinecraftSpearDash.setStatus("Server blocked the cart");
+            SpearLog.log("bow cart: the server blocked the cart" + (cartRetries >= 1 ? " twice" : ""));
+            SpearDash.setStatus("Server blocked the cart");
             return false;
         }
         if (retryAtTick > 0) {
@@ -240,7 +240,7 @@ final class CartLowTier {
             return true;
         }
         cartRetries++;
-        SpearLog.log("cart low tier: the server blocked the cart, placing it again");
+        SpearLog.log("bow cart: the server blocked the cart, placing it again");
         // A tick on another slot first, so the cart slot after it is a real change.
         Cart.hop(minecraft, player, BucketUse.findSlot(player, Items.TNT_MINECART));
         retryAtTick = player.tickCount + 1;
@@ -258,8 +258,8 @@ final class CartLowTier {
         if (!SpearSettings.combatAllowed(minecraft)) {
             return;
         }
-        if (CartHighTier.shotRecently()) {
-            return; // High Tier's own shot at its own cart
+        if (CrossbowCart.shotRecently()) {
+            return; // Crossbow Cart's own shot at its own cart
         }
         int[] ticks = new int[1];
         List<Vec3> path = new ArrayList<>();
@@ -272,8 +272,8 @@ final class CartLowTier {
         ItemStack shooter = isShooter(player.getMainHandItem()) ? player.getMainHandItem() : player.getOffhandItem();
         boolean flame = shooter.is(Items.BOW) && MaceSwap.enchantmentLevel(shooter, Enchantments.FLAME) > 0;
         if (!arrow.isOnFire() && !flame && !pathBurns) {
-            MinecraftSpearDash.setStatus(shooter.is(Items.BOW) ? "Bow has no Flame" : "Arrow isn't burning");
-            SpearLog.log("cart low tier: no cart, the arrow isn't burning ("
+            SpearDash.setStatus(shooter.is(Items.BOW) ? "Bow has no Flame" : "Arrow isn't burning");
+            SpearLog.log("bow cart: no cart, the arrow isn't burning ("
                     + (shooter.is(Items.BOW) ? "the bow has no Flame"
                     : "a crossbow arrow only burns if it flies through fire or lava, and this one doesn't") + ")");
             return;
@@ -281,62 +281,62 @@ final class CartLowTier {
         for (Vec3 point : path) {
             if (minecraft.level.isRainingAt(BlockPos.containing(point))) {
                 // a burning arrow goes out in the rain before it comes down
-                MinecraftSpearDash.setStatus("Rain puts the arrow out");
-                SpearLog.log("cart low tier: no cart, it's raining where the arrow comes down (it goes out)");
+                SpearDash.setStatus("Rain puts the arrow out");
+                SpearLog.log("bow cart: no cart, it's raining where the arrow comes down (it goes out)");
                 return;
             }
         }
         if (!CHANCE.roll()) {
-            SpearLog.log("cart low tier: skipped this shot (Chance)");
+            SpearLog.log("bow cart: skipped this shot (Chance)");
             return;
         }
         if (landing.getDirection() != Direction.UP) {
-            MinecraftSpearDash.setStatus("Arrow lands on a wall");
+            SpearDash.setStatus("Arrow lands on a wall");
             return;
         }
         net.minecraft.world.entity.player.Player first = hitsPlayerFirst(minecraft, player, path);
         if (first != null) {
-            MinecraftSpearDash.setStatus("Arrow hits " + first.getName().getString() + " first");
-            SpearLog.log("cart low tier: no cart, the arrow hits " + first.getName().getString() + " before it lands");
+            SpearDash.setStatus("Arrow hits " + first.getName().getString() + " first");
+            SpearLog.log("bow cart: no cart, the arrow hits " + first.getName().getString() + " before it lands");
             return;
         }
         if (ticks[0] < MIN_TICKS_LEFT) {
-            MinecraftSpearDash.setStatus("Arrow lands too soon");
+            SpearDash.setStatus("Arrow lands too soon");
             return;
         }
         if (!player.isWithinBlockInteractionRange(landing.getBlockPos(), 1.0)) {
-            MinecraftSpearDash.setStatus("Arrow lands out of reach");
-            SpearLog.log("cart low tier: arrow lands at " + landing.getBlockPos().above().toShortString() + ", out of reach");
+            SpearDash.setStatus("Arrow lands out of reach");
+            SpearLog.log("bow cart: arrow lands at " + landing.getBlockPos().above().toShortString() + ", out of reach");
             return;
         }
         BlockPos target = bestSpot(minecraft, player, path, landing.getBlockPos());
         if (target == null) {
-            MinecraftSpearDash.setStatus("No room for a rail there");
-            SpearLog.log("cart low tier: arrow lands at " + landing.getBlockPos().above().toShortString()
+            SpearDash.setStatus("No room for a rail there");
+            SpearLog.log("bow cart: arrow lands at " + landing.getBlockPos().above().toShortString()
                     + ", no spot under its path takes a rail you can reach and see");
             return;
         }
         String risk = SelfBlast.danger(minecraft, player, SelfBlast.cartCenter(target), landingSpeed);
         if (risk != null) {
-            MinecraftSpearDash.setStatus("Too close for your health");
-            SpearLog.log("cart low tier: no cart at " + target.toShortString() + ", " + risk);
+            SpearDash.setStatus("Too close for your health");
+            SpearLog.log("bow cart: no cart at " + target.toShortString() + ", " + risk);
             return;
         }
         BlockPos hitGround = target.below();
         boolean railThere = Cart.hasRail(minecraft, target);
         int rail = Cart.railSlot(player);
         if (rail < 0 && !railThere || !Cart.hasCart(player)) {
-            SpearLog.log("cart low tier: arrow lands at " + target.toShortString() + ", "
+            SpearLog.log("bow cart: arrow lands at " + target.toShortString() + ", "
                     + (Cart.hasCart(player) ? "no rail in hotbar" : "no TNT minecart"));
             CartRefill.requestNow();
-            MinecraftSpearDash.setStatus(rail < 0 ? "No rail in hotbar" : "No TNT minecart");
+            SpearDash.setStatus(rail < 0 ? "No rail in hotbar" : "No TNT minecart");
             return;
         }
         // With a rail already there the crosshair lands on the rail, not the ground under it.
         float[] aim = railThere ? new float[0] : BucketUse.aimAtFace(minecraft, player, hitGround, Direction.UP);
         if (aim == null) {
-            MinecraftSpearDash.setStatus("Can't see where it lands");
-            SpearLog.log("cart low tier: arrow lands at " + target.toShortString() + ", can't see the spot");
+            SpearDash.setStatus("Can't see where it lands");
+            SpearLog.log("bow cart: arrow lands at " + target.toShortString() + ", can't see the spot");
             return;
         }
         ground = hitGround;
@@ -361,7 +361,7 @@ final class CartLowTier {
         }
         AIM.stop();
         flickDoneMs = 0;
-        SpearLog.log("cart low tier: arrow lands at " + landing.getBlockPos().above().toShortString() + " in " + ticks[0]
+        SpearLog.log("bow cart: arrow lands at " + landing.getBlockPos().above().toShortString() + " in " + ticks[0]
                 + " ticks, cart at " + target.toShortString() + (railThere ? ", a rail is already there" : ""));
     }
 
@@ -419,7 +419,7 @@ final class CartLowTier {
             return;
         }
         boolean placed = Cart.use(minecraft, player, rail, new BlockHitResult(Vec3.atCenterOf(ground), Direction.UP, ground, false));
-        SpearLog.log("cart low tier: rail " + (placed ? "down" : "refused") + ", "
+        SpearLog.log("bow cart: rail " + (placed ? "down" : "refused") + ", "
                 + (landTick - player.tickCount) + " ticks before the arrow");
         if (!placed) {
             giveUp(minecraft, player, "Rail refused");
@@ -444,7 +444,7 @@ final class CartLowTier {
         String risk = SelfBlast.danger(minecraft, player, SelfBlast.cartCenter(spot), landingSpeed);
         if (risk != null) {
             giveUp(minecraft, player, "Too close for your health");
-            SpearLog.log("cart low tier: no cart, you're too close now, " + risk);
+            SpearLog.log("bow cart: no cart, you're too close now, " + risk);
             return;
         }
         BlockHitResult click = Cart.onRail(spot); // sent as what your view really hits on the rail
@@ -456,14 +456,14 @@ final class CartLowTier {
             cartPlacedMs = System.nanoTime() / 1_000_000;
             CartRefill.watch(spot);
         }
-        SpearLog.log("cart low tier: cart " + (cartsDown + (placed ? 0 : 1)) + " " + (placed ? "on the rail" : "refused")
+        SpearLog.log("bow cart: cart " + (cartsDown + (placed ? 0 : 1)) + " " + (placed ? "on the rail" : "refused")
                 + ", " + (landTick - player.tickCount) + " ticks before the arrow");
         AIM.stop();
         finish(minecraft, player);
     }
 
     private static void finish(Minecraft minecraft, LocalPlayer player) {
-        MinecraftSpearDash.setStatus(cartsDown == 0 ? "Cart refused"
+        SpearDash.setStatus(cartsDown == 0 ? "Cart refused"
                 : cartsDown == 1 ? "Cart down" : cartsDown + " carts stacked");
         step = Step.BOW;
         nextTick = player.tickCount + 1;
@@ -483,7 +483,7 @@ final class CartLowTier {
             return;
         }
         if (!Cart.cartAt(minecraft, checkSpot)) {
-            SpearLog.log("cart low tier: the cart blew");
+            SpearLog.log("bow cart: the cart blew");
             return;
         }
         Entity arrow = minecraft.level.getEntity(arrowId);
@@ -496,8 +496,8 @@ final class CartLowTier {
                     arrow.getX(), arrow.getY(), arrow.getZ(), arrow.position().distanceTo(middle),
                     arrow.isOnFire() ? "burning" : "not burning");
         }
-        SpearLog.log("cart low tier: the cart didn't blow, " + where);
-        MinecraftSpearDash.setStatus("Arrow missed the cart");
+        SpearLog.log("bow cart: the cart didn't blow, " + where);
+        SpearDash.setStatus("Arrow missed the cart");
     }
 
     /**
@@ -520,7 +520,7 @@ final class CartLowTier {
         if (cell == null || cell.equals(spot)) {
             return;
         }
-        SpearLog.log("cart low tier: the arrow's path changed, the cart spot moves from "
+        SpearLog.log("bow cart: the arrow's path changed, the cart spot moves from "
                 + spot.toShortString() + " to " + cell.toShortString());
         spot = cell;
         ground = cell.below();
@@ -552,7 +552,7 @@ final class CartLowTier {
                 BlockPos under = cell.below();
                 boolean rail = Cart.hasRail(minecraft, cell);
                 if (!rail && (!Cart.railFits(minecraft, cell)
-                        || WebTrap.reactsToUse(minecraft.level.getBlockState(under).getBlock())
+                        || AutoWeb.reactsToUse(minecraft.level.getBlockState(under).getBlock())
                         || BucketUse.aimAtFace(minecraft, player, under, Direction.UP) == null)) {
                     continue;
                 }
@@ -578,8 +578,8 @@ final class CartLowTier {
     }
 
     private static void giveUp(Minecraft minecraft, LocalPlayer player, String why) {
-        MinecraftSpearDash.setStatus(why);
-        SpearLog.log("cart low tier: stopped, " + why.toLowerCase());
+        SpearDash.setStatus(why);
+        SpearLog.log("bow cart: stopped, " + why.toLowerCase());
         if (Cart.heldSlot(player) != bowSlot) {
             backToBow(minecraft, player);
         }

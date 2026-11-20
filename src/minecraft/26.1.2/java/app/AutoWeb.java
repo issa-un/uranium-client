@@ -29,7 +29,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Web Trap: on your bind, webs the player under your crosshair. The cobweb goes in the
+ * Auto Web: on your bind, webs the player under your crosshair. The cobweb goes in the
  * block they are standing in, or, while they are in the air (jumping at you for a crit),
  * in the block they will land in, up to 4 blocks below them; if their feet are already in
  * a web it goes at their head. Where they will be is led by how they are moving: players
@@ -47,7 +47,7 @@ import net.minecraft.world.phys.Vec3;
  * friends are never webbed. A web is never put in your own block (Web Escape would clear
  * it) and never on a block that does something when used (chests, doors, buttons...).
  */
-final class WebTrap {
+final class AutoWeb {
     // How much further than your reach a player can be: the web goes at their feet, which
     // must be in reach, not at the part of them you are looking at.
     private static final double TARGET_EXTRA = 1.0;
@@ -67,7 +67,7 @@ final class WebTrap {
     private static final Map<Class<?>, Boolean> USABLE_BLOCKS = new HashMap<>();
     private static String whyNot = "";
 
-    private WebTrap() {}
+    private AutoWeb() {}
 
     /** Runs from its bind; true if it placed something (or tried), so the press is used up. */
     static boolean activate(Minecraft minecraft) {
@@ -77,16 +77,16 @@ final class WebTrap {
             return false;
         }
         if (!SpearSettings.combatAllowed(minecraft)) {
-            MinecraftSpearDash.setStatus("Off on this server");
+            SpearDash.setStatus("Off on this server");
             return false;
         }
         Player target = lookedAtPlayer(minecraft, player);
         if (target == null) {
-            MinecraftSpearDash.setStatus("No player in sight");
+            SpearDash.setStatus("No player in sight");
             return false;
         }
         if (VelocityHud.isFriend(target)) {
-            MinecraftSpearDash.setStatus("Friend, not webbed");
+            SpearDash.setStatus("Friend, not webbed");
             return false;
         }
         if (drain && drainWater(minecraft, player, target)) {
@@ -94,7 +94,7 @@ final class WebTrap {
         }
         int web = BucketUse.findSlot(player, Items.COBWEB);
         if (web < 0) {
-            MinecraftSpearDash.setStatus("No cobweb in hotbar");
+            SpearDash.setStatus("No cobweb in hotbar");
             return false;
         }
         Vec3 lead = leadPosition(minecraft, target);
@@ -104,12 +104,12 @@ final class WebTrap {
             spot = usableSpot(minecraft, player, target.position());
         }
         if (spot == null) {
-            MinecraftSpearDash.setStatus(whyNot);
+            SpearDash.setStatus(whyNot);
             return false;
         }
         boolean placed = placeWeb(minecraft, player, web, spot);
-        MinecraftSpearDash.setStatus(placed ? "Webbed " + target.getName().getString() : "Web refused");
-        SpearLog.log("web trap: " + (placed ? "web" : "web refused") + " at " + spot.toShortString()
+        SpearDash.setStatus(placed ? "Webbed " + target.getName().getString() : "Web refused");
+        SpearLog.log("auto web: " + (placed ? "web" : "web refused") + " at " + spot.toShortString()
                 + " for " + target.getName().getString() + (target.onGround() ? " (on ground" : " (in the air")
                 + (led ? String.format(Locale.ROOT, ", led %.1f blocks)", lead.subtract(target.position()).horizontalDistance())
                         : ", where seen)"));
@@ -138,7 +138,7 @@ final class WebTrap {
      * down where their jump carries them.
      */
     private static Vec3 leadPosition(Minecraft minecraft, Player target) {
-        int ticks = (ShieldBreak.pingMs(minecraft) + VIEW_LAG_MS + 49) / 50;
+        int ticks = (AutoStun.pingMs(minecraft) + VIEW_LAG_MS + 49) / 50;
         if (!target.onGround()) {
             ticks = Math.max(ticks, airTicks(minecraft, target));
         }
@@ -218,7 +218,7 @@ final class WebTrap {
      * press a button, flip a trapdoor): any block with its own use code.
      */
     static boolean reactsToUse(Block block) {
-        return USABLE_BLOCKS.computeIfAbsent(block.getClass(), WebTrap::hasUseCode);
+        return USABLE_BLOCKS.computeIfAbsent(block.getClass(), AutoWeb::hasUseCode);
     }
 
     private static boolean hasUseCode(Class<?> type) {
@@ -260,7 +260,7 @@ final class WebTrap {
             }
         } finally {
             inventory.setSelectedSlot(previousSlot);
-            MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+            SpearDash.sendSelectedSlot(minecraft, false);
         }
         MinecraftInputController.stopGuard();
         return result.consumesAction();
@@ -277,8 +277,8 @@ final class WebTrap {
             if (aim != null) {
                 BucketUse.placeLava(minecraft, lava, aim[0], aim[1]);
                 View.release(VIEW_HOLD_MS);
-                MinecraftSpearDash.setStatus("Drained " + target.getName().getString());
-                SpearLog.log("web trap: lava into water at " + water.toShortString() + " next to "
+                SpearDash.setStatus("Drained " + target.getName().getString());
+                SpearLog.log("auto web: lava into water at " + water.toShortString() + " next to "
                         + target.getName().getString());
                 return true;
             }

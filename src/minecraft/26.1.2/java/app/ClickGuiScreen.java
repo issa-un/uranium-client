@@ -79,19 +79,19 @@ public final class ClickGuiScreen extends Screen {
     private int dragTrackX1;
     private int dragTrackX2;
     private final List<Binder> binders = List.of(
-            new Binder(MinecraftSpearDash::isAwaitingBinding, MinecraftSpearDash::bindKeyboard,
-                    MinecraftSpearDash::bindMouse, MinecraftSpearDash::cancelBinding),
-            new Binder(ShieldBreak::isAwaitingBinding, ShieldBreak::bindKeyboard, ShieldBreak::bindMouse,
-                    ShieldBreak::cancelBinding),
-            new Binder(WebTrap::isAwaitingBinding, WebTrap::bindKeyboard, WebTrap::bindMouse, WebTrap::cancelBinding),
+            new Binder(SpearDash::isAwaitingBinding, SpearDash::bindKeyboard,
+                    SpearDash::bindMouse, SpearDash::cancelBinding),
+            new Binder(AutoStun::isAwaitingBinding, AutoStun::bindKeyboard, AutoStun::bindMouse,
+                    AutoStun::cancelBinding),
+            new Binder(AutoWeb::isAwaitingBinding, AutoWeb::bindKeyboard, AutoWeb::bindMouse, AutoWeb::cancelBinding),
             new Binder(QuickThrow::isAwaitingBinding, QuickThrow::bindKeyboard, QuickThrow::bindMouse,
                     QuickThrow::cancelBinding),
-            new Binder(AimHelper::isAwaitingBinding, AimHelper::bindKeyboard, AimHelper::bindMouse,
-                    AimHelper::cancelBinding),
+            new Binder(AimAssist::isAwaitingBinding, AimAssist::bindKeyboard, AimAssist::bindMouse,
+                    AimAssist::cancelBinding),
             new Binder(PearlCatch::isAwaitingBinding, PearlCatch::bindKeyboard, PearlCatch::bindMouse,
                     PearlCatch::cancelBinding),
-            new Binder(ChestSwap::isAwaitingBinding, ChestSwap::bindKeyboard, ChestSwap::bindMouse,
-                    ChestSwap::cancelBinding),
+            new Binder(ElytraSwap::isAwaitingBinding, ElytraSwap::bindKeyboard, ElytraSwap::bindMouse,
+                    ElytraSwap::cancelBinding),
             new Binder(Utilities::isAwaitingZoomBinding, Utilities::bindZoomKeyboard, Utilities::bindZoomMouse,
                     Utilities::cancelZoomBinding),
             // Esc clears a HUD toggle key instead of cancelling (see VelocityHud).
@@ -601,7 +601,7 @@ public final class ClickGuiScreen extends Screen {
         });
         right = pill(graphics, "Edit HUD", right - 6, y + 5, TEXT, mouseX, mouseY,
                 () -> Mc.setScreen(minecraft, new HudEditorScreen()));
-        String status = font.plainSubstrByWidth(MinecraftSpearDash.status(), right - x - MARGIN - 8);
+        String status = font.plainSubstrByWidth(SpearDash.status(), right - x - MARGIN - 8);
         graphics.text(font, status, x + MARGIN, y + 8, SECONDARY, false);
     }
 

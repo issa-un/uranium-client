@@ -15,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Aim Helper: while its key works (hold Left Alt by default), turns your view toward the
+ * Aim Assist: while its key works (hold Left Alt by default), turns your view toward the
  * player nearest your crosshair, with any item in your hand. Your own mouse always still
  * works on top of it, and every turn goes out in whole mouse counts like a real mouse.
  * Aim mode picks how it moves:
@@ -42,7 +42,7 @@ import org.lwjgl.glfw.GLFW;
  * - Key: Hold (only while held), Toggle (press on, press off) or Always (no key needed).
  * Friends are never aimed at.
  */
-final class AimHelper {
+final class AimAssist {
     private static final double MIN_RANGE = 1;
     private static final int MIN_FOV = 30;
     private static final double MAX_LEAD_TICKS = 4;
@@ -129,7 +129,7 @@ final class AimHelper {
     private static double pastYaw;
     private static double pastPitch;
 
-    private AimHelper() {}
+    private AimAssist() {}
 
     /**
      * Called every frame by the HUD, and from the input loop for when the HUD is hidden: one
@@ -389,7 +389,7 @@ final class AimHelper {
             double seconds) {
         Vec3 tickSpeed = new Vec3(other.getX() - other.xo, other.getY() - other.yo, other.getZ() - other.zo);
         smoothSpeed = smoothSpeed.add(tickSpeed.subtract(smoothSpeed).scale(Math.min(1, seconds / 0.2)));
-        double lead = PREDICTION.low() / 100.0 * Math.min(MAX_LEAD_TICKS, 1 + ShieldBreak.pingMs(minecraft) / 50.0);
+        double lead = PREDICTION.low() / 100.0 * Math.min(MAX_LEAD_TICKS, 1 + AutoStun.pingMs(minecraft) / 50.0);
         AABB box = drawnBox(other, partial).move(smoothSpeed.scale(lead));
         return spot(eye, look, box, other);
     }
@@ -495,7 +495,7 @@ final class AimHelper {
         // a slow breathe, so it reads as "on" without being loud
         int alpha = 0x50 + (int) (0x30 * (0.5 + 0.5 * Math.sin(System.nanoTime() / 2.5E8)));
         for (int slot = 0; slot < 9; slot++) {
-            if (!MinecraftSpearDash.isSpear(player.getInventory().getItem(slot))) {
+            if (!SpearDash.isSpear(player.getInventory().getItem(slot))) {
                 continue;
             }
             int x = left + slot * 20 + 2;
@@ -553,14 +553,14 @@ final class AimHelper {
             return;
         }
         toggledOn = !toggledOn;
-        MinecraftSpearDash.setStatus(toggledOn ? "Aim Assist on" : "Aim Assist off");
+        SpearDash.setStatus(toggledOn ? "Aim Assist on" : "Aim Assist off");
     }
 
     /** Logs what the helper is doing, when that changes or once a second while it keeps on. */
     private static void note(String what, long now) {
         String kind = what.contains(":") ? what.substring(0, what.indexOf(':')) : what;
         if (!kind.equals(lastNoteKind) || now - lastNoteMs >= LOG_GAP_MS) {
-            SpearLog.log("aim helper: " + what);
+            SpearLog.log("aim assist: " + what);
             lastNoteKind = kind;
             lastNoteMs = now;
         }

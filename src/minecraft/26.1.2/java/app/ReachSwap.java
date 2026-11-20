@@ -82,7 +82,7 @@ final class ReachSwap {
             player.getInventory().setSelectedSlot(spearSlot);
             // Charged by your attack speed of the moment, which is still the weapon's.
             if (player.cannotAttackWithItem(spear, 0)) {
-                MinecraftSpearDash.setStatus("Reach swap: not charged");
+                SpearDash.setStatus("Reach swap: not charged");
             } else {
                 watch(target, weapon);
                 // Sends the spear's slot, then the jab, back to back.
@@ -93,7 +93,7 @@ final class ReachSwap {
         } finally {
             if (!jabbed) {
                 player.getInventory().setSelectedSlot(previousSlot);
-                MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+                SpearDash.sendSelectedSlot(minecraft, false);
             }
         }
         if (!jabbed) {
@@ -102,12 +102,12 @@ final class ReachSwap {
         // The spear stays in your hand on purpose: for good (Switch only), or for a moment
         // you can see (Jab), and the switch back comes from update.
         MinecraftInputController.stopGuard();
-        MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+        SpearDash.sendSelectedSlot(minecraft, false);
         switchedTo = spearSlot;
         fromSlot = previousSlot;
         backAtMs = mode == SWITCH_ONLY ? -1
                 : System.nanoTime() / 1_000_000 + Math.max(SHOW_MS, SWITCH_BACK.pick());
-        MinecraftSpearDash.setStatus("Reach jab");
+        SpearDash.setStatus("Reach jab");
         SpearLog.log("reach swap: hotbar " + (previousSlot + 1) + " -> spear " + (spearSlot + 1)
                 + (mode == SWITCH_ONLY ? ", spear kept, " : " -> back, ")
                 + String.format("%.2f", player.distanceTo(target)) + " blocks to " + target.getName().getString());
@@ -166,7 +166,7 @@ final class ReachSwap {
 
     private static void select(Minecraft minecraft, int slot) {
         minecraft.player.getInventory().setSelectedSlot(slot);
-        MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+        SpearDash.sendSelectedSlot(minecraft, false);
         MinecraftInputController.stopGuard(); // our own switch, not a server correction
     }
 
@@ -178,7 +178,7 @@ final class ReachSwap {
         SpearLog.log("reach swap result: " + watched.getName().getString() + " lost "
                 + String.format("%.1f", lost) + " health (" + String.format("%.1f", lost / 2) + " hearts), damage from "
                 + watchedFrom);
-        MinecraftSpearDash.setStatus("Reach jab: " + String.format("%.1f", lost / 2) + " hearts");
+        SpearDash.setStatus("Reach jab: " + String.format("%.1f", lost / 2) + " hearts");
         watched = null;
     }
 
@@ -215,7 +215,7 @@ final class ReachSwap {
             if (!stack.has(DataComponents.PIERCING_WEAPON)) {
                 continue;
             }
-            if (MinecraftSpearDash.lungeLevel(stack) == 0) {
+            if (SpearDash.lungeLevel(stack) == 0) {
                 return slot;
             }
             if (lungeSpear < 0) {

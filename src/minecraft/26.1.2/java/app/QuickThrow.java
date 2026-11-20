@@ -37,7 +37,7 @@ final class QuickThrow {
             return false;
         }
         if (!SpearSettings.combatAllowed(minecraft)) {
-            MinecraftSpearDash.setStatus("Off on this server");
+            SpearDash.setStatus("Off on this server");
             return false;
         }
         if (ACTION.busy()) {
@@ -45,11 +45,11 @@ final class QuickThrow {
         }
         int slot = BucketUse.findSlot(player, ITEMS[item]);
         if (slot < 0) {
-            MinecraftSpearDash.setStatus("No " + ITEM_NAMES[item].toLowerCase(Locale.ROOT) + " in hotbar");
+            SpearDash.setStatus("No " + ITEM_NAMES[item].toLowerCase(Locale.ROOT) + " in hotbar");
             return false;
         }
         if (player.getCooldowns().isOnCooldown(player.getInventory().getItem(slot))) {
-            MinecraftSpearDash.setStatus(ITEM_NAMES[item] + " cooling down");
+            SpearDash.setStatus(ITEM_NAMES[item] + " cooling down");
             return false;
         }
         String name = ITEM_NAMES[item];
@@ -66,7 +66,7 @@ final class QuickThrow {
         }, (game, thrown, from, used) -> {
             MinecraftInputController.stopGuard();
             if (thrown) {
-                MinecraftSpearDash.setStatus(name + " thrown");
+                SpearDash.setStatus(name + " thrown");
                 SpearLog.log("quick throw: " + name.toLowerCase(Locale.ROOT) + " from hotbar " + (used + 1));
             }
         });

@@ -46,7 +46,7 @@ final class AutoEat {
             return;
         }
         // Never in the middle of another module's swap: it would cancel it.
-        if (ShieldBreak.isRunning() || PearlCatch.isRunning() || MinecraftSpearDash.isDashing()) {
+        if (AutoStun.isRunning() || PearlCatch.isRunning() || SpearDash.isDashing()) {
             return;
         }
         if (!enabled || Mc.screen(minecraft) != null || now < readyAtMs || player.isUsingItem() || AutoGapple.isEating()
@@ -71,10 +71,10 @@ final class AutoEat {
         countBefore = player.getInventory().getItem(best).getCount();
         startedMs = now;
         player.getInventory().setSelectedSlot(best);
-        MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+        SpearDash.sendSelectedSlot(minecraft, false);
         MinecraftInputController.stopGuard();
         minecraft.options.keyUse.setDown(true);
-        MinecraftSpearDash.setStatus("Eating");
+        SpearDash.setStatus("Eating");
     }
 
     private static void continueEating(Minecraft minecraft, LocalPlayer player, long now) {
@@ -87,9 +87,9 @@ final class AutoEat {
         minecraft.options.keyUse.setDown(WTap.physicallyDown(minecraft, minecraft.options.keyUse));
         if (!interrupted) {
             player.getInventory().setSelectedSlot(previousSlot);
-            MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+            SpearDash.sendSelectedSlot(minecraft, false);
         }
-        MinecraftSpearDash.setStatus(eaten ? "Ate" : "Eating stopped");
+        SpearDash.setStatus(eaten ? "Ate" : "Eating stopped");
         eatingSlot = -1;
         readyAtMs = now + COOLDOWN_MS;
     }

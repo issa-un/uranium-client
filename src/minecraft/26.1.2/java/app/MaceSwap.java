@@ -52,8 +52,8 @@ final class MaceSwap {
             }
             return -1;
         }
-        // A raised shield takes the hit, slam and all; leave it to Shield Break or a plain hit.
-        if (ShieldBreak.blockingToward(minecraft, target)) {
+        // A raised shield takes the hit, slam and all; leave it to Auto Stun or a plain hit.
+        if (AutoStun.blockingToward(minecraft, target)) {
             MaceLog.attack(minecraft, target, holdingMace ? heldSlot : -1, heldSlot, "not swapped: shield up toward you");
             return -1;
         }
@@ -99,7 +99,7 @@ final class MaceSwap {
         }
         MinecraftInputController.guardSwitchBack(previousSlot, maceSlot);
         String kind = describe(player.getInventory().getItem(maceSlot));
-        MinecraftSpearDash.setStatus(kind + " hit");
+        SpearDash.setStatus(kind + " hit");
         SpearLog.log("mace swap: hotbar " + (previousSlot + 1) + " -> " + kind + " " + (maceSlot + 1)
                 + " -> back to " + (previousSlot + 1) + (isSlam(player) ? " (slam)" : "")
                 + " on " + target.getName().getString());

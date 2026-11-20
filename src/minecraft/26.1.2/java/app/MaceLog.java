@@ -100,10 +100,10 @@ final class MaceLog {
         Vec3 motion = player.getDeltaMovement();
         float cooldown = strength;
         double reach = distanceToBox(player.getEyePosition(), target.getBoundingBox());
-        int ping = ShieldBreak.pingMs(minecraft);
+        int ping = AutoStun.pingMs(minecraft);
         boolean shield = target.isBlocking();
-        boolean shieldToward = ShieldBreak.blockingToward(minecraft, target);
-        boolean immune = ShieldBreak.immuneWhenHitArrives(minecraft, target);
+        boolean shieldToward = AutoStun.blockingToward(minecraft, target);
+        boolean immune = AutoStun.immuneWhenHitArrives(minecraft, target);
 
         StringBuilder line = new StringBuilder("mace #").append(number).append(" on ").append(target.getName().getString())
                 .append(": ");
@@ -164,7 +164,7 @@ final class MaceLog {
         PENDING_LINES.add(line.toString());
         NEW.add(new Shot(number, target, slam, nowMs() + ping + WATCH_MS));
         if (slam) {
-            SlamFollowUp.onSlam(target);
+            SlamCombo.onSlam(target);
         }
     }
 

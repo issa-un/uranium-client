@@ -76,7 +76,7 @@ public final class HudFilter implements ClassFileTransformer {
     private static final Map<String, Boolean> HIDDEN = new ConcurrentHashMap<>();
     private static final HudFilter INSTANCE = new HudFilter();
     private static volatile boolean enabled;
-    // Hide UI: every source but the game itself is hidden, whatever its switch says.
+    // Vanilla HUD: every source but the game itself is hidden, whatever its switch says.
     private static volatile boolean hideAll;
     private static volatile Instrumentation instrumentation;
     private static volatile boolean installed;
@@ -410,23 +410,23 @@ public final class HudFilter implements ClassFileTransformer {
     }
 
     /**
-     * Hide UI: only Minecraft's own HUD stays on screen. Uranium's HUD and wheels are left out
+     * Vanilla HUD: only Minecraft's own HUD stays on screen. Uranium's HUD and wheels are left out
      * where they draw; every other mod or client is hidden through the same drawing check
      * as Hide other clients. Menus still open and show as normal.
      */
     static void toggleHideAll() {
         boolean on = !hideAll;
         if (on && instrumentation != null && !install()) {
-            MinecraftSpearDash.setStatus(status);
+            SpearDash.setStatus(status);
         }
         hideAll = on;
-        SpearLog.log("hide ui: " + (on ? "on" : "off"));
-        MinecraftSpearDash.setStatus(on ? "UI hidden" : "UI shown");
+        SpearLog.log("vanilla hud: " + (on ? "on" : "off"));
+        SpearDash.setStatus(on ? "UI hidden" : "UI shown");
     }
 
     static void toggleEnabled() {
         setEnabled(!enabled);
-        MinecraftSpearDash.setStatus(enabled ? "Other clients' HUD hidden" : status.isEmpty() ? "Other clients' HUD shown" : status);
+        SpearDash.setStatus(enabled ? "Other clients' HUD hidden" : status.isEmpty() ? "Other clients' HUD shown" : status);
     }
 
     /** Adds the check to the drawing methods, the first time it is turned on. */
@@ -436,7 +436,7 @@ public final class HudFilter implements ClassFileTransformer {
         }
         Instrumentation inst = instrumentation;
         if (inst == null || !inst.isRetransformClassesSupported()) {
-            status = "Hide other clients needs a fresh Update";
+            status = "Hide Other Clients needs a fresh Update";
             return false;
         }
         try {
@@ -447,7 +447,7 @@ public final class HudFilter implements ClassFileTransformer {
             return true;
         } catch (Throwable error) {
             inst.removeTransformer(INSTANCE);
-            status = "Hide other clients failed: " + error.getClass().getSimpleName();
+            status = "Hide Other Clients failed: " + error.getClass().getSimpleName();
             SpearLog.log("hide other clients: could not add the drawing check: " + error);
             return false;
         }

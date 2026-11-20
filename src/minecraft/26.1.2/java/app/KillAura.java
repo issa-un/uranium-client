@@ -15,7 +15,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * World Slash: a quiet kill aura. It turns your real view onto the closest player in front of
+ * Kill Aura: a quiet kill aura. It turns your real view onto the closest player in front of
  * you and hits them when a hit counts. Made to look like a person playing, not a bot:
  * - Your camera really turns (nothing is faked in packets), so what the server sees is what
  *   you see. It turns at a steady Rotation speed that wobbles a bit and slows down as it gets
@@ -23,12 +23,12 @@ import net.minecraft.world.phys.Vec3;
  * - It only hits once your crosshair is actually on them, after a human Reaction delay, so
  *   every hit passes the server's own look and reach checks. Never through walls.
  * - Hits only when they count (full cooldown, not immune, or a mace slam), the same rules as
- *   Hit. Chance skips some of them.
+ *   Trigger Bot. Chance skips some of them.
  * - Only players inside FOV in front of you, within Range (vanilla reach is 3). It sticks to
  *   one target and does not flick between people.
  * - Pauses while you eat, block, use an item or have a menu open. Friends are never hit.
  */
-final class WorldSlash {
+final class KillAura {
     private static final double MIN_RANGE = 1;
     private static final int MIN_FOV = 30;
     /** How long it keeps the same target before it may switch to someone closer. */
@@ -64,7 +64,7 @@ final class WorldSlash {
     private static String lastNoteKind = "";
     private static long lastNoteMs;
 
-    private WorldSlash() {}
+    private KillAura() {}
 
     /** Called every frame by the HUD and from the input loop: one turn step and maybe a hit. */
     static void update(Minecraft minecraft) {
@@ -77,8 +77,8 @@ final class WorldSlash {
             drop();
             return;
         }
-        if (player.isUsingItem() || player.isBlocking() || ShieldBreak.isRunning() || PearlCatch.isRunning()
-                || MinecraftSpearDash.isDashing()) {
+        if (player.isUsingItem() || player.isBlocking() || AutoStun.isRunning() || PearlCatch.isRunning()
+                || SpearDash.isDashing()) {
             onTargetSinceMs = -1;
             return;
         }
@@ -156,7 +156,7 @@ final class WorldSlash {
         if (now - onTargetSinceMs < reactionMs || now < nextTryMs) {
             return;
         }
-        int ready = Hit.ready(minecraft, player, target, now);
+        int ready = TriggerBot.ready(minecraft, player, target, now);
         if (ready < 0) {
             return;
         }
@@ -164,7 +164,7 @@ final class WorldSlash {
             nextTryMs = now + SKIP_MS;
             return;
         }
-        Hit.strike(minecraft, player, target, ready == Hit.SLAM, now);
+        TriggerBot.strike(minecraft, player, target, ready == TriggerBot.SLAM, now);
         // A fresh reaction for the next hit, like a person re-timing their click.
         onTargetSinceMs = now;
         reactionMs = PlayStyle.delay(REACTION.pick());
@@ -243,7 +243,7 @@ final class WorldSlash {
     private static void note(String what, long now) {
         String kind = what.contains(":") ? what.substring(0, what.indexOf(':')) : what;
         if (!kind.equals(lastNoteKind) || now - lastNoteMs >= LOG_GAP_MS) {
-            SpearLog.log("world slash: " + what);
+            SpearLog.log("kill aura: " + what);
             lastNoteKind = kind;
             lastNoteMs = now;
         }

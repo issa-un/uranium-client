@@ -76,11 +76,11 @@ final class AimRecorder {
             startNs = System.nanoTime();
             frames = 0;
             lastCursorX = Double.NaN;
-            MinecraftSpearDash.setStatus("Recording your aim: " + file.getFileName());
+            SpearDash.setStatus("Recording your aim: " + file.getFileName());
             SpearLog.log("aim recorder: started " + file);
         } catch (IOException exception) {
             out = null;
-            MinecraftSpearDash.setStatus("Couldn't start the recording: " + exception.getMessage());
+            SpearDash.setStatus("Couldn't start the recording: " + exception.getMessage());
         }
     }
 
@@ -94,7 +94,7 @@ final class AimRecorder {
             // what was written stays
         }
         out = null;
-        MinecraftSpearDash.setStatus("Saved " + frames + " frames to recordings/" + file.getFileName());
+        SpearDash.setStatus("Saved " + frames + " frames to recordings/" + file.getFileName());
         SpearLog.log("aim recorder: saved " + frames + " frames to " + file);
     }
 

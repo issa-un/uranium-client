@@ -19,7 +19,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Shield Break: on your bind, if the target under your crosshair is holding up a shield
+ * Auto Stun: on your bind, if the target under your crosshair is holding up a shield
  * toward you, swaps to a weapon that disables shields (an axe) and hits the shield up to
  * Axe hits times, one game tick apart, then with Mace follow-up hits with the mace and
  * swaps back. Each step can first wait a random time in its delay's range (Swap delay,
@@ -33,7 +33,7 @@ import net.minecraft.world.phys.Vec3;
  * Your press or click is always the trigger; nothing fires on its own. With Trigger on Any
  * attack, every attack your client sends counts as that click (see AttackHook).
  */
-final class ShieldBreak {
+final class AutoStun {
     // 0 is Auto: extra hits only when your ping is low enough for them to be skipped
     // when the first already worked.
     private static final String[] HIT_COUNTS = {"Auto", "1", "2", "3"};
@@ -135,7 +135,7 @@ final class ShieldBreak {
     private static long lastPressMs;
     private static boolean lastResultGood;
 
-    private ShieldBreak() {}
+    private AutoStun() {}
 
     /** Runs a shield break from its bind or an attack click; true if it started. */
     static boolean activate(Minecraft minecraft) {
@@ -149,21 +149,21 @@ final class ShieldBreak {
             return false;
         }
         if (!SpearSettings.combatAllowed(minecraft)) {
-            MinecraftSpearDash.setStatus("Off on this server");
+            SpearDash.setStatus("Off on this server");
             return false;
         }
         if (blocking == null) {
-            MinecraftSpearDash.setStatus("Not blocking");
+            SpearDash.setStatus("Not blocking");
             return false;
         }
-        int axe = findSlot(player, ShieldBreak::disablesShields);
+        int axe = findSlot(player, AutoStun::disablesShields);
         if (axe < 0) {
-            MinecraftSpearDash.setStatus("No axe in hotbar");
+            SpearDash.setStatus("No axe in hotbar");
             return false;
         }
         double extra = extraReach(player);
         if (!inRange(player, axe, blocking, extra)) {
-            MinecraftSpearDash.setStatus("Too far for the axe");
+            SpearDash.setStatus("Too far for the axe");
             return false;
         }
         pressExtra = extra;
@@ -249,8 +249,8 @@ final class ShieldBreak {
             return; // an extra hit during a break, dropped like an extra click
         }
         if (!CHANCE.roll() || !activate(minecraft, blockingToward(minecraft, entity) ? entity : null)) {
-            SpearLog.log("shield break: held-back hit on " + entity.getName().getString()
-                    + " went out as a plain hit (" + MinecraftSpearDash.status() + ")");
+            SpearLog.log("auto stun: held-back hit on " + entity.getName().getString()
+                    + " went out as a plain hit (" + SpearDash.status() + ")");
             AttackHook.resend(minecraft, attack);
         }
     }
@@ -288,7 +288,7 @@ final class ShieldBreak {
         if (!reason.equals(lastSkipReason) || now - lastSkipMs > 1000) {
             lastSkipReason = reason;
             lastSkipMs = now;
-            SpearLog.log("shield break: skipped " + near.getName().getString() + " via spear click: " + reason);
+            SpearLog.log("auto stun: skipped " + near.getName().getString() + " via spear click: " + reason);
         }
     }
 
@@ -319,9 +319,9 @@ final class ShieldBreak {
         } else if (!facingYou(minecraft, entity)) {
             reason = String.format(java.util.Locale.ROOT, "their shield faces away from you (%.0f degrees off, %.0f counts)",
                     Math.toDegrees(shieldAngle(minecraft, entity)), Math.toDegrees(BLOCKING_ANGLE + FACING_MARGIN));
-        } else if (findSlot(player, ShieldBreak::disablesShields) < 0) {
+        } else if (findSlot(player, AutoStun::disablesShields) < 0) {
             reason = "no axe in your hotbar";
-        } else if (!inRange(player, findSlot(player, ShieldBreak::disablesShields), entity, extraReach(player))) {
+        } else if (!inRange(player, findSlot(player, AutoStun::disablesShields), entity, extraReach(player))) {
             reason = String.format(java.util.Locale.ROOT, "too far for the axe (%.1f blocks)", player.distanceTo(entity));
         } else if (target != null) {
             reason = "a break is already running";
@@ -332,7 +332,7 @@ final class ShieldBreak {
         if (!reason.equals(lastSkipReason) || now - lastSkipMs > 1000) {
             lastSkipReason = reason;
             lastSkipMs = now;
-            SpearLog.log("shield break: skipped " + entity.getName().getString() + " via " + via + ": " + reason);
+            SpearLog.log("auto stun: skipped " + entity.getName().getString() + " via " + via + ": " + reason);
         }
     }
 
@@ -373,7 +373,7 @@ final class ShieldBreak {
                 || !SpearSettings.combatAllowed(minecraft) || !blockingToward(minecraft, entity)) {
             return false;
         }
-        int axe = findSlot(player, ShieldBreak::disablesShields);
+        int axe = findSlot(player, AutoStun::disablesShields);
         return axe >= 0 && inRange(player, axe, entity, extraReach(player));
     }
 
@@ -393,11 +393,11 @@ final class ShieldBreak {
         }
         if (player.getInventory().getSelectedSlot() != heldSlot) {
             // You picked another slot mid-press; leave your choice alone.
-            SpearLog.log("shield break: stopped, hotbar moved to "
+            SpearLog.log("auto stun: stopped, hotbar moved to "
                     + (player.getInventory().getSelectedSlot() + 1) + " mid-press on "
                     + target.getName().getString() + " (" + (nowMs() - startedMs) + " ms)");
             target = null;
-            MinecraftSpearDash.setStatus("Shield break stopped");
+            SpearDash.setStatus("Shield break stopped");
             return;
         }
         advance(minecraft);
@@ -516,7 +516,7 @@ final class ShieldBreak {
         swapBack(minecraft);
         MinecraftInputController.guardSwitchBack(previousSlot, lastSlot);
         String axePart = hitsDone == 1 ? "Shield hit" : "Shield hit x" + hitsDone;
-        MinecraftSpearDash.setStatus(maceHit ? axePart + " + mace"
+        SpearDash.setStatus(maceHit ? axePart + " + mace"
                 : landedEarly ? axePart + ", landed before mace" : axePart);
         lastBroken = target;
         lastBrokenMs = nowMs();
@@ -525,7 +525,7 @@ final class ShieldBreak {
         watchSeenUp = seenUp;
         watchMinDownMs = pingMs(minecraft) / 2;
         breaksTried++;
-        SpearLog.log("shield break: hotbar " + (previousSlot + 1) + " -> axe " + (axeSlot + 1)
+        SpearLog.log("auto stun: hotbar " + (previousSlot + 1) + " -> axe " + (axeSlot + 1)
                 + " x" + hitsDone + (seenUp ? "" : " (shield still going up)")
                 + (maceHit ? " -> mace " + (maceSlot + 1) + (slamWanted || MaceSwap.isSlam(player) ? " (slam)" : " (no fall)") : "")
                 + (landedEarly ? " (landed before mace)" : "") + " -> back to "
@@ -544,14 +544,14 @@ final class ShieldBreak {
         if (minecraft.player != null && heldSlot != previousSlot) {
             swapBack(minecraft);
         }
-        SpearLog.log("shield break: cancelled (" + reason + ") on " + target.getName().getString()
+        SpearLog.log("auto stun: cancelled (" + reason + ") on " + target.getName().getString()
                 + " after " + (nowMs() - startedMs) + " ms, axe hits " + hitsDone);
         lastPress = "cancelled after " + (nowMs() - startedMs) + " ms";
         lastResult = reason;
         lastResultGood = false;
         lastPressMs = nowMs();
         target = null;
-        MinecraftSpearDash.setStatus(reason);
+        SpearDash.setStatus(reason);
     }
 
     private static void swapBack(Minecraft minecraft) {
@@ -560,7 +560,7 @@ final class ShieldBreak {
 
     private static void select(Minecraft minecraft, int slot) {
         minecraft.player.getInventory().setSelectedSlot(slot);
-        MinecraftSpearDash.sendSelectedSlot(minecraft, false);
+        SpearDash.sendSelectedSlot(minecraft, false);
         heldSlot = slot;
     }
 
@@ -625,16 +625,16 @@ final class ShieldBreak {
         breaksLanded++;
         lastResult = "shield down in " + afterMs + " ms";
         lastResultGood = true;
-        MinecraftSpearDash.setStatus("Shield down (" + breaksLanded + "/" + breaksTried + ")");
-        SpearLog.log("shield break result: shield went down " + afterMs + " ms after the break");
+        SpearDash.setStatus("Shield down (" + breaksLanded + "/" + breaksTried + ")");
+        SpearLog.log("auto stun result: shield went down " + afterMs + " ms after the break");
     }
 
     private static void missed(String status, String logged) {
         watchingResult = false;
         lastResult = status.toLowerCase(java.util.Locale.ROOT);
         lastResultGood = false;
-        MinecraftSpearDash.setStatus(status + " (" + breaksLanded + "/" + breaksTried + ")");
-        SpearLog.log("shield break result: " + logged);
+        SpearDash.setStatus(status + " (" + breaksLanded + "/" + breaksTried + ")");
+        SpearLog.log("auto stun result: " + logged);
     }
 
     /**
@@ -777,7 +777,7 @@ final class ShieldBreak {
                 + (shieldUpForHit(minecraft, entity) ? " (hit ok)" : "");
     }
 
-    /** Who the last Shield Break hit, and when (for Punish Alerts). */
+    /** Who the last Auto Stun hit, and when (for Combat Alerts). */
     static LivingEntity lastBroken() {
         return lastBroken;
     }
@@ -812,7 +812,7 @@ final class ShieldBreak {
     }
 
     static boolean hasAxe(Minecraft minecraft) {
-        return minecraft.player != null && findSlot(minecraft.player, ShieldBreak::disablesShields) >= 0;
+        return minecraft.player != null && findSlot(minecraft.player, AutoStun::disablesShields) >= 0;
     }
 
     private static boolean disablesShields(ItemStack stack) {

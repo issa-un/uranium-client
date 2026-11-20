@@ -8,14 +8,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 
 /**
- * Slam Steer: while you fall into a slam with a mace ready, holds your own movement keys
+ * Target Strafe: while you fall into a slam with a mace ready, holds your own movement keys
  * (W A S D) toward the player below you, so your air strafe carries you onto them instead
  * of past them. Plain vanilla air control: it only presses keys, it never turns your view
  * and never pushes you faster than your keys can. A key you are holding yourself always
  * wins on its axis (hold S to back off and it stops pushing forward). It lets go once you
  * are right above them, land, or they get away.
  */
-final class SlamSteer {
+final class TargetStrafe {
     private static final double MIN_FALL = 1.5;
     private static final double RANGE = 6;
     private static final double ON_TOP = 0.4;
@@ -24,7 +24,7 @@ final class SlamSteer {
     // Input loop only: whether our keys are down right now.
     private static boolean steering;
 
-    private SlamSteer() {}
+    private TargetStrafe() {}
 
     /** Called from the input loop. */
     static void update(Minecraft minecraft) {

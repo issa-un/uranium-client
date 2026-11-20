@@ -77,7 +77,7 @@ COMBAT
                   hit waits a new random time first (100 ms, then 142.1,
                   then ...) inside the Delay range, so no two hits come at
                   the same moment. Slams never wait (you'd land first).
-                  Auto: Hit only works while you look like you're
+                  Auto: Trigger Bot only works while you look like you're
                   fighting: a player is in front of you (close, near your
                   crosshair) and in the last 2.5 seconds you jumped,
                   switched hotbar slots, swung, got hit by a player or
@@ -99,7 +99,7 @@ COMBAT
   Hit Select      A slam you click while they're still immune from the last
                   hit would mostly be wasted. Hit Select holds that click and
                   sends it the moment their immunity ends.
-  Slam Follow-up  Slam, then sword: the moment their immunity from your slam
+  Slam Combo      Slam, then sword: the moment their immunity from your slam
                   ends, it pulls out your sword, hits, and goes back.
   Target Strafe   While you fall into a slam, holds W A S D toward the player
                   below you so you land on them, not past them. Your own keys
@@ -149,7 +149,7 @@ COMBAT
   Elytra Swap     Swaps between elytra and chestplate on one key.
 
 CART (TNT minecarts)
-  High Tier       Right-click a block with a rail: it puts the rail down,
+  Crossbow Cart   Right-click a block with a rail: it puts the rail down,
                   puts a TNT minecart on it, lights the block your shot will
                   fly through (beside the rail or on its corner) with your
                   flint and steel, then pulls out your crossbow. Needs a rail and a TNT minecart in your hotbar;
@@ -178,15 +178,15 @@ CART (TNT minecarts)
                   and aims a little high for the arrow's drop.
                   While it's on, any crossbow in your hotbar that isn't
                   loaded gets a big red cover, so you load it in time (with
-                  Armor Slots' alerts on, the !!! over it does that instead).
+                  Armor HUD's alerts on, the !!! over it does that instead).
                     Chance: how often it acts (100% every time).
-                    Macro mode (same switch in High Tier and Low Tier,
-                    also used by Block): the module presses your own
+                    Macro mode (same switch in Crossbow Cart and Bow Cart,
+                    also used by Anti Cart): the module presses your own
                     keys, your hotbar number key and your right-click,
                     and the game itself does the switch and the click on
                     its next tick, just like your fingers. Nothing gets
                     sent by the module. Each press takes a game tick, so
-                    it is a bit slower. In High Tier your own right-click
+                    it is a bit slower. In Crossbow Cart your own right-click
                     goes to the game as a real click: it puts the rail
                     down (or, on a rail that's already there, just
                     clicks it) and the module carries on from there with
@@ -253,7 +253,7 @@ CART (TNT minecarts)
                     of, so it lands in that exact slot (any junk there goes
                     back into the inventory), then closes
                     the inventory.
-  Block           A TNT cart that isn't yours comes within Range: it puts
+  Anti Cart       A TNT cart that isn't yours comes within Range: it puts
                   blocks between you and it (End Stone first, it takes
                   blasts well, then obsidian, then any full block). It picks
                   the spots that hide the most of you from the blast (a cart
@@ -261,7 +261,7 @@ CART (TNT minecarts)
                   right in its line, not two beside it with a crack
                   between), takes the block out, turns your view smoothly
                   onto where it goes, places it and switches back. Blocks: how many (1-4). Your own
-                  carts from High Tier and Low Tier are left alone.
+                  carts from Crossbow Cart and Bow Cart are left alone.
                     Jump block: jump with a cart within Range and a block
                     goes under your feet too, with a calm look down and
                     back up.
@@ -269,7 +269,7 @@ CART (TNT minecarts)
                     range, red !!! hop at the right middle of your screen
                     with a tan arrow under them pointing to it, and how
                     many blocks away it is.
-  Low Tier        Fire your bow and it works out where the arrow will come
+  Bow Cart        Fire your bow and it works out where the arrow will come
                   down, then puts a rail and a TNT minecart there before it
                   lands. Your camera turns there in one smooth flick, like
                   your own hand, and it doesn't snap back. You can only
@@ -282,9 +282,9 @@ CART (TNT minecarts)
                     Smooth is one even turn; Stutter is quick jumps. Smooth
                     and Stutter end right on the spot.
                     Delay: how long it waits between the rail and the cart.
-                    Replenish: the same refill as High Tier, for rails and
+                    Replenish: the same refill as Crossbow Cart, for rails and
                     TNT carts.
-                    Auto reload: the same as High Tier's.
+                    Auto reload: the same as Crossbow Cart's.
                     Chance: how often it acts (100% every time).
                     Lowest draw: your bow lets go by itself the moment it is
                     drawn enough to shoot (4 ticks), so the arrow is slow and
@@ -317,8 +317,9 @@ UTILITY
   Clear Weather   No rain or thunder on your screen.
   Auto Respawn    Skips the death screen.
   Hit Sound       A ding when your hit lands.
-  Middle Click Friend   Middle-click a player to add them as a friend.
-                  Friends are never hit or targeted.
+  Middle Click Friend
+                  Middle-click a player to add them as a friend. Friends are
+                  never hit or targeted.
   Debug           Hidden: type "debug" in the menu search to find it. While
                   it's on, a badge in the top left shows Human % for the
                   last minute. Its screen lists every mouse move the
@@ -333,14 +334,14 @@ UTILITY
                   Replenish and the rest.
 
 HUD
-  Speed HUD       A speed ring above your hotbar.
+  Speedometer     A speed ring above your hotbar.
   Radar           Shows nearby players around your crosshair.
-  Landing         Shows the fall damage you'll take before you land.
-  Combat stats    Your ping, fall, shield timing and shield break results.
+  Fall Damage     Shows the fall damage you'll take before you land.
+  Combat Stats    Your ping, fall, shield timing and shield break results.
   Slam Meter      While you fall with a mace, shows under your crosshair how
                   hard the slam will hit them after their armor, and KILL or
                   POP when it's enough.
-  2AM             A quiet HUD for late sessions. Out of a fight it fades
+  Minimal HUD     A quiet HUD for late sessions. Out of a fight it fades
                   almost to nothing; it comes back the moment you hit, get
                   hit or draw a bow. Steel, cream and amber instead of bright
                   green, and it dims itself after midnight. It has:
@@ -351,7 +352,7 @@ HUD
                   - dots over players for every totem they popped: amber
                     this life, grey for lives before.
                   Only one alert shows at a time.
-  Armor Slots     Your four armor pieces in hotbar-style slots on the left of
+  Armor HUD       Your four armor pieces in hotbar-style slots on the left of
                   your hotbar (past the offhand slot), with durability bars.
                     Alerts (on by default):
                     three red !!! hop over anything that needs you: armor
@@ -363,23 +364,27 @@ HUD
                   them stays where it happened and floats up as it fades,
                   with "Name popped 3" over it: red for them, green for you.
                   The middle of your screen says who popped too.
-  Damage Particles  Old 1.8.9 style: every hit on a player throws a shower of
+  Damage Particles
+                  Old 1.8.9 style: every hit on a player throws a shower of
                   red -1s off them, one per point of damage, for about 2
                   seconds. Combos make a lot of them.
-  Punish Alerts   Shows when a nearby player is open: EATING (with the time
-                  left), POPPED a totem, or SHIELD DOWN after your Shield
-                  Break (with the seconds until they can block). Optional
-                  ping sound.
-  Wheels          A wheel floating above players' heads that turns one notch
+  Combat Alerts   Shows when a nearby player is open: EATING (with the time
+                  left), POPPED a totem, or SHIELD DOWN after your Auto Stun
+                  (with the seconds until they can block). Optional ping
+                  sound.
+  Hit Wheels      A wheel floating above players' heads that turns one notch
                   every time they get hit. Choose who gets one and whether it
                   replaces their helmet. Only you can see it.
-  Hide other clients   Hides the module lists other clients draw on screen.
+  Vanilla HUD     Shows only the game's own HUD: hides Uranium and every
+                  other mod.
+  Hide Other Clients
+                  Hides the module lists other clients draw on screen.
 
 
 GOOD TO KNOW
 - No Fabric API? Everything still works except the HUD tab.
 - On 26.2 and 26.3: install Fabric Loader and Fabric API for that version.
-  Reach Swap and Wheels only work on 26.1.2 (they switch themselves off).
+  Reach Swap and Hit Wheels only work on 26.1.2 (they switch themselves off).
 - Something didn't work? Every mace hit, dash, shield break and pearl catch
   writes a line in .minecraft\logs\spear-injector.log explaining what
   happened.

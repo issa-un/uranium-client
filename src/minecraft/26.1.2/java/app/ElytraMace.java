@@ -84,13 +84,13 @@ final class ElytraMace {
         }
         double distance = player.getEyePosition().distanceTo(looked.getBoundingBox().getCenter());
         double speed = player.getDeltaMovement().length();
-        double leadTicks = ShieldBreak.pingMs(minecraft) / 50.0 + SPARE_TICKS;
+        double leadTicks = AutoStun.pingMs(minecraft) / 50.0 + SPARE_TICKS;
         if (distance > REACH + speed * leadTicks) {
             return;
         }
         int slot = swapSlot(player);
         if (slot < 0) {
-            MinecraftSpearDash.setStatus("No chestplate or free hotbar slot");
+            SpearDash.setStatus("No chestplate or free hotbar slot");
             lastDoneMs = now;
             return;
         }
@@ -100,11 +100,11 @@ final class ElytraMace {
         droppedMs = now;
         target = looked;
         targetHurt = looked.hurtTime;
-        MinecraftSpearDash.setStatus("Elytra off");
+        SpearDash.setStatus("Elytra off");
         SpearLog.log(String.format(Locale.ROOT,
                 "elytra mace: elytra off %.1f blocks from %s, %.1f blocks above, falling %.2f/tick, ping %d ms",
                 distance, looked.getName().getString(), player.getY() - looked.getY(), fall,
-                ShieldBreak.pingMs(minecraft)));
+                AutoStun.pingMs(minecraft)));
     }
 
     /** After the drop: the hit landing, a miss, or the ground ends it; then maybe glide again. */
@@ -137,7 +137,7 @@ final class ElytraMace {
         ClientPacketListener connection = minecraft.getConnection();
         if (connection != null && player.tryToStartFallFlying()) {
             connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.START_FALL_FLYING));
-            MinecraftSpearDash.setStatus("Gliding again");
+            SpearDash.setStatus("Gliding again");
         }
     }
 

@@ -168,33 +168,33 @@ final class MinecraftInputController {
             ownScrollCallback = null;
             previousScrollCallback = null;
         }
-        MinecraftSpearDash.reset(minecraft);
-        ShieldBreak.reset(minecraft);
+        SpearDash.reset(minecraft);
+        AutoStun.reset(minecraft);
         MaceSwap.reset();
         MaceLog.reset();
-        Hit.reset();
-        AimHelper.reset();
+        TriggerBot.reset();
+        AimAssist.reset();
         AimRecorder.stop();
-        CartHighTier.reset();
-        CartLowTier.reset();
+        CrossbowCart.reset();
+        BowCart.reset();
         CartRefill.reset();
         PopChams.reset();
         CrossbowReload.reset(minecraft);
         DamageParticles.reset();
-        NightShift.reset();
-        ArmorSlots.reset();
-        CartBlock.reset();
+        MinimalHud.reset();
+        ArmorHud.reset();
+        AntiCart.reset();
         PlayStyle.reset();
         SlamMeter.reset();
-        SlamSteer.reset(minecraft);
-        SlamSaver.reset();
-        KnockbackSteer.reset();
-        SlamFollowUp.reset();
-        PunishAlerts.reset();
-        WorldSlash.reset();
-        Wheels.reset(minecraft);
+        TargetStrafe.reset(minecraft);
+        HitSelect.reset();
+        KnockbackDisplacement.reset();
+        SlamCombo.reset();
+        CombatAlerts.reset();
+        KillAura.reset();
+        HitWheels.reset(minecraft);
         WebEscape.reset();
-        WebTrap.reset();
+        AutoWeb.reset();
         MlgWater.reset();
         WindClutch.reset();
         ElytraMace.reset();
@@ -207,7 +207,7 @@ final class MinecraftInputController {
         Utilities.reset(minecraft);
         QuickThrow.reset(minecraft);
         PearlCatch.reset(minecraft);
-        ChestSwap.reset(minecraft);
+        ElytraSwap.reset(minecraft);
         AutoEat.reset(minecraft);
         AutoFish.reset();
         WTap.reset(minecraft);
@@ -272,44 +272,44 @@ final class MinecraftInputController {
                 }
             }
             // A hotbar key the game has not acted on yet (it does on its next tick); a
-            // right-click right after it counts with that slot in hand (Cart High Tier).
+            // right-click right after it counts with that slot in hand (Crossbow Cart).
             for (int slot = 0; slot < 9; slot++) {
                 if (minecraft.options.keyHotbarSlots[slot].matches(event)) {
-                    CartHighTier.onHotbarPress(slot);
+                    CrossbowCart.onHotbarPress(slot);
                 }
             }
             // The attack key can be rebound to the keyboard.
             boolean consumed = minecraft.options.keyAttack.matches(event) && attackClick(minecraft);
-            if (MinecraftSpearDash.mouseButton() < 0 && key >= 0 && key == MinecraftSpearDash.keyCode()
+            if (SpearDash.mouseButton() < 0 && key >= 0 && key == SpearDash.keyCode()
                     && dash(minecraft)) {
                 consumed = true;
             }
-            if (!consumed && ShieldBreak.mouseButton() < 0 && key >= 0 && key == ShieldBreak.keyCode()
+            if (!consumed && AutoStun.mouseButton() < 0 && key >= 0 && key == AutoStun.keyCode()
                     && shieldBreak(minecraft)) {
                 consumed = true;
             }
-            // Web Trap starts unbound (-1), which is also the code of keys GLFW does not know.
-            if (!consumed && WebTrap.mouseButton() < 0 && key >= 0 && key == WebTrap.keyCode()
-                    && WebTrap.activate(minecraft)) {
+            // Auto Web starts unbound (-1), which is also the code of keys GLFW does not know.
+            if (!consumed && AutoWeb.mouseButton() < 0 && key >= 0 && key == AutoWeb.keyCode()
+                    && AutoWeb.activate(minecraft)) {
                 consumed = true;
             }
             if (!consumed && QuickThrow.mouseButton() < 0 && key >= 0 && key == QuickThrow.keyCode()
                     && QuickThrow.activate(minecraft)) {
                 consumed = true;
             }
-            if (AimHelper.mouseButton() < 0 && key >= 0 && key == AimHelper.keyCode()) {
-                AimHelper.onKey(minecraft);
+            if (AimAssist.mouseButton() < 0 && key >= 0 && key == AimAssist.keyCode()) {
+                AimAssist.onKey(minecraft);
             }
             if (!consumed && PearlCatch.mouseButton() < 0 && key >= 0 && key == PearlCatch.keyCode()
                     && PearlCatch.activate(minecraft)) {
                 consumed = true;
             }
             if (!consumed && minecraft.options.keyUse.matches(event)
-                    && (PearlCatch.onUseClick(minecraft) || CartHighTier.onUseClick(minecraft))) {
+                    && (PearlCatch.onUseClick(minecraft) || CrossbowCart.onUseClick(minecraft))) {
                 consumed = true;
             }
-            if (!consumed && ChestSwap.mouseButton() < 0 && key >= 0 && key == ChestSwap.keyCode()
-                    && ChestSwap.activate(minecraft)) {
+            if (!consumed && ElytraSwap.mouseButton() < 0 && key >= 0 && key == ElytraSwap.keyCode()
+                    && ElytraSwap.activate(minecraft)) {
                 consumed = true;
             }
             // A hotbar key the game will act on is your own pick; the swap-back watch leaves it.
@@ -336,33 +336,33 @@ final class MinecraftInputController {
             }
             for (int slot = 0; slot < 9; slot++) {
                 if (minecraft.options.keyHotbarSlots[slot].matchesMouse(event)) {
-                    CartHighTier.onHotbarPress(slot);
+                    CrossbowCart.onHotbarPress(slot);
                 }
             }
             boolean consumed = minecraft.options.keyAttack.matchesMouse(event) && attackClick(minecraft);
-            if (button == MinecraftSpearDash.mouseButton() && dash(minecraft)) {
+            if (button == SpearDash.mouseButton() && dash(minecraft)) {
                 consumed = true;
             }
-            if (!consumed && button == ShieldBreak.mouseButton() && shieldBreak(minecraft)) {
+            if (!consumed && button == AutoStun.mouseButton() && shieldBreak(minecraft)) {
                 consumed = true;
             }
-            if (!consumed && button == WebTrap.mouseButton() && WebTrap.activate(minecraft)) {
+            if (!consumed && button == AutoWeb.mouseButton() && AutoWeb.activate(minecraft)) {
                 consumed = true;
             }
             if (!consumed && button == QuickThrow.mouseButton() && QuickThrow.activate(minecraft)) {
                 consumed = true;
             }
-            if (button == AimHelper.mouseButton()) {
-                AimHelper.onKey(minecraft);
+            if (button == AimAssist.mouseButton()) {
+                AimAssist.onKey(minecraft);
             }
             if (!consumed && button == PearlCatch.mouseButton() && PearlCatch.activate(minecraft)) {
                 consumed = true;
             }
             if (!consumed && minecraft.options.keyUse.matchesMouse(event)
-                    && (PearlCatch.onUseClick(minecraft) || CartHighTier.onUseClick(minecraft))) {
+                    && (PearlCatch.onUseClick(minecraft) || CrossbowCart.onUseClick(minecraft))) {
                 consumed = true;
             }
-            if (!consumed && button == ChestSwap.mouseButton() && ChestSwap.activate(minecraft)) {
+            if (!consumed && button == ElytraSwap.mouseButton() && ElytraSwap.activate(minecraft)) {
                 consumed = true;
             }
             if (!consumed && button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE && Utilities.middleClick(minecraft)) {
@@ -392,7 +392,7 @@ final class MinecraftInputController {
     }
 
     /**
-     * Your attack click: a Shield Break on a target blocking toward you, else a Mace Swap
+     * Your attack click: a Auto Stun on a target blocking toward you, else a Mace Swap
      * hit. True if one of them made the hit, so the game must not also hit. Otherwise Auto
      * Weapon may switch to a weapon first, and the game makes the hit with it (or, with its
      * delays on, Auto Weapon makes the hit itself after them).
@@ -400,13 +400,13 @@ final class MinecraftInputController {
     private static boolean attackClick(Minecraft minecraft) {
         WTap.onAttackClick(minecraft);
         Utilities.onAttackClick(minecraft);
-        return ShieldBreak.handleAttackClick(minecraft) || SlamSaver.onAttackClick(minecraft)
+        return AutoStun.handleAttackClick(minecraft) || HitSelect.onAttackClick(minecraft)
                 || ReachSwap.handleAttackClick(minecraft) || AutoWeapon.onAttackClick(minecraft)
-                || KnockbackSteer.onAttackClick(minecraft);
+                || KnockbackDisplacement.onAttackClick(minecraft);
     }
 
     private static boolean shieldBreak(Minecraft minecraft) {
-        return Mc.screen(minecraft) == null && ShieldBreak.activate(minecraft);
+        return Mc.screen(minecraft) == null && AutoStun.activate(minecraft);
     }
 
     private static boolean isHotbarButton(Minecraft minecraft, MouseButtonEvent event) {
@@ -443,8 +443,8 @@ final class MinecraftInputController {
 
     /** True if a dash went out (or is levelling first). */
     private static boolean dash(Minecraft minecraft) {
-        return Mc.screen(minecraft) == null && MinecraftSpearDash.hasLungeSpearInHotbar(minecraft)
-                && MinecraftSpearDash.activate(minecraft);
+        return Mc.screen(minecraft) == null && SpearDash.hasLungeSpearInHotbar(minecraft)
+                && SpearDash.activate(minecraft);
     }
 
     /**
@@ -498,39 +498,39 @@ final class MinecraftInputController {
         lastTickMs = System.nanoTime() / 1_000_000;
         SpearSettings.followServer(minecraft);
         guard("AttackHook", () -> AttackHook.update(minecraft));
-        guard("Spear Dash ready sound", () -> MinecraftSpearDash.updateReadySound(minecraft));
+        guard("Spear Dash ready sound", () -> SpearDash.updateReadySound(minecraft));
         guard("switch-back watch", () -> enforceSwitchBack(minecraft));
-        guard("Spear Dash", () -> MinecraftSpearDash.updateDash(minecraft, true));
-        guard("ShieldBreak", () -> ShieldBreak.update(minecraft));
+        guard("Spear Dash", () -> SpearDash.updateDash(minecraft, true));
+        guard("AutoStun", () -> AutoStun.update(minecraft));
         guard("AutoWeapon", () -> AutoWeapon.update(minecraft));
         guard("ReachSwap", () -> ReachSwap.update(minecraft));
         guard("QuickThrow", () -> QuickThrow.update(minecraft));
         guard("PearlCatch", () -> PearlCatch.update(minecraft));
         guard("MaceLog", () -> MaceLog.update(minecraft));
-        guard("Hit", () -> Hit.update(minecraft));
-        guard("AimHelper", () -> AimHelper.update(minecraft));
-        guard("WorldSlash", () -> WorldSlash.update(minecraft));
-        guard("SlamSteer", () -> SlamSteer.update(minecraft));
-        guard("SlamSaver", () -> SlamSaver.update(minecraft));
-        guard("KnockbackSteer", () -> KnockbackSteer.update(minecraft));
-        guard("CartBlock", () -> CartBlock.update(minecraft));
-        guard("SlamFollowUp", () -> SlamFollowUp.update(minecraft));
-        guard("PunishAlerts", () -> PunishAlerts.update(minecraft));
+        guard("TriggerBot", () -> TriggerBot.update(minecraft));
+        guard("AimAssist", () -> AimAssist.update(minecraft));
+        guard("KillAura", () -> KillAura.update(minecraft));
+        guard("TargetStrafe", () -> TargetStrafe.update(minecraft));
+        guard("HitSelect", () -> HitSelect.update(minecraft));
+        guard("KnockbackDisplacement", () -> KnockbackDisplacement.update(minecraft));
+        guard("AntiCart", () -> AntiCart.update(minecraft));
+        guard("SlamCombo", () -> SlamCombo.update(minecraft));
+        guard("CombatAlerts", () -> CombatAlerts.update(minecraft));
         guard("CartMacro", () -> Cart.macroTick(minecraft));
-        guard("CartHighTier", () -> CartHighTier.update(minecraft));
-        guard("CartLowTier", () -> {
-            CartLowTier.update(minecraft);
-            CartLowTier.frame(minecraft);
+        guard("CrossbowCart", () -> CrossbowCart.update(minecraft));
+        guard("BowCart", () -> {
+            BowCart.update(minecraft);
+            BowCart.frame(minecraft);
         });
         guard("CartRefill", () -> CartRefill.update(minecraft));
         guard("PopChams", () -> PopChams.update(minecraft));
         guard("CrossbowReload", () -> CrossbowReload.update(minecraft));
         guard("DamageParticles", () -> DamageParticles.update(minecraft));
-        guard("NightShift", () -> NightShift.update(minecraft));
+        guard("MinimalHud", () -> MinimalHud.update(minecraft));
         guard("PlayStyle", () -> PlayStyle.update(minecraft));
         guard("InventoryDump", () -> InventoryDump.update(minecraft));
-        guard("Wheels", () -> Wheels.update(minecraft));
-        guard("ChestSwap", () -> ChestSwap.update(minecraft));
+        guard("HitWheels", () -> HitWheels.update(minecraft));
+        guard("ElytraSwap", () -> ElytraSwap.update(minecraft));
         guard("WebEscape", () -> WebEscape.update(minecraft));
         guard("MlgWater", () -> MlgWater.update(minecraft));
         guard("WindClutch", () -> WindClutch.update(minecraft));
@@ -554,32 +554,32 @@ final class MinecraftInputController {
             numpad8WasDown = numpad8Down;
         }
 
-        boolean bindingUsesEvents = MinecraftSpearDash.mouseButton() < 0
+        boolean bindingUsesEvents = SpearDash.mouseButton() < 0
                 ? keyEventsInstalled
                 : mouseEventsInstalled;
         boolean dashDown = !bindingUsesEvents && isBindingDown(minecraft,
-                MinecraftSpearDash.keyCode(), MinecraftSpearDash.mouseButton());
+                SpearDash.keyCode(), SpearDash.mouseButton());
         if (dashDown && !dashKeyWasDown) {
             dash(minecraft);
         }
         dashKeyWasDown = dashDown;
 
-        boolean shieldUsesEvents = ShieldBreak.mouseButton() < 0
+        boolean shieldUsesEvents = AutoStun.mouseButton() < 0
                 ? keyEventsInstalled
                 : mouseEventsInstalled;
         boolean shieldDown = !shieldUsesEvents && isBindingDown(minecraft,
-                ShieldBreak.keyCode(), ShieldBreak.mouseButton());
+                AutoStun.keyCode(), AutoStun.mouseButton());
         if (shieldDown && !shieldKeyWasDown) {
             shieldBreak(minecraft);
         }
         shieldKeyWasDown = shieldDown;
 
-        boolean webTrapBound = WebTrap.keyCode() >= 0 || WebTrap.mouseButton() >= 0;
-        boolean webTrapUsesEvents = WebTrap.mouseButton() < 0 ? keyEventsInstalled : mouseEventsInstalled;
+        boolean webTrapBound = AutoWeb.keyCode() >= 0 || AutoWeb.mouseButton() >= 0;
+        boolean webTrapUsesEvents = AutoWeb.mouseButton() < 0 ? keyEventsInstalled : mouseEventsInstalled;
         boolean webTrapDown = webTrapBound && !webTrapUsesEvents && isBindingDown(minecraft,
-                WebTrap.keyCode(), WebTrap.mouseButton());
+                AutoWeb.keyCode(), AutoWeb.mouseButton());
         if (webTrapDown && !webTrapKeyWasDown) {
-            WebTrap.activate(minecraft);
+            AutoWeb.activate(minecraft);
         }
         webTrapKeyWasDown = webTrapDown;
     }
@@ -621,7 +621,7 @@ final class MinecraftInputController {
         if (guardSpearSlot < 0) {
             return;
         }
-        if (MinecraftSpearDash.isDashing()) {
+        if (SpearDash.isDashing()) {
             return; // the spear in your hand is a dash of ours, still showing
         }
         if (minecraft.player == null || userPickedSlot
@@ -641,7 +641,7 @@ final class MinecraftInputController {
             return;
         }
         if (guardFixes >= MAX_GUARD_FIXES) {
-            MinecraftSpearDash.alert("Server keeps spear!");
+            SpearDash.alert("Server keeps spear!");
             guardSpearSlot = -1;
             return;
         }
@@ -649,8 +649,8 @@ final class MinecraftInputController {
         SpearLog.log("guard: server put the spear back " + afterMs + " ms after the dash"
                 + " (fix " + guardFixes + " of " + MAX_GUARD_FIXES + ")");
         minecraft.player.getInventory().setSelectedSlot(guardPreviousSlot);
-        MinecraftSpearDash.sendSelectedSlot(minecraft, true);
-        MinecraftSpearDash.alert("Server undid swap, fixed");
+        SpearDash.sendSelectedSlot(minecraft, true);
+        SpearDash.alert("Server undid swap, fixed");
     }
 
     private static boolean isBindingDown(Minecraft minecraft, int keyCode, int mouseButton) {

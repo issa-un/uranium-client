@@ -10,17 +10,17 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.EntityHitResult;
 
 /**
- * Hit: see hitbox, hit. Something living under your crosshair and in reach (not a friend or
+ * Trigger Bot: see hitbox, hit. Something living under your crosshair and in reach (not a friend or
  * an armor stand) gets hit, as soon as a hit will count: not still immune from its last hit,
  * and either your attack cooldown full or you falling into a mace slam (the slam's bonus is
  * never cut by the cooldown). A slam that needs Mace Swap waits until the fall is long
  * enough for Mace Swap to bring the mace out (MaceSwap.WORTH_FALL); hitting sooner would
  * go out with what you hold and leave the target immune to the real slam. The hit goes out like your own click, so Mace Swap, Auto Weapon
- * and Shield Break's Any attack trigger still act on it. Chance is how many of those moments
+ * and Auto Stun's Any attack trigger still act on it. Chance is how many of those moments
  * it takes; a moment it skips waits SKIP_MS before the next try. Random delay holds each
  * plain hit a new random time first, so no two hits come the same ms after they could.
  */
-final class Hit {
+final class TriggerBot {
     // A plain hit waits for this much cooldown; a slam goes at once.
     private static final float FULL = 0.95F;
     // A slam on a target we slammed this recently would land in its immunity.
@@ -31,7 +31,7 @@ final class Hit {
     static final Num DELAY = Num.ms(80, 160, 400);
     private static volatile boolean enabled;
     private static volatile boolean randomDelay;
-    // Auto: Hit only acts while you look like you're fighting (see fighting()).
+    // Auto: Trigger Bot only acts while you look like you're fighting (see fighting()).
     private static volatile boolean auto;
     // How long a sign of a fight keeps Auto on after it, so it doesn't flicker.
     private static final long SIGN_MS = 2500;
@@ -55,7 +55,7 @@ final class Hit {
     private static int lastSlamTargetId = -1;
     private static long lastSlamMs;
 
-    private Hit() {}
+    private TriggerBot() {}
 
     /** Called from the input loop: one hit if this is a moment where it counts. */
     static void update(Minecraft minecraft) {
@@ -66,8 +66,8 @@ final class Hit {
         }
         if (!enabled || player == null || minecraft.gameMode == null || Mc.screen(minecraft) != null
                 || !SpearSettings.combatAllowed(minecraft) || player.isUsingItem()
-                || ShieldBreak.isRunning() || PearlCatch.isRunning()
-                || CartHighTier.isBusy() || CartLowTier.isBusy() || CartBlock.isBusy() || CartRefill.isBusy()) {
+                || AutoStun.isRunning() || PearlCatch.isRunning()
+                || CrossbowCart.isBusy() || BowCart.isBusy() || AntiCart.isBusy() || CartRefill.isBusy()) {
             return;
         }
         if (!(minecraft.hitResult instanceof EntityHitResult result)
@@ -112,7 +112,7 @@ final class Hit {
 
     /**
      * Whether a hit on the target would count right now: -1 not yet, PLAIN for a normal hit
-     * with a full cooldown, SLAM for a mace slam. Shared with World Slash.
+     * with a full cooldown, SLAM for a mace slam. Shared with Kill Aura.
      */
     static int ready(Minecraft minecraft, LocalPlayer player, LivingEntity target, long now) {
         boolean holdsMace = player.getMainHandItem().is(Items.MACE);
@@ -124,11 +124,11 @@ final class Hit {
         if (slam) {
             return target.getId() == lastSlamTargetId && now - lastSlamMs < OWN_SLAM_IMMUNITY_MS ? -1 : SLAM;
         }
-        return ShieldBreak.immuneWhenHitArrives(minecraft, target) || player.getAttackStrengthScale(0.5F) < FULL
+        return AutoStun.immuneWhenHitArrives(minecraft, target) || player.getAttackStrengthScale(0.5F) < FULL
                 ? -1 : PLAIN;
     }
 
-    /** One hit, like your own click (so Mace Swap, Auto Weapon and Shield Break act on it). */
+    /** One hit, like your own click (so Mace Swap, Auto Weapon and Auto Stun act on it). */
     static void strike(Minecraft minecraft, LocalPlayer player, LivingEntity target, boolean slam, long now) {
         Debug.click(slam ? "slam hit" : "hit");
         minecraft.gameMode.attack(player, target);
@@ -187,10 +187,10 @@ final class Hit {
         boolean fighting = !windCharge && now - lookedMs < SIGN_MS && !signs.isEmpty();
         if (fighting != wasFighting) {
             wasFighting = fighting;
-            SpearLog.log("hit auto: " + (fighting ? "on (" + String.join(", ", signs) + ")"
+            SpearLog.log("trigger bot auto: " + (fighting ? "on (" + String.join(", ", signs) + ")"
                     : "off (" + (windCharge ? "wind charge in hand" : now - lookedMs >= SIGN_MS
                     ? "nobody in front of you" : "no signs of a fight") + ")"));
-            MinecraftSpearDash.setStatus(fighting ? "Hit on" : "Hit off");
+            SpearDash.setStatus(fighting ? "Trigger Bot on" : "Trigger Bot off");
         }
         return fighting;
     }

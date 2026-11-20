@@ -5,7 +5,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 
 /**
- * Turns your real view (the camera) for Web Escape, MLG Water, Clutch and Web Trap: they
+ * Turns your real view (the camera) for Web Escape, MLG Water, Clutch and Auto Web: they
  * snap it to where they place, the game sends that view like any mouse movement, and once
  * they are done it turns back to where you were looking with a hand-like flick (see
  * HumanAim), not a snap. If you move the mouse while it is turned or turning back, the view

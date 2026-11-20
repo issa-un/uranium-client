@@ -12,12 +12,12 @@ import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.equipment.Equippable;
 
 /**
- * Chest Swap: on its bind, swaps what you wear on your chest between an elytra and the best
+ * Elytra Swap: on its bind, swaps what you wear on your chest between an elytra and the best
  * chestplate in your hotbar, the way right-clicking the hotbar item puts it on (the worn one
  * goes to that hotbar slot), then switches back to what you held. Swap delay, Use delay
  * and Swap back put a random pause in their range before each step.
  */
-final class ChestSwap {
+final class ElytraSwap {
     private static volatile boolean enabled;
     private static volatile int keyCode = -1;
     private static volatile int mouseButton = -1;
@@ -27,7 +27,7 @@ final class ChestSwap {
     static final Num SWAP_BACK = Num.ms(0, 0, 500);
     private static final SwapAction ACTION = new SwapAction();
 
-    private ChestSwap() {}
+    private ElytraSwap() {}
 
     /** Runs from its bind; true if it swapped, so the press is used up. */
     static boolean activate(Minecraft minecraft) {
@@ -54,7 +54,7 @@ final class ChestSwap {
             }
         }
         if (slot < 0) {
-            MinecraftSpearDash.setStatus(wearingElytra ? "No chestplate in hotbar" : "No elytra in hotbar");
+            SpearDash.setStatus(wearingElytra ? "No chestplate in hotbar" : "No elytra in hotbar");
             return false;
         }
         ACTION.start(minecraft, slot, true, SWAP_DELAY, USE_DELAY, SWAP_BACK, game -> {
@@ -63,8 +63,8 @@ final class ChestSwap {
         }, (game, worn, from, used) -> {
             MinecraftInputController.stopGuard();
             if (worn) {
-                MinecraftSpearDash.setStatus(wearingElytra ? "Chestplate on" : "Elytra on");
-                SpearLog.log("chest swap: " + (wearingElytra ? "chestplate" : "elytra") + " from hotbar " + (used + 1));
+                SpearDash.setStatus(wearingElytra ? "Chestplate on" : "Elytra on");
+                SpearLog.log("elytra swap: " + (wearingElytra ? "chestplate" : "elytra") + " from hotbar " + (used + 1));
             }
         });
         return true;
