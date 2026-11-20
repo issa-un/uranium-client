@@ -484,7 +484,7 @@ final class ProcessPickerWindow {
         return label;
     }
 
-    /** The build's tag from the jar name (minecraft-gui-injector-<tag>.jar). */
+    /** The build's tag from the jar name (Uranium-<tag>.jar). */
     private String version() {
         String name = agentJar.getFileName().toString();
         int dash = name.lastIndexOf('-');
@@ -670,9 +670,9 @@ final class ProcessPickerWindow {
         } catch (URISyntaxException | NullPointerException ignored) {
         }
         // Running from the IDE: use the newest built injector jar.
-        Path fallback = Path.of("build", "libs", "minecraft-gui-injector.jar").toAbsolutePath();
+        Path fallback = Path.of("build", "libs", "Uranium.jar").toAbsolutePath();
         try (var jars = Files.list(Path.of("build", "libs"))) {
-            return jars.filter(jar -> jar.getFileName().toString().startsWith("minecraft-gui-injector-"))
+            return jars.filter(jar -> Updater.isBuild(jar.getFileName().toString()))
                     .max(Comparator.comparingLong(jar -> jar.toFile().lastModified()))
                     .map(Path::toAbsolutePath)
                     .orElse(fallback);

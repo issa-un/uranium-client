@@ -39,6 +39,11 @@ final class Updater {
 
     private Updater() {}
 
+    /** A Uranium build jar: Uranium-<tag>.jar (minecraft-gui-injector-<tag>.jar before the rename). */
+    static boolean isBuild(String name) {
+        return (name.startsWith("Uranium-") || name.startsWith("minecraft-gui-injector-")) && name.endsWith(".jar");
+    }
+
     /** The latest release on GitHub; throws with a plain reason if it can't be read. */
     static Release latest() throws IOException, InterruptedException {
         HttpResponse<String> response = HTTP.send(HttpRequest.newBuilder(
@@ -61,8 +66,9 @@ final class Updater {
         Object assets = json.get("assets");
         if (assets instanceof List<?> list) {
             for (Object asset : list) {
-                if (asset instanceof Map<?, ?> map && map.get("name") instanceof String name
-                        && name.startsWith("minecraft-gui-injector-") && name.endsWith(".jar")) {
+                // Uranium-<tag>.jar, or the old-name copy if that's all there is
+                if (asset instanceof Map<?, ?> map && map.get("name") instanceof String name && isBuild(name)
+                        && (jarName == null || name.startsWith("Uranium-"))) {
                     jarName = name;
                     jarUrl = (String) map.get("browser_download_url");
                     jarSize = map.get("size") instanceof Number size ? size.longValue() : 0;

@@ -36,7 +36,7 @@ public final class MinecraftProcessService {
         try {
             String absoluteJarPath = agentJar.toAbsolutePath().toString();
             Path statusFile = Path.of(System.getProperty("java.io.tmpdir"),
-                    "minecraft-gui-agent-" + process.pid() + ".log");
+                    "uranium-agent-" + process.pid() + ".log");
             Files.deleteIfExists(statusFile);
             try {
                 virtualMachine.loadAgent(absoluteJarPath,

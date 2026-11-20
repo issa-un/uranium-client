@@ -149,6 +149,7 @@ final class VelocityHud {
         if (!active) {
             return;
         }
+        HudFilter.ownDraw(true);
         try {
             draw(graphics, deltaTracker);
         } catch (RuntimeException error) {
@@ -157,6 +158,8 @@ final class VelocityHud {
                 drawFailed = true;
                 SpearLog.log("hud: drawing failed, skipped this frame: " + error);
             }
+        } finally {
+            HudFilter.ownDraw(false);
         }
     }
 

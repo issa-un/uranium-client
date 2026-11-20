@@ -51,8 +51,9 @@ public final class HudFilter implements ClassFileTransformer {
                     "text", "centeredText", "textWithWordWrap", "textWithBackdrop", "blit", "blitSprite",
                     "item", "fakeItem", "itemDecorations", "map", "entity", "skin", "book", "bannerPattern",
                     "sign"),
-            RENDER_STATE, Set.of("addItem", "addText", "addPicturesInPictureState", "addGuiElement",
-                    "addBlitToCurrentLayer", "addGlyphToCurrentLayer"));
+            // Not the per-letter and per-image-piece adds: those only happen inside a text or
+            // image draw already checked, and checking each letter cost a lot of frame time.
+            RENDER_STATE, Set.of("addItem", "addText", "addPicturesInPictureState", "addGuiElement"));
     // Code from these is the game, the JDK or Uranium.
     private static final String[] GAME_PACKAGES = {"net.minecraft.", "com.mojang.", "java.", "javax.", "jdk.",
             "sun.", "com.sun.", "org.joml.", "it.unimi.", "org.lwjgl.", "net.fabricmc.", "org.spongepowered.",
@@ -101,13 +102,22 @@ public final class HudFilter implements ClassFileTransformer {
         }
     }
 
+    // True while Uranium itself draws (its HUD, its menu): nothing to check then. Render thread.
+    private static boolean ownDraw;
+
+    /** Uranium starts drawing (true) or is done (false): its own draws skip the check. */
+    static void ownDraw(boolean drawing) {
+        ownDraw = drawing;
+    }
+
     /** Called from the rewritten drawing methods: true to skip this draw. */
     public static boolean skip() {
-        if (!enabled && !hideAll) {
+        if (!enabled && !hideAll || ownDraw) {
             return false;
         }
         try {
-            if (System.nanoTime() / 1_000_000 < traceUntilMs && TRACED.size() < TRACE_LIMIT) {
+            // The who-draws diagnostics cost a stack walk per draw: only with Debug on.
+            if (Debug.isEnabled() && System.nanoTime() / 1_000_000 < traceUntilMs && TRACED.size() < TRACE_LIMIT) {
                 WALKER.walk(HudFilter::trace);
             }
             return WALKER.walk(HudFilter::fromOtherClientOnHud);

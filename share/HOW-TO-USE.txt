@@ -109,28 +109,16 @@ COMBAT
                   crosshair is really on them, after a human reaction delay.
                   Settings: Range, Rotation speed, FOV, Reaction, Chance,
                   Mobs too.
-  Aim Assist      Hold Left Alt (change it, or pick Toggle / Always, in the
-                  menu) and your aim turns onto the player nearest your
-                  crosshair, with any item in your hand. Aim mode:
-                    Simple  speeds up, then eases onto them. Speed is a
-                            range: each target gets its own top speed.
-                    Wind    copies Doomsday's aim, measured from a
-                            recording: a small nudge, then one flick
-                            nearly all the way (Snap), then it lets go
-                            for a moment. A step every game tick (Step
-                            every). The sharpest mode, and the easiest
-                            for an anticheat to spot.
-                    Human   reacts like a person: aims where they were a
-                            moment ago (Reaction), flicks a little past on
-                            big turns and comes back (Overshoot).
-                  It sticks to one player until another is clearly nearer
-                  your crosshair. Prediction aims ahead of a moving player
-                  (0% is smoothest). Vertical aim off turns you only left
-                  and right. Also: Range, FOV, Aim at (Auto / Head /
-                  Center / Feet), Ignore mouse input, Check line of sight,
-                  Aim while blocking, Ignore invisible, Ignore creative.
-                  Off on the ground unless Ground too is on.
-                  While it's on, your spear's hotbar slot glows gold.
+  Aim Assist      Locks onto the torso of the nearest player you can see,
+                  even behind you (who's nearest your crosshair first), and stays
+                  locked wherever they go, until you yank your mouse away
+                  hard. Small mouse moves don't break it. It lets go when
+                  they die, get far away or hide behind a wall, and holds
+                  off while you eat. While locked, your spear's hotbar slot
+                  glows gold.
+                  Drift Lock (on by default): the harder they get thrown
+                  off their path (knockback, wind charge, pearl), the more
+                  of your mouse it ignores and the faster it follows them.
   Mace Swap       Pulls out your mace for slams from 4.5+ blocks. Smaller
                   drops and normal hits keep your weapon, which hits harder.
   Elytra Mace     Dive at a player with an elytra on and look at them: your

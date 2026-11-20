@@ -225,8 +225,7 @@ final class BuilderWindow {
                 continue;
             }
             try (Stream<Path> files = Files.list(dir)) {
-                files.filter(file -> file.getFileName().toString().startsWith("minecraft-gui-injector-")
-                        && file.getFileName().toString().endsWith(".jar")).forEach(jars::add);
+                files.filter(file -> Updater.isBuild(file.getFileName().toString())).forEach(jars::add);
             } catch (IOException ignored) {
                 // an unreadable folder has no builds
             }
@@ -246,7 +245,7 @@ final class BuilderWindow {
 
     private static String tag(Path jar) {
         String name = jar.getFileName().toString();
-        return "build " + name.substring("minecraft-gui-injector-".length()).replace(".jar", "");
+        return "build " + name.substring(name.lastIndexOf('-') + 1).replace(".jar", "");
     }
 
     /** Minecraft 26.1.2 (or 26.2/26.3), Fabric Loader and Fabric API installed; Minecraft running. */

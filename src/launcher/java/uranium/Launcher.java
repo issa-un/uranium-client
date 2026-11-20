@@ -16,7 +16,7 @@ import javax.swing.JOptionPane;
 
 /**
  * What Uranium.exe starts: finds the newest Uranium build and runs it. Builds are the
- * minecraft-gui-injector-*.jar files in the app folder (the one packed with the exe) and in
+ * Uranium-*.jar files (minecraft-gui-injector-*.jar before the rename) in the app folder (the one packed with the exe) and in
  * the builds folder next to Uranium.exe (the ones the Update tab downloads). Newest by the
  * Build-Time in each jar's manifest. That way an update is just a new jar in builds: the
  * exe never has to change.
@@ -55,7 +55,8 @@ public final class Launcher {
         try (Stream<Path> files = Files.list(dir)) {
             files.filter(file -> {
                 String name = file.getFileName().toString();
-                return name.startsWith("minecraft-gui-injector-") && name.endsWith(".jar");
+                return (name.startsWith("Uranium-") || name.startsWith("minecraft-gui-injector-"))
+                        && name.endsWith(".jar");
             }).forEach(into::add);
         } catch (Exception ignored) {
             // an unreadable folder has no builds

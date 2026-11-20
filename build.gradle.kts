@@ -99,7 +99,7 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 tasks.jar {
-    archiveFileName.set("minecraft-gui-injector-$buildTag.jar")
+    archiveFileName.set("Uranium-$buildTag.jar")
     doFirst {
         if (missingMinecraftFiles.isNotEmpty()) {
             throw GradleException(
@@ -139,11 +139,12 @@ application {
 // Windows, so it stays until the game closes and goes on the next build after that.
 val deleteOldJars = tasks.register("deleteOldJars") {
     val libs = layout.buildDirectory.dir("libs")
-    val current = "minecraft-gui-injector-$buildTag.jar"
+    val current = "Uranium-$buildTag.jar"
     outputs.upToDateWhen { false }
     doLast {
         libs.get().asFile.listFiles { file ->
-            file.name.startsWith("minecraft-gui-injector-") && file.name != current
+            (file.name.startsWith("Uranium-") || file.name.startsWith("minecraft-gui-injector-"))
+                && file.name.endsWith(".jar") && file.name != current
         }?.forEach { it.delete() }
     }
 }
@@ -232,6 +233,17 @@ tasks.register<Zip>("packageZip") {
     archiveFileName.set("Uranium.zip")
     destinationDirectory.set(file("dist"))
     from(file("dist/Uranium")) { into("Uranium") }
+    doLast {
+        // The files to attach to a GitHub release: the build, plus the same build under its
+        // old name, minecraft-gui-injector-<tag>.jar. Installs from before the rename only look
+        // for that name, so attach both to the next releases; once players have updated past
+        // the rename the old-name copy can go.
+        val jar = tasks.jar.get().archiveFile.get().asFile
+        val dist = file("dist")
+        dist.listFiles { f -> f.name.endsWith(".jar") }?.forEach { it.delete() }
+        jar.copyTo(File(dist, jar.name), overwrite = true)
+        jar.copyTo(File(dist, "minecraft-gui-injector-$buildTag.jar"), overwrite = true)
+    }
 }
 
 tasks.named<JavaExec>("run") {

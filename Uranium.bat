@@ -5,7 +5,7 @@ setlocal
 cd /d "%~dp0"
 
 set "JAR="
-for /f "delims=" %%f in ('dir /b /o-d "build\libs\minecraft-gui-injector-*.jar" 2^>nul') do (
+for /f "delims=" %%f in ('dir /b /o-d "build\libs\Uranium-*.jar" "build\libs\minecraft-gui-injector-*.jar" 2^>nul') do (
     set "JAR=%~dp0build\libs\%%f"
     goto found
 )
