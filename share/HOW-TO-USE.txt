@@ -47,9 +47,6 @@ WHAT EACH MODULE DOES
 --------------------
 
 COMBAT
-  Spear Dash      Swaps to your spear, lunges, and swaps back, on one key.
-  Auto Stun       Axe through their shield, then a mace hit while it's down.
-                  Reaches as far as the weapon in your hand (4.5 with a spear).
   Play Style      How the aim and timing of Cart, Aim Assist, Kill Aura
                   and Trigger Bot feel.
                     Mouse test: the first time you open the menu, dots pop
@@ -96,14 +93,10 @@ COMBAT
                   Toward you is for cornering a player who strafes: no hit can
                   pull them in, but the sideways push can cancel their run, so
                   they land in your path and close enough for the next hit.
-  Hit Select      A slam you click while they're still immune from the last
+  Hit Select      A hit you click while they're still immune from the last
                   hit would mostly be wasted. Hit Select holds that click and
-                  sends it the moment their immunity ends.
-  Slam Combo      Slam, then sword: the moment their immunity from your slam
-                  ends, it pulls out your sword, hits, and goes back.
-  Target Strafe   While you fall into a slam, holds W A S D toward the player
-                  below you so you land on them, not past them. Your own keys
-                  always win.
+                  sends it the moment their immunity ends. Every weapon: sword,
+                  axe, spear, mace (a held slam is dropped if you land).
   Kill Aura       Turns your view onto the player in
                   front of you and hits when the hit counts, only once your
                   crosshair is really on them, after a human reaction delay.
@@ -125,22 +118,32 @@ COMBAT
                   Vertical aim, Ignore mouse input, Check line of sight,
                   Aim while blocking, Ignore invisible, Ignore creative,
                   Ground too. While it's on, your spear's slot glows gold.
+  Auto Totem      Keeps a totem in your offhand.
+  Auto Weapon     Switches to your best weapon when you hit holding a tool.
+  Quick Throw     Throws a pearl or wind charge on one key.
+  Pearl Catch     Throws your pearl and sends a wind charge to meet it in the
+                  air, so you teleport up. Works on a key or by right-clicking
+                  a pearl.
+  Elytra Swap     Swaps between elytra and chestplate on one key.
+
+SPEAR & MACE
+  Spear Dash      Swaps to your spear, lunges, and swaps back, on one key.
+  Reach Swap      Uses your spear's longer reach to hit players further away.
+  Auto Stun       Axe through their shield, then a mace hit while it's down.
+                  Reaches as far as the weapon in your hand (4.5 with a spear).
   Mace Swap       Pulls out your mace for slams from 4.5+ blocks. Smaller
                   drops and normal hits keep your weapon, which hits harder.
+  Slam Combo      Slam, then sword: the moment their immunity from your slam
+                  ends, it pulls out your sword, hits, and goes back.
+  Target Strafe   While you fall into a slam, holds W A S D toward the player
+                  below you so you land on them, not past them. Your own keys
+                  always win.
   Elytra Mace     Dive at a player with an elytra on and look at them: your
                   elytra comes off by itself as you close in (a chestplate
                   from your hotbar goes on), so your mace hit counts as a
                   slam. Only when you're above them and diving. Glide again
                   puts the elytra back on after the hit if you're still in
                   the air.
-  Auto Totem      Keeps a totem in your offhand.
-  Auto Weapon     Switches to your best weapon when you hit holding a tool.
-  Reach Swap      Uses your spear's longer reach to hit players further away.
-  Quick Throw     Throws a pearl or wind charge on one key.
-  Pearl Catch     Throws your pearl and sends a wind charge to meet it in the
-                  air, so you teleport up. Works on a key or by right-clicking
-                  a pearl.
-  Elytra Swap     Swaps between elytra and chestplate on one key.
 
 CART (TNT minecarts)
   Crossbow Cart   Right-click a block with a rail: it puts the rail down,

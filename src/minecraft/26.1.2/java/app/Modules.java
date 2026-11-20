@@ -68,33 +68,6 @@ final class Modules {
                                             HandProfile.reset();
                                             SpearSettings.save(minecraft);
                                         }))),
-                        new Module("Spear Dash", "Swaps to your spear, lunges and swaps back on one key",
-                                SpearDash::isEnabled, SpearDash::toggleEnabled, List.of(
-                                new Bind("Key", () -> bindLabel(SpearDash.keyCode(), SpearDash.mouseButton()),
-                                        SpearDash::isAwaitingBinding, SpearDash::awaitBinding),
-                                new Toggle("Only from wind charge", SpearDash::isOnlyFromWindCharge,
-                                        SpearDash::toggleOnlyFromWindCharge),
-                                new Choice("Dashes", SpearDash::dashCountLabel, SpearDash::cycleDashCount),
-                                new Choice("Flat lunge", SpearDash::flatModeLabel, SpearDash::cycleFlatMode),
-                                new Toggle("Ready sound", SpearDash::isReadySound, SpearDash::toggleReadySound),
-                                new Slider("Swap delay", SpearDash.SWAP_DELAY),
-                                new Slider("Jab delay", SpearDash.JAB_DELAY),
-                                new Slider("Return", SpearDash.RETURN),
-                                new Slider("Chain gap", SpearDash.CHAIN_GAP))),
-                        new Module("Auto Stun", "Axe through a raised shield, then a mace hit while it's down",
-                                AutoStun::isEnabled, AutoStun::toggleEnabled, List.of(
-                                new Bind("Key", () -> bindLabel(AutoStun.keyCode(), AutoStun.mouseButton()),
-                                        AutoStun::isAwaitingBinding, AutoStun::awaitBinding),
-                                new Toggle("On attack click", AutoStun::isOnAttackClick, AutoStun::toggleOnAttackClick),
-                                new Choice("Trigger", AutoStun::triggerLabel, AutoStun::toggleAnyAttack),
-                                new Choice("Axe hits", () -> AutoStun.axeHitsLabel(minecraft), AutoStun::cycleAxeHits),
-                                new Toggle("Mace follow-up", AutoStun::isMaceFollowUp, AutoStun::toggleMaceFollowUp),
-                                new Slider("Chance", AutoStun.CHANCE),
-                                new Slider("Swap delay", AutoStun.SWAP_DELAY),
-                                new Slider("Hit delay", AutoStun.HIT_DELAY),
-                                new Slider("Between hits", AutoStun.BETWEEN_HITS),
-                                new Slider("Axe to mace", AutoStun.AXE_TO_MACE),
-                                new Slider("Swap back", AutoStun.SWAP_BACK))),
                         new Module("Trigger Bot", "Hits what you look at whenever the hit will count",
                                 TriggerBot::isEnabled, TriggerBot::toggleEnabled, List.of(
                                 new Toggle("Auto", TriggerBot::isAuto, TriggerBot::toggleAuto),
@@ -105,12 +78,8 @@ final class Modules {
                                 KnockbackDisplacement::isEnabled, KnockbackDisplacement::toggleEnabled, List.of(
                                 new Choice("Push", KnockbackDisplacement::modeLabel, KnockbackDisplacement::cycleMode),
                                 new Slider("Max turn", KnockbackDisplacement.MAX_TURN))),
-                        new Module("Hit Select", "Holds a slam clicked too early and sends it the moment it counts",
+                        new Module("Hit Select", "Holds a hit clicked while they're still immune and sends it the moment it counts",
                                 HitSelect::isEnabled, HitSelect::toggleEnabled, List.of()),
-                        new Module("Slam Combo", "A sword hit right after your slam, the moment it can count",
-                                SlamCombo::isEnabled, SlamCombo::toggleEnabled, List.of()),
-                        new Module("Target Strafe", "Steers your fall onto the player below for a slam",
-                                TargetStrafe::isEnabled, TargetStrafe::toggleEnabled, List.of()),
                         new Module("Kill Aura", "Turns onto the player in front of you and hits when the hit counts",
                                 KillAura::isEnabled, KillAura::toggleEnabled, List.of(
                                 new Slider("Range", KillAura.RANGE),
@@ -148,11 +117,6 @@ final class Modules {
                                         AimAssist::toggleIgnoreCreative),
                                 new Shown(() -> AimAssist.mode() != 1,
                                         new Toggle("Ground too", AimAssist::isGround, AimAssist::toggleGround)))),
-                        new Module("Mace Swap", "Pulls out your mace for slams worth 3+ hearts",
-                                MaceSwap::isEnabled, MaceSwap::toggleEnabled, List.of()),
-                        new Module("Elytra Mace", "Takes your elytra off as you dive at a player, so the hit slams",
-                                ElytraMace::isEnabled, ElytraMace::toggleEnabled, List.of(
-                                new Toggle("Glide again", ElytraMace::isGlideAgain, ElytraMace::toggleGlideAgain))),
                         new Module("Auto Totem", "Keeps a totem in your offhand",
                                 AutoTotem::isEnabled, AutoTotem::toggleEnabled, List.of(
                                 new Choice("Mode", AutoTotem::modeLabel, AutoTotem::cycleMode),
@@ -164,10 +128,6 @@ final class Modules {
                                 new Slider("Chance", AutoWeapon.CHANCE),
                                 new Slider("Swap delay", AutoWeapon.SWAP_DELAY),
                                 new Slider("Hit delay", AutoWeapon.HIT_DELAY))),
-                        new Module("Reach Swap", "Hits players further away with your spear's 4.5-block reach",
-                                ReachSwap::isEnabled, ReachSwap::toggleEnabled, List.of(
-                                new Choice("Mode", ReachSwap::modeLabel, ReachSwap::cycleMode),
-                                new Slider("Switch back", ReachSwap.SWITCH_BACK))),
                         new Module("Quick Throw", "Throws a pearl or wind charge on one key",
                                 QuickThrow::isEnabled, QuickThrow::toggleEnabled, List.of(
                                 new Bind("Key", () -> bindLabel(QuickThrow.keyCode(), QuickThrow.mouseButton()),
@@ -190,6 +150,47 @@ final class Modules {
                                 new Slider("Swap delay", ElytraSwap.SWAP_DELAY),
                                 new Slider("Use delay", ElytraSwap.USE_DELAY),
                                 new Slider("Swap back", ElytraSwap.SWAP_BACK))))),
+                new Category("Spear & Mace", "S", 0xFF76FF03, List.of(
+                        new Module("Spear Dash", "Swaps to your spear, lunges and swaps back on one key",
+                                SpearDash::isEnabled, SpearDash::toggleEnabled, List.of(
+                                new Bind("Key", () -> bindLabel(SpearDash.keyCode(), SpearDash.mouseButton()),
+                                        SpearDash::isAwaitingBinding, SpearDash::awaitBinding),
+                                new Toggle("Only from wind charge", SpearDash::isOnlyFromWindCharge,
+                                        SpearDash::toggleOnlyFromWindCharge),
+                                new Choice("Dashes", SpearDash::dashCountLabel, SpearDash::cycleDashCount),
+                                new Choice("Flat lunge", SpearDash::flatModeLabel, SpearDash::cycleFlatMode),
+                                new Toggle("Ready sound", SpearDash::isReadySound, SpearDash::toggleReadySound),
+                                new Slider("Swap delay", SpearDash.SWAP_DELAY),
+                                new Slider("Jab delay", SpearDash.JAB_DELAY),
+                                new Slider("Return", SpearDash.RETURN),
+                                new Slider("Chain gap", SpearDash.CHAIN_GAP))),
+                        new Module("Reach Swap", "Hits players further away with your spear's 4.5-block reach",
+                                ReachSwap::isEnabled, ReachSwap::toggleEnabled, List.of(
+                                new Choice("Mode", ReachSwap::modeLabel, ReachSwap::cycleMode),
+                                new Slider("Switch back", ReachSwap.SWITCH_BACK))),
+                        new Module("Auto Stun", "Axe through a raised shield, then a mace hit while it's down",
+                                AutoStun::isEnabled, AutoStun::toggleEnabled, List.of(
+                                new Bind("Key", () -> bindLabel(AutoStun.keyCode(), AutoStun.mouseButton()),
+                                        AutoStun::isAwaitingBinding, AutoStun::awaitBinding),
+                                new Toggle("On attack click", AutoStun::isOnAttackClick, AutoStun::toggleOnAttackClick),
+                                new Choice("Trigger", AutoStun::triggerLabel, AutoStun::toggleAnyAttack),
+                                new Choice("Axe hits", () -> AutoStun.axeHitsLabel(minecraft), AutoStun::cycleAxeHits),
+                                new Toggle("Mace follow-up", AutoStun::isMaceFollowUp, AutoStun::toggleMaceFollowUp),
+                                new Slider("Chance", AutoStun.CHANCE),
+                                new Slider("Swap delay", AutoStun.SWAP_DELAY),
+                                new Slider("Hit delay", AutoStun.HIT_DELAY),
+                                new Slider("Between hits", AutoStun.BETWEEN_HITS),
+                                new Slider("Axe to mace", AutoStun.AXE_TO_MACE),
+                                new Slider("Swap back", AutoStun.SWAP_BACK))),
+                        new Module("Mace Swap", "Pulls out your mace for slams worth 3+ hearts",
+                                MaceSwap::isEnabled, MaceSwap::toggleEnabled, List.of()),
+                        new Module("Slam Combo", "A sword hit right after your slam, the moment it can count",
+                                SlamCombo::isEnabled, SlamCombo::toggleEnabled, List.of()),
+                        new Module("Target Strafe", "Steers your fall onto the player below for a slam",
+                                TargetStrafe::isEnabled, TargetStrafe::toggleEnabled, List.of()),
+                        new Module("Elytra Mace", "Takes your elytra off as you dive at a player, so the hit slams",
+                                ElytraMace::isEnabled, ElytraMace::toggleEnabled, List.of(
+                                new Toggle("Glide again", ElytraMace::isGlideAgain, ElytraMace::toggleGlideAgain))))),
                 new Category("Cart", "K", 0xFFB2FF59, List.of(
                         new Module("Crossbow Cart", "Places a rail, TNT cart and fire, then shoots it with your crossbow",
                                 CrossbowCart::isEnabled, CrossbowCart::toggleEnabled, List.of(
